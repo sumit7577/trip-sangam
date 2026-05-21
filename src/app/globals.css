@@ -1,0 +1,130 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --crimson: #2C3D2E;   /* loden green (no red) */
+  --coral: #9B8868;     /* camel */
+  --magenta: #1C1C1A;   /* espresso */
+  --mountain: #1C2E3D;  /* midnight navy */
+  --gold: #C9A876;      /* champagne brass */
+  --jade: #3B5C4B;      /* muted forest */
+  --sand: #F2EEE6;      /* bone / oat */
+  --ink: #1C1C1A;       /* espresso ink */
+  --muted: #7A7268;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  text-size-adjust: 100%;
+  -webkit-text-size-adjust: 100%;
+}
+
+html, body {
+  /* Hard guard against any rogue horizontal scroll.
+     NOTE: do NOT use max-width:100vw — on Windows that includes the scrollbar (~15px)
+     and pushes content past the visible edge. width:100% inherits the actual visible width. */
+  overflow-x: hidden;
+  width: 100%;
+}
+
+:root { --header-h: 64px; }
+@media (min-width: 768px) { :root { --header-h: 72px; } }
+
+/* Belt-and-braces: every direct child of body inherits the same constraint */
+body > * { max-width: 100%; }
+
+body {
+  background: var(--sand);
+  color: var(--ink);
+  font-feature-settings: "ss01", "cv11";
+}
+
+/* Avoid iOS Safari input zoom (font-size must be >= 16px) */
+input, select, textarea { font-size: 16px; }
+@media (min-width: 768px) { input, select, textarea { font-size: inherit; } }
+
+::selection {
+  background: rgba(155, 136, 104, 0.30); /* warm camel wash */
+  color: var(--ink);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: rgba(12, 10, 9, 0.15);
+  border-radius: 999px;
+  border: 2px solid var(--sand);
+}
+::-webkit-scrollbar-thumb:hover { background: rgba(12, 10, 9, 0.3); }
+
+/* Hide scrollbar utility */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Glass surface */
+.glass {
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+}
+.glass-dark {
+  background: rgba(12, 10, 9, 0.4);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+/* Shimmer for skeletons — quiet bone tones, no warmth flicker */
+.shimmer {
+  background: linear-gradient(90deg, #E6DFD0 0%, #F2EEE6 50%, #E6DFD0 100%);
+  background-size: 200% 100%;
+  animation: shimmer 2s linear infinite;
+}
+
+/* NOTE: "sunset" tokens kept by name to avoid refactor — values are now SOLID, no gradient.
+   Buttons & primary surfaces are espresso ink. Quiet luxury. */
+.bg-sunset {
+  background-image: none;
+  background-color: #1C1C1A;
+}
+.bg-sunset-soft {
+  background-image: none;
+  background-color: rgba(28, 28, 26, 0.04);
+}
+/* Solid loden green text — replaces the old gradient text */
+.text-sunset {
+  background-image: none;
+  -webkit-background-clip: initial;
+  background-clip: initial;
+  color: #2C3D2E;
+}
+/* Champagne brass — for hero / dark-background italic accents */
+.text-champagne {
+  color: #C9A876;
+}
+/* Hairline foil divider — solid brass, no gradient */
+.foil-rule {
+  background-color: #C9A876;
+  height: 1px;
+  opacity: 0.5;
+}
+
+/* Editorial text balance */
+.balance { text-wrap: balance; }
+.pretty { text-wrap: pretty; }
+
+/* Focus ring */
+*:focus-visible {
+  outline: 2px solid var(--crimson);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+/* Hide arrows on number input */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+input[type="number"] { -moz-appearance: textfield; }
