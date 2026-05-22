@@ -22,9 +22,20 @@ export function BlogList({
 
   const featured = posts.find((p) => p.featured) ?? posts[0];
   const rest = useMemo(() => {
+    if (!featured) return [];
     const list = posts.filter((p) => p.slug !== featured.slug);
     return active === "All" ? list : list.filter((p) => p.category === active);
-  }, [active, featured.slug, posts]);
+  }, [active, featured, posts]);
+
+  if (!featured) {
+    return (
+      <section className="mx-auto max-w-7xl px-5 py-32 text-center md:px-8">
+        <p className="font-mono text-xs uppercase tracking-[0.22em] text-muted">Field notes</p>
+        <h2 className="mt-3 font-serif text-3xl">No posts yet.</h2>
+        <p className="mt-3 text-muted">Check back soon — our guides are writing.</p>
+      </section>
+    );
+  }
 
   const featuredAuthor = authorsBySlug[featured.authorSlug];
 
