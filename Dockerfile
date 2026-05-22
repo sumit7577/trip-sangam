@@ -15,6 +15,10 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
+# Ensure public/ exists even if empty in source — `COPY` in the runner stage
+# below would fail if /app/public is missing (empty dirs aren't tracked in git).
+RUN mkdir -p /app/public
+
 # NEXT_PUBLIC_* must be present at BUILD time because Next bakes them into the
 # client bundle. Compose passes these via args; defaults work for in-cluster
 # server-side fetches against the backend service.
