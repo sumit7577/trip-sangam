@@ -2,18 +2,18 @@
 
 import { useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { packages } from "@/data/packages";
+import type { Package } from "@/types";
 import { PackageCard } from "./PackageCard";
 import { cn } from "@/lib/utils";
 
 const filters = ["All", "Trekking", "Cultural", "Adventure", "Spiritual", "Wildlife"] as const;
 type Filter = (typeof filters)[number];
 
-export function FeaturedPackages() {
+export function FeaturedPackages({ packages }: { packages: Package[] }) {
   const [active, setActive] = useState<Filter>("All");
   const filtered = useMemo(
     () => (active === "All" ? packages : packages.filter((p) => p.category === active)),
-    [active]
+    [active, packages]
   );
 
   return (

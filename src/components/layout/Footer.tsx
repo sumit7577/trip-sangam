@@ -20,10 +20,10 @@ const cols = [
 ];
 
 const socials: { Icon: typeof Instagram; href: string; label: string }[] = [
-  { Icon: Instagram, href: "https://instagram.com/sangamtrails", label: "Instagram" },
-  { Icon: Facebook, href: "https://facebook.com/sangamtrails", label: "Facebook" },
-  { Icon: Youtube, href: "https://youtube.com/@sangamtrails", label: "YouTube" },
-  { Icon: Twitter, href: "https://twitter.com/sangamtrails", label: "Twitter / X" },
+  { Icon: Instagram, href: "https://instagram.com/sangamtravels", label: "Instagram" },
+  { Icon: Facebook, href: "https://facebook.com/sangamtravels", label: "Facebook" },
+  { Icon: Youtube, href: "https://youtube.com/@sangamtravels", label: "YouTube" },
+  { Icon: Twitter, href: "https://twitter.com/sangamtravels", label: "Twitter / X" },
 ];
 
 function scrollOrToast(target: string, label: string) {
@@ -50,7 +50,7 @@ export function Footer() {
             <span className="grid h-9 w-9 place-items-center rounded-xl bg-ink">
               <Mountain className="h-5 w-5 text-white" />
             </span>
-            <span className="font-serif text-xl">Sangam Trails</span>
+            <span className="font-serif text-xl">Sangam Travels</span>
           </Link>
           <p className="pretty mt-4 max-w-sm text-sm leading-relaxed text-muted">
             A small team of Nepali guides and itinerary designers building considered journeys across the
@@ -102,7 +102,7 @@ export function Footer() {
 
       <div className="border-t border-ink/8">
         <div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-3 px-5 py-6 text-xs text-muted md:flex-row md:items-center md:px-8">
-          <p>© {new Date().getFullYear()} Sangam Trails Pvt. Ltd. · Kathmandu, Nepal</p>
+          <p>© {new Date().getFullYear()} Sangam Travels Pvt. Ltd. · Kathmandu, Nepal</p>
           <div className="flex items-center gap-4">
             <button onClick={() => toast("Privacy policy — prototype", "default")} className="hover:text-ink">Privacy</button>
             <button onClick={() => toast("Terms of service — prototype", "default")} className="hover:text-ink">Terms</button>

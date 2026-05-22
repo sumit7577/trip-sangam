@@ -5,16 +5,25 @@ import { WhyChooseUs } from "@/components/home/WhyChooseUs";
 import { Testimonials } from "@/components/home/Testimonials";
 import { Newsletter } from "@/components/home/Newsletter";
 import { CarStrip } from "@/components/ui/CarStrip";
+import { getHomepage, getPackages } from "@/lib/api";
 
-export default function HomePage() {
+export default async function HomePage() {
+  const [home, packages] = await Promise.all([getHomepage(), getPackages()]);
+
   return (
     <>
-      <Hero />
+      <Hero
+        packages={packages}
+        eyebrow={home.heroEyebrow}
+        title={home.heroTitle}
+        subtitle={home.heroSubtitle}
+        imageUrl={home.heroImage}
+      />
       <StatsStrip />
       <CarStrip />
-      <FeaturedPackages />
+      <FeaturedPackages packages={home.featuredPackages.length > 0 ? home.featuredPackages : packages} />
       <WhyChooseUs />
-      <Testimonials />
+      <Testimonials testimonials={home.testimonials} />
       <Newsletter />
     </>
   );

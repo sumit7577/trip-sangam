@@ -56,7 +56,7 @@ export function Header() {
               "font-serif text-base font-medium tracking-tight transition-colors sm:text-lg",
               scrolled ? "text-ink" : "text-white"
             )}>
-              Sangam Trails
+              Sangam Travels
             </span>
             <span className={cn(
               "hidden text-[10px] uppercase tracking-[0.18em] transition-colors sm:inline",

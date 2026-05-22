@@ -4,6 +4,7 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import { ChevronDown } from "lucide-react";
 import { SearchBar } from "@/components/ui/SearchBar";
+import type { Package } from "@/types";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 28 },
@@ -14,20 +15,40 @@ const fadeUp = {
   }),
 };
 
-export function Hero() {
+const DEFAULT_IMAGE =
+  "https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?auto=format&fit=crop&w=2400&q=85";
+const DEFAULT_EYEBROW = "Spring '26 departures open";
+const DEFAULT_TITLE = "Where the Sky Begins";
+const DEFAULT_SUBTITLE =
+  "Curated journeys across Nepal's most sacred landscapes — led by local guides who grew up in the shadow of these mountains.";
+
+interface HeroProps {
+  packages: Package[];
+  eyebrow?: string;
+  title?: string;
+  subtitle?: string;
+  imageUrl?: string;
+}
+
+export function Hero({ packages, eyebrow, title, subtitle, imageUrl }: HeroProps) {
+  const heroImage = imageUrl || DEFAULT_IMAGE;
+  const heroEyebrow = eyebrow || DEFAULT_EYEBROW;
+  const heroTitle = title || DEFAULT_TITLE;
+  const heroSubtitle = subtitle || DEFAULT_SUBTITLE;
+
   return (
     <section className="relative isolate min-h-[100svh] w-full overflow-hidden">
       <div className="absolute inset-0 animate-ken-burns">
         <Image
-          src="https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?auto=format&fit=crop&w=2400&q=85"
-          alt="The Annapurna massif at first light — Nepal Himalaya"
+          src={heroImage}
+          alt={heroTitle}
           fill
           priority
           sizes="100vw"
           className="object-cover"
+          unoptimized={heroImage.startsWith("http://")}
         />
       </div>
-      {/* Flat ink wash — no gradient. Keeps text legible without a sunset effect. */}
       <div className="absolute inset-0 bg-ink/45" />
       <div className="absolute inset-0 bg-grain opacity-20 mix-blend-overlay" />
 
@@ -40,7 +61,7 @@ export function Hero() {
           className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/8 px-4 py-1.5 text-xs font-medium uppercase tracking-[0.18em] text-white backdrop-blur"
         >
           <span className="h-1.5 w-1.5 rounded-full bg-gold animate-pulse" />
-          Spring '26 departures open
+          {heroEyebrow}
         </motion.span>
 
         <motion.h1
@@ -50,7 +71,7 @@ export function Hero() {
           animate="show"
           className="balance mt-8 font-serif text-[clamp(2.5rem,7vw,6.5rem)] font-light leading-[0.95] tracking-tight text-white"
         >
-          Where the Sky <em className="italic text-champagne">Begins</em>
+          {heroTitle}
         </motion.h1>
 
         <motion.p
@@ -60,11 +81,10 @@ export function Hero() {
           animate="show"
           className="pretty mt-6 max-w-xl text-base text-white/80 md:text-lg"
         >
-          Curated journeys across Nepal's most sacred landscapes — led by local guides who grew up
-          in the shadow of these mountains.
+          {heroSubtitle}
         </motion.p>
 
-        <SearchBar />
+        <SearchBar packages={packages} />
 
         <motion.div
           initial={{ opacity: 0 }}

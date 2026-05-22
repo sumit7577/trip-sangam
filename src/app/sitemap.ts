@@ -1,10 +1,10 @@
 import type { MetadataRoute } from "next";
-import { packages } from "@/data/packages";
-import { blogPosts } from "@/data/blog";
+import { getBlogPosts, getPackages } from "@/lib/api";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://himalayan-trails.example.com";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://sangamtravels.example.com";
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const [packages, blogPosts] = await Promise.all([getPackages(), getBlogPosts()]);
   const now = new Date();
 
   const staticRoutes: MetadataRoute.Sitemap = [

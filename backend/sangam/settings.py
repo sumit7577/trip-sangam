@@ -17,9 +17,9 @@ DEBUG = os.environ.get("DJANGO_DEBUG", "true").lower() == "true"
 ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
 
 INSTALLED_APPS = [
-    "cms",
-    "api",
-    "bookings",
+    "cms.apps.CmsConfig",
+    "api.apps.ApiConfig",
+    "bookings.apps.BookingsConfig",
 
     "wagtail.contrib.forms",
     "wagtail.contrib.redirects",
@@ -109,9 +109,48 @@ STATICFILES_DIRS = [BASE_DIR / "static"]
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
+# ---------------------------------------------------------------------------
+# File storage — Bunny CDN for production, local disk for dev (fallback).
+#
+# Set BUNNY_STORAGE_ACCESS_KEY in .env to push uploads (Wagtail images,
+# documents, any FileField/ImageField with the default storage) to Bunny.
+# Without the key set, falls back to Django's local FileSystemStorage
+# under MEDIA_ROOT so dev keeps working with no credentials.
+# ---------------------------------------------------------------------------
+
+BUNNY_STORAGE_ZONE_NAME = os.environ.get("BUNNY_STORAGE_ZONE_NAME", "")
+BUNNY_STORAGE_ACCESS_KEY = os.environ.get("BUNNY_STORAGE_ACCESS_KEY", "")
+BUNNY_STORAGE_PUBLIC_HOST = os.environ.get("BUNNY_STORAGE_PUBLIC_HOST", "")
+BUNNY_STORAGE_API_HOST = os.environ.get("BUNNY_STORAGE_API_HOST", "storage.bunnycdn.com")
+BUNNY_STORAGE_DIRECTORY = os.environ.get("BUNNY_STORAGE_DIRECTORY", "sangam/")
+
+if BUNNY_STORAGE_ACCESS_KEY and BUNNY_STORAGE_ZONE_NAME and BUNNY_STORAGE_PUBLIC_HOST:
+    STORAGES = {
+        "default": {
+            "BACKEND": "app.BunnyStorage.BunnyStorage",
+            "OPTIONS": {"directoryName": BUNNY_STORAGE_DIRECTORY},
+        },
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        },
+    }
+else:
+    STORAGES = {
+        "default": {
+            "BACKEND": "django.core.files.storage.FileSystemStorage",
+        },
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        },
+    }
+
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-WAGTAIL_SITE_NAME = "Sangam Trails CMS"
+WAGTAIL_SITE_NAME = "Sangam Travels CMS"
+
+# Where Wagtail "Preview" button redirects to. The Next.js route at this path
+# fetches the draft data from /api/preview/ using the signed token.
+NEXTJS_PREVIEW_URL = os.environ.get("NEXTJS_PREVIEW_URL", "http://localhost:3000/preview/")
 WAGTAILADMIN_BASE_URL = os.environ.get("WAGTAILADMIN_BASE_URL", "http://localhost:8000")
 WAGTAIL_FRONTEND_LOGIN_URL = None
 WAGTAILDOCS_EXTENSIONS = ["pdf", "doc", "docx", "csv", "txt"]

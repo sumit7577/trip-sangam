@@ -27,7 +27,7 @@ export function AboutHero() {
           className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3.5 py-1 text-[10px] font-medium uppercase tracking-[0.22em] backdrop-blur"
         >
           <span className="h-1.5 w-1.5 rounded-full bg-gold" />
-          About Sangam Trails
+          About Sangam Travels
         </motion.span>
 
         <motion.h1

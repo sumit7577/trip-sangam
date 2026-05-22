@@ -2,18 +2,23 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import { BlogList } from "@/components/blog/BlogList";
 import { Newsletter } from "@/components/home/Newsletter";
+import { getBlogPosts, getTeamBySlug } from "@/lib/api";
 
 export const metadata: Metadata = {
-  title: "Field Notes · Sangam Trails",
+  title: "Field Notes · Sangam Travels",
   description:
     "Editorial dispatches from our guides — trekking essays, cultural notes, practical tips, and stories from the trail.",
 };
 
-export default function BlogPage() {
+export default async function BlogPage() {
+  const [posts, authorsBySlug] = await Promise.all([
+    getBlogPosts(),
+    getTeamBySlug(),
+  ]);
   return (
     <>
       <BlogHero />
-      <BlogList />
+      <BlogList posts={posts} authorsBySlug={authorsBySlug} />
       <Newsletter />
     </>
   );

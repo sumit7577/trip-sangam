@@ -1,9 +1,15 @@
 "use client";
 
-import { packages } from "@/data/packages";
+import type { Package } from "@/types";
 import { PackageCard } from "@/components/home/PackageCard";
 
-export function SimilarPackages({ currentSlug }: { currentSlug: string }) {
+export function SimilarPackages({
+  currentSlug,
+  packages,
+}: {
+  currentSlug: string;
+  packages: Package[];
+}) {
   const list = packages.filter((p) => p.slug !== currentSlug).slice(0, 6);
 
   return (

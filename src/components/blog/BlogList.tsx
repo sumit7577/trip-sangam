@@ -5,23 +5,28 @@ import Image from "next/image";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowUpRight, Clock } from "lucide-react";
-import { blogPosts, type BlogCategory } from "@/data/blog";
-import { getTeamMember } from "@/data/team";
+import type { BlogCategory, BlogPost, TeamMember } from "@/types";
 import { BlogCard } from "./BlogCard";
 import { cn } from "@/lib/utils";
 
 const filters: ("All" | BlogCategory)[] = ["All", "Trekking", "Culture", "Stories", "Tips", "Wildlife"];
 
-export function BlogList() {
+export function BlogList({
+  posts,
+  authorsBySlug,
+}: {
+  posts: BlogPost[];
+  authorsBySlug: Record<string, TeamMember>;
+}) {
   const [active, setActive] = useState<"All" | BlogCategory>("All");
 
-  const featured = blogPosts.find((p) => p.featured) ?? blogPosts[0];
+  const featured = posts.find((p) => p.featured) ?? posts[0];
   const rest = useMemo(() => {
-    const list = blogPosts.filter((p) => p.slug !== featured.slug);
+    const list = posts.filter((p) => p.slug !== featured.slug);
     return active === "All" ? list : list.filter((p) => p.category === active);
-  }, [active, featured.slug]);
+  }, [active, featured.slug, posts]);
 
-  const featuredAuthor = getTeamMember(featured.authorSlug);
+  const featuredAuthor = authorsBySlug[featured.authorSlug];
 
   return (
     <section className="mx-auto max-w-7xl px-5 py-14 md:px-8 md:py-20">
@@ -108,7 +113,7 @@ export function BlogList() {
       <motion.div layout className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 lg:gap-8">
         <AnimatePresence mode="popLayout">
           {rest.map((p, i) => (
-            <BlogCard key={p.slug} post={p} index={i} />
+            <BlogCard key={p.slug} post={p} index={i} author={authorsBySlug[p.authorSlug]} />
           ))}
         </AnimatePresence>
       </motion.div>

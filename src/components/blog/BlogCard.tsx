@@ -4,12 +4,17 @@ import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowUpRight, Clock } from "lucide-react";
-import type { BlogPost } from "@/data/blog";
-import { getTeamMember } from "@/data/team";
-import { cn } from "@/lib/utils";
+import type { BlogPost, TeamMember } from "@/types";
 
-export function BlogCard({ post, index }: { post: BlogPost; index: number }) {
-  const author = getTeamMember(post.authorSlug);
+export function BlogCard({
+  post,
+  index,
+  author,
+}: {
+  post: BlogPost;
+  index: number;
+  author?: TeamMember;
+}) {
 
   return (
     <motion.article

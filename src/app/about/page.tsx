@@ -1,14 +1,14 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import { Quote, Newspaper, MapPin } from "lucide-react";
-import { team } from "@/data/team";
+import { getTeam } from "@/lib/api";
 import { AboutHero } from "@/components/about/AboutHero";
 import { ValuesGrid } from "@/components/about/ValuesGrid";
 import { CountUp } from "@/components/ui/CountUp";
 import { Newsletter } from "@/components/home/Newsletter";
 
 export const metadata: Metadata = {
-  title: "About · Sangam Trails",
+  title: "About · Sangam Travels",
   description:
     "A small team of Nepali guides and itinerary designers building considered journeys across the Himalayan belt since 2018.",
 };
@@ -27,7 +27,8 @@ const press = [
   { name: "TripAdvisor", quote: "Travelers' Choice — top 1% worldwide.", year: "2023–25" },
 ];
 
-export default function AboutPage() {
+export default async function AboutPage() {
+  const team = await getTeam();
   return (
     <>
       <AboutHero />

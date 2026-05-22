@@ -68,3 +68,41 @@ export interface PackageDetail extends Package {
   faqs: FAQItem[];
   journey: JourneyStop[];
 }
+
+export type BlogCategory = "Trekking" | "Culture" | "Stories" | "Tips" | "Wildlife";
+
+export interface BlogPost {
+  slug: string;
+  title: string;
+  category: BlogCategory;
+  authorSlug: string;
+  date: string;
+  isoDate: string;
+  readingTime: number;
+  coverImage: string;
+  excerpt: string;
+  body: string[];
+  pullQuote?: string;
+  featured?: boolean;
+}
+
+export interface TeamMember {
+  slug: string;
+  name: string;
+  role: string;
+  region: string;
+  yearsExperience: number;
+  languages: string[];
+  photo: string;
+  bio: string;
+}
+
+export interface Testimonial {
+  id: string;
+  name: string;
+  location: string;
+  avatar: string;
+  rating: number;
+  quote: string;
+  trip: string;
+}

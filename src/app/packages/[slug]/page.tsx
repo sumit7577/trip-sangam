@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { annapurnaDetail } from "@/data/annapurna";
-import { packages, getPackage } from "@/data/packages";
+import type { PackageDetail } from "@/types";
+import { getPackage, getPackages } from "@/lib/api";
 import { HeroSlider } from "@/components/detail/HeroSlider";
 import { JourneyMap } from "@/components/detail/JourneyMap";
 import { PackageHeader } from "@/components/detail/PackageHeader";
@@ -13,18 +13,18 @@ import { FinalCTA } from "@/components/detail/FinalCTA";
 import { MobileBookingBar } from "@/components/detail/MobileBookingBar";
 import { CarStrip } from "@/components/ui/CarStrip";
 
-export function generateStaticParams() {
-  // Pre-render every package slug so cards always land on a valid page
+const FALLBACK_BODY_SLUG = "annapurna-circuit";
+
+export async function generateStaticParams() {
+  const packages = await getPackages();
   return packages.map((p) => ({ slug: p.slug }));
 }
 
-export function generateMetadata({ params }: { params: { slug: string } }): Metadata {
-  // We only have full editorial copy for Annapurna; other slugs reuse it.
-  // Metadata uses the *shallow* package for accurate title / description per slug.
-  const base = getPackage(params.slug);
+export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
+  const base = await getPackage(params.slug);
   if (!base) return { title: "Not found" };
   return {
-    title: `${base.name} · ${base.durationDays} days · Sangam Trails`,
+    title: `${base.name} · ${base.durationDays} days · Sangam Travels`,
     description: base.shortDescription,
     openGraph: {
       title: base.name,
@@ -41,15 +41,39 @@ export function generateMetadata({ params }: { params: { slug: string } }): Meta
   };
 }
 
-export default function PackageDetailPage({ params }: { params: { slug: string } }) {
-  // Prototype: only annapurna-circuit has the long-form detail data.
-  // Other slugs render Annapurna's detail body, but the header/CTA show the right name + price.
-  const base = getPackage(params.slug);
-  if (!base) notFound();
+/** Use the slug's own body if filled in; otherwise reuse annapurna-circuit's body. */
+function withBody(base: PackageDetail, fallback: PackageDetail | null): PackageDetail {
+  if (base.itinerary.length > 0) return base;
+  if (!fallback) return base;
+  return {
+    ...fallback,
+    // Header/card data wins from `base`:
+    slug: base.slug,
+    name: base.name,
+    location: base.location,
+    category: base.category,
+    difficulty: base.difficulty,
+    durationDays: base.durationDays,
+    groupSize: base.groupSize,
+    rating: base.rating,
+    reviewCount: base.reviewCount,
+    priceINR: base.priceINR,
+    originalPriceINR: base.originalPriceINR,
+    discountPct: base.discountPct,
+    bestSeason: base.bestSeason,
+    heroImage: base.heroImage,
+    shortDescription: base.shortDescription,
+  };
+}
 
-  const pkg = params.slug === annapurnaDetail.slug
-    ? annapurnaDetail
-    : { ...annapurnaDetail, ...base };
+export default async function PackageDetailPage({ params }: { params: { slug: string } }) {
+  const [base, packages, fallback] = await Promise.all([
+    getPackage(params.slug),
+    getPackages(),
+    params.slug === FALLBACK_BODY_SLUG ? Promise.resolve(null) : getPackage(FALLBACK_BODY_SLUG),
+  ]);
+  if (!base) notFound();
+  const pkg = withBody(base, fallback);
 
   return (
     <>
@@ -74,7 +98,7 @@ export default function PackageDetailPage({ params }: { params: { slug: string }
       <JourneyMap stops={pkg.journey} />
       <OfferBanner />
       <CarStrip />
-      <SimilarPackages currentSlug={pkg.slug} />
+      <SimilarPackages currentSlug={pkg.slug} packages={packages} />
       <FinalCTA pkg={pkg} />
       <MobileBookingBar pkg={pkg} />
     </>

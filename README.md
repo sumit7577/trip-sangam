@@ -155,7 +155,7 @@ The build is **fully static**. `npm run build` produces an `out/` folder of plai
 Set `NEXT_PUBLIC_SITE_URL` **before** `npm run build` so robots.txt and sitemap.xml carry your real domain.
 
 ```powershell
-$env:NEXT_PUBLIC_SITE_URL="https://sangamtrails.com"
+$env:NEXT_PUBLIC_SITE_URL="https://sangamtravels.com"
 npm run build
 ```
 

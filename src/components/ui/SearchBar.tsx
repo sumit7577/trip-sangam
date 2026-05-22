@@ -5,12 +5,12 @@ import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { MapPin, Calendar, Users, Search, Minus, Plus, ChevronDown } from "lucide-react";
 import { toast } from "@/lib/toast";
-import { packages } from "@/data/packages";
+import type { Package } from "@/types";
 import { cn } from "@/lib/utils";
 
 type Popover = "dest" | "trav" | null;
 
-export function SearchBar() {
+export function SearchBar({ packages }: { packages: Package[] }) {
   const [destination, setDestination] = useState("");
   const [date, setDate] = useState("");
   const [adults, setAdults] = useState(2);
@@ -40,7 +40,7 @@ export function SearchBar() {
           p.category.toLowerCase().includes(q)
       )
       .slice(0, 5);
-  }, [destination]);
+  }, [destination, packages]);
 
   const dateDisplay = date
     ? new Date(date).toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" })

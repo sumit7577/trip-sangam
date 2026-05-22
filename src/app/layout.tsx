@@ -25,12 +25,12 @@ const jetbrains = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Sangam Trails — Where the Sky Begins",
+  title: "Sangam Travels — Where the Sky Begins",
   description:
     "Curated journeys across Nepal's most sacred landscapes. Trekking, cultural & spiritual experiences led by local guides.",
   keywords: ["Nepal", "trekking", "Everest", "Annapurna", "Himalayan tours"],
   openGraph: {
-    title: "Sangam Trails",
+    title: "Sangam Travels",
     description: "Curated journeys across Nepal's most sacred landscapes.",
     type: "website",
   },

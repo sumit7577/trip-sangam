@@ -3,27 +3,31 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ChevronLeft, Clock, ArrowUpRight } from "lucide-react";
-import { blogPosts, getBlogPost } from "@/data/blog";
-import { getTeamMember } from "@/data/team";
+import { getBlogPost, getBlogPosts, getTeamBySlug } from "@/lib/api";
 
-export function generateStaticParams() {
-  return blogPosts.map((p) => ({ slug: p.slug }));
+export async function generateStaticParams() {
+  const posts = await getBlogPosts();
+  return posts.map((p) => ({ slug: p.slug }));
 }
 
-export function generateMetadata({ params }: { params: { slug: string } }): Metadata {
-  const post = getBlogPost(params.slug);
+export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
+  const post = await getBlogPost(params.slug);
   if (!post) return { title: "Not found" };
   return {
-    title: `${post.title} · Sangam Trails`,
+    title: `${post.title} · Sangam Travels`,
     description: post.excerpt,
   };
 }
 
-export default function BlogPostPage({ params }: { params: { slug: string } }) {
-  const post = getBlogPost(params.slug);
+export default async function BlogPostPage({ params }: { params: { slug: string } }) {
+  const [post, posts, authorsBySlug] = await Promise.all([
+    getBlogPost(params.slug),
+    getBlogPosts(),
+    getTeamBySlug(),
+  ]);
   if (!post) notFound();
-  const author = getTeamMember(post.authorSlug);
-  const related = blogPosts.filter((p) => p.slug !== post.slug).slice(0, 3);
+  const author = authorsBySlug[post.authorSlug];
+  const related = posts.filter((p) => p.slug !== post.slug).slice(0, 3);
 
   return (
     <>
@@ -145,7 +149,7 @@ export default function BlogPostPage({ params }: { params: { slug: string } }) {
 
           <div className="grid grid-cols-1 gap-6 md:grid-cols-3 lg:gap-8">
             {related.map((p) => {
-              const a = getTeamMember(p.authorSlug);
+              const a = authorsBySlug[p.authorSlug];
               return (
                 <Link
                   key={p.slug}
