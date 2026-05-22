@@ -63,6 +63,10 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
+    # Whitenoise serves /static/ from gunicorn — required in production because
+    # DEBUG=False disables Django's built-in static file handler, so without
+    # this the Wagtail admin loads with no CSS/JS.
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -146,7 +150,10 @@ if BUNNY_STORAGE_ACCESS_KEY and BUNNY_STORAGE_ZONE_NAME and BUNNY_STORAGE_PUBLIC
             "OPTIONS": {"directoryName": BUNNY_STORAGE_DIRECTORY},
         },
         "staticfiles": {
-            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+            # Whitenoise serves /static/ + gzips collected files. Using the
+            # non-manifest variant (no hashes) — Wagtail occasionally references
+            # assets dynamically that the manifest version rejects at collect time.
+            "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
         },
     }
 else:
@@ -155,7 +162,10 @@ else:
             "BACKEND": "django.core.files.storage.FileSystemStorage",
         },
         "staticfiles": {
-            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+            # Whitenoise serves /static/ + gzips collected files. Using the
+            # non-manifest variant (no hashes) — Wagtail occasionally references
+            # assets dynamically that the manifest version rejects at collect time.
+            "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
         },
     }
 
