@@ -1,0 +1,99 @@
+version: '3.8'
+
+# Sangam Travels deploy stack — mirrors allcoachingAdmin's nginx-proxy pattern.
+#
+#   sangam-backend   Django + Wagtail (gunicorn) — internal port 8000
+#                    exposed at https://${CMS_DOMAIN} via sumit_proxy (nginx-proxy
+#                    + acme-companion handles cert issuance + renewal)
+#   sangam-frontend  Next.js (standalone) — internal port 3000
+#                    exposed at https://${SITE_DOMAIN}
+#
+# Both containers join the external sumit_proxy network (created once on the
+# host) so the existing nginx-proxy + acme-companion picks them up via their
+# VIRTUAL_HOST / LETSENCRYPT_HOST env vars. They also share an internal
+# `sangam-net` so the frontend can reach the backend by service name without
+# exposing ports to the host.
+
+services:
+  sangam-backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: sangam-backend:latest
+    container_name: sangam-backend
+    restart: always
+    expose:
+      - "8000"
+    environment:
+      # nginx-proxy / acme-companion configuration ─────────────────────────
+      - VIRTUAL_HOST=${CMS_DOMAIN}
+      - VIRTUAL_PORT=8000
+      - LETSENCRYPT_HOST=${CMS_DOMAIN}
+      - LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}
+      - REDIRECT_HTTPS=false
+
+      # Django ─────────────────────────────────────────────────────────────
+      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
+      - DJANGO_DEBUG=false
+      - DJANGO_ALLOWED_HOSTS=${CMS_DOMAIN},sangam-backend,localhost,127.0.0.1
+      - DJANGO_DB_PATH=/app/data/db.sqlite3
+      - WAGTAILADMIN_BASE_URL=https://${CMS_DOMAIN}
+      - NEXTJS_PREVIEW_URL=https://${SITE_DOMAIN}/preview/
+      - CORS_ALLOWED_ORIGINS=https://${SITE_DOMAIN}
+      - CSRF_TRUSTED_ORIGINS=https://${CMS_DOMAIN},https://${SITE_DOMAIN}
+
+      # Bunny CDN (leave blank to use local /app/media volume) ──────────────
+      - BUNNY_STORAGE_ZONE_NAME=${BUNNY_STORAGE_ZONE_NAME:-}
+      - BUNNY_STORAGE_ACCESS_KEY=${BUNNY_STORAGE_ACCESS_KEY:-}
+      - BUNNY_STORAGE_PUBLIC_HOST=${BUNNY_STORAGE_PUBLIC_HOST:-}
+      - BUNNY_STORAGE_API_HOST=${BUNNY_STORAGE_API_HOST:-storage.bunnycdn.com}
+      - BUNNY_STORAGE_DIRECTORY=${BUNNY_STORAGE_DIRECTORY:-sangam/}
+    volumes:
+      - sangam-db:/app/data
+      - sangam-static:/app/staticfiles
+      - sangam-media:/app/media
+    networks:
+      - proxy
+      - sangam-net
+
+  sangam-frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        # NEXT_PUBLIC_* must be present at build time — bake the public site
+        # URL into the bundle. The internal API URL points at the backend
+        # service name via the shared sangam-net network.
+        NEXT_PUBLIC_API_URL: http://sangam-backend:8000
+        NEXT_PUBLIC_SITE_URL: https://${SITE_DOMAIN}
+    image: sangam-frontend:latest
+    container_name: sangam-frontend
+    restart: always
+    expose:
+      - "3000"
+    environment:
+      - VIRTUAL_HOST=${SITE_DOMAIN}
+      - VIRTUAL_PORT=3000
+      - LETSENCRYPT_HOST=${SITE_DOMAIN}
+      - LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}
+      - REDIRECT_HTTPS=false
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=http://sangam-backend:8000
+      - NEXT_PUBLIC_SITE_URL=https://${SITE_DOMAIN}
+    depends_on:
+      - sangam-backend
+    networks:
+      - proxy
+      - sangam-net
+
+networks:
+  proxy:
+    external: true
+    name: sumit_proxy
+  sangam-net:
+    driver: bridge
+
+volumes:
+  sangam-db:
+  sangam-static:
+  sangam-media:

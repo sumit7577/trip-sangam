@@ -16,6 +16,19 @@ SECRET_KEY = os.environ.get(
 DEBUG = os.environ.get("DJANGO_DEBUG", "true").lower() == "true"
 ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
 
+# Required behind nginx/HTTPS proxy for Wagtail admin POSTs (e.g. login) to
+# pass CSRF. Pass full origins including scheme: "https://yourdomain.com"
+CSRF_TRUSTED_ORIGINS = [
+    o.strip()
+    for o in os.environ.get("CSRF_TRUSTED_ORIGINS", "").split(",")
+    if o.strip()
+]
+# Honor X-Forwarded-Proto from nginx so request.is_secure() returns True when
+# the original request was HTTPS — without this, Django builds http:// URLs in
+# password-reset emails, redirect responses, etc.
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+USE_X_FORWARDED_HOST = True
+
 INSTALLED_APPS = [
     "cms.apps.CmsConfig",
     "api.apps.ApiConfig",
@@ -83,7 +96,9 @@ WSGI_APPLICATION = "sangam.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        # DJANGO_DB_PATH lets the SQLite file live on a Docker volume in prod
+        # (e.g. /app/data/db.sqlite3) so DB state survives container rebuilds.
+        "NAME": os.environ.get("DJANGO_DB_PATH") or str(BASE_DIR / "db.sqlite3"),
     }
 }
 
