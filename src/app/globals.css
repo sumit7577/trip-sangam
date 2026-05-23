@@ -159,6 +159,17 @@ input, select, textarea { font-size: 16px; }
   background-size: 200% 100%;
 }
 
+/* ──────────────────────────────────────────────────────────────
+   Google Translate widget — hide its UI; we drive it from our own dropdown.
+   ────────────────────────────────────────────────────────────── */
+#google_translate_element { display: none !important; }
+.goog-te-banner-frame.skiptranslate { display: none !important; }
+.goog-te-gadget { display: none !important; }
+body { top: 0 !important; }
+.goog-tooltip,
+.goog-tooltip:hover,
+.goog-text-highlight { background: transparent !important; box-shadow: none !important; }
+
 /* Shimmer for skeletons — quiet bone tones, no warmth flicker */
 .shimmer {
   background: linear-gradient(90deg, #E6DFD0 0%, #F2EEE6 50%, #E6DFD0 100%);

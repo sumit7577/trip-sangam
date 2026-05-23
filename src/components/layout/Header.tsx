@@ -7,6 +7,7 @@ import { motion, AnimatePresence, useScroll, useMotionValueEvent } from "framer-
 import { Menu, X, ChevronDown, Phone, MessageCircle, Compass, Sparkles, BookOpen, Newspaper } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
 import { useCurrency, type Currency } from "@/lib/currency";
 import { useModal } from "@/lib/modal";
 import { useTheme } from "@/lib/theme";
@@ -72,9 +73,9 @@ export function Header() {
           </span>
           <span className="flex flex-col leading-none">
             <span className={cn(
-              "font-serif text-base font-medium tracking-tight transition-colors sm:text-lg",
+              "font-serif text-base font-medium tracking-tight transition-colors notranslate sm:text-lg",
               scrolled ? "text-ink" : "text-white"
-            )}>
+            )} translate="no">
               Trip Sangam
             </span>
             <span className={cn(
@@ -104,6 +105,7 @@ export function Header() {
         </nav>
 
         <div className="flex items-center gap-1.5 md:gap-2">
+          <LanguageSwitcher dark={!scrolled} />
           <ThemeToggle dark={!scrolled} />
           <CurrencySwitcher dark={!scrolled} />
           <button
@@ -182,7 +184,7 @@ export function Header() {
                     />
                   </span>
                   <span className="flex flex-col leading-none">
-                    <span className="font-serif text-[17px] font-medium tracking-tight text-ink">Trip Sangam</span>
+                    <span className="font-serif text-[17px] font-medium tracking-tight text-ink notranslate" translate="no">Trip Sangam</span>
                     <span className="mt-1.5 font-mono text-[9px] uppercase tracking-[0.24em] text-ink/55">
                       Journey Beyond Borders
                     </span>

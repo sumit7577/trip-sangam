@@ -39,13 +39,20 @@ export const metadata: Metadata = {
 // Default: LIGHT. Dark mode only activates when the user explicitly toggled it before.
 const themeInitScript = `(function(){try{if(localStorage.getItem('theme')==='dark')document.documentElement.classList.add('dark');}catch(e){}})();`;
 
+// Google Translate widget bootstrap. The widget reads the googtrans cookie
+// (set by LanguageSwitcher) and translates the page on load.
+const translateInitScript = `function googleTranslateElementInit(){new google.translate.TranslateElement({pageLanguage:'en',includedLanguages:'en,ne,hi,bn,mr,ta,te,gu,pa,kn,ml,or',autoDisplay:false},'google_translate_element');}`;
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${fraunces.variable} ${inter.variable} ${jetbrains.variable}`} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+        <script dangerouslySetInnerHTML={{ __html: translateInitScript }} />
+        <script src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit" async />
       </head>
       <body className="font-sans bg-sand text-ink antialiased dark:bg-[#0E0E0D] dark:text-sand">
+        <div id="google_translate_element" aria-hidden="true" />
         <Providers>
           <Header />
           <main className="w-full overflow-x-hidden">{children}</main>

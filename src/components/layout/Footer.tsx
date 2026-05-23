@@ -21,7 +21,7 @@ const cols = [
 ];
 
 const socials: { Icon: typeof Instagram; href: string; label: string }[] = [
-  { Icon: Instagram, href: "https://www.instagram.com/sangam_tr.avels?igsh=cjhmN3RjZ3gyMmYx&utm_source=qr", label: "Instagram" },
+  { Icon: Instagram, href: "https://www.instagram.com/trip_sangam_?igsh=cjhmN3RjZ3gyMmYx&utm_source=qr", label: "Instagram" },
   { Icon: Facebook, href: "https://www.facebook.com/share/1BTLAVtUaM/?mibextid=wwXIfr", label: "Facebook" },
   { Icon: MessageCircle, href: "https://wa.me/917070406193", label: "WhatsApp" },
   { Icon: Phone, href: "tel:+917070406193", label: "Call" },
@@ -58,7 +58,7 @@ export function Footer() {
               />
             </span>
             <span className="flex flex-col leading-none">
-              <span className="font-serif text-xl text-ink">Trip Sangam</span>
+              <span className="font-serif text-xl text-ink notranslate" translate="no">Trip Sangam</span>
               <span className="mt-1 text-[10px] uppercase tracking-[0.18em] text-muted">Journey Beyond Borders</span>
             </span>
           </Link>
