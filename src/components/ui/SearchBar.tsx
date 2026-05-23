@@ -72,7 +72,7 @@ export function SearchBar({ packages }: { packages: Package[] }) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.6, duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
       onSubmit={onSubmit}
-      className="glass relative mx-auto mt-10 w-full max-w-4xl rounded-[28px] p-1.5 shadow-lift md:rounded-full"
+      className="glass relative mx-auto mt-8 w-full max-w-4xl rounded-[24px] p-1 shadow-lift md:mt-10 md:rounded-full md:p-1.5"
     >
       <div className="flex flex-col items-stretch gap-1 md:flex-row md:items-stretch md:gap-0">
         {/* DESTINATION */}
@@ -146,7 +146,7 @@ export function SearchBar({ packages }: { packages: Package[] }) {
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.97 }}
           type="submit"
-          className="mt-1 inline-flex h-12 shrink-0 items-center justify-center gap-2 rounded-2xl bg-ink text-sm font-semibold text-white shadow-glow transition-colors hover:bg-ink/90 md:ml-1 md:mt-0 md:h-auto md:min-h-[52px] md:rounded-full md:px-6"
+          className="mt-1 inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-2xl bg-ink text-sm font-semibold text-white shadow-glow transition-colors hover:bg-ink/90 md:ml-1 md:mt-0 md:h-auto md:min-h-[52px] md:rounded-full md:px-6"
         >
           <Search className="h-4 w-4" strokeWidth={1.75} />
           <span>Search</span>
@@ -267,7 +267,7 @@ function Field({
     <div
       onClick={onActivate}
       className={cn(
-        "group relative flex flex-1 cursor-pointer items-center gap-3 rounded-2xl px-4 py-2.5 transition-all md:rounded-full md:px-5 md:py-3",
+        "group relative flex flex-1 cursor-pointer items-center gap-3 rounded-2xl px-3.5 py-2 transition-all md:rounded-full md:px-5 md:py-3",
         active ? "bg-white shadow-soft" : "hover:bg-white/35"
       )}
     >

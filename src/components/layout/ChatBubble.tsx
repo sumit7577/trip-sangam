@@ -17,10 +17,10 @@ function WhatsAppIcon({ className }: { className?: string }) {
 
 export function ChatBubble() {
   const btn =
-    "grid h-12 w-12 place-items-center rounded-full text-white shadow-lift transition-transform hover:scale-110 md:h-14 md:w-14";
+    "grid h-11 w-11 place-items-center rounded-full text-white shadow-lift transition-transform hover:scale-110 md:h-14 md:w-14";
 
   return (
-    <div className="fixed right-4 z-30 flex flex-col items-center gap-3 bottom-[calc(env(safe-area-inset-bottom)+84px)] md:right-6 md:bottom-6">
+    <div className="fixed right-3 z-30 flex flex-col items-center gap-2.5 bottom-[calc(env(safe-area-inset-bottom)+16px)] md:right-6 md:bottom-6 md:gap-3">
       {/* Phone (top of stack) */}
       <motion.a
         initial={{ scale: 0, opacity: 0 }}

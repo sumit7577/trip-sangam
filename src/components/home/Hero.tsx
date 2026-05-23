@@ -52,7 +52,7 @@ export function Hero({ packages, eyebrow, title, subtitle, imageUrl }: HeroProps
       <div className="absolute inset-0 bg-ink/45" />
       <div className="absolute inset-0 bg-grain opacity-20 mix-blend-overlay" />
 
-      <div className="relative mx-auto flex min-h-[100svh] max-w-7xl flex-col items-center justify-center px-5 pt-32 pb-24 text-center md:px-8">
+      <div className="relative mx-auto flex min-h-[100svh] max-w-7xl flex-col items-center justify-center px-5 pt-24 pb-20 text-center md:px-8 md:pt-32 md:pb-24">
         <motion.span
           custom={0}
           variants={fadeUp}
