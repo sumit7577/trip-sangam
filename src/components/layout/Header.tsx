@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence, useScroll, useMotionValueEvent } from "framer-motion";
-import { Mountain, Menu, X, ChevronDown } from "lucide-react";
+import { Mountain, Menu, X, ChevronDown, Phone, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { useCurrency, type Currency } from "@/lib/currency";
 import { useModal } from "@/lib/modal";
@@ -111,45 +111,84 @@ export function Header() {
 
       <AnimatePresence>
         {open && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-ink/40 backdrop-blur-sm lg:hidden"
-            onClick={() => setOpen(false)}
-          >
+          <>
+            <motion.div
+              key="backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 z-[60] bg-black/55 backdrop-blur-sm lg:hidden"
+              onClick={() => setOpen(false)}
+            />
             <motion.aside
+              key="drawer"
               initial={{ x: "100%" }}
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
-              transition={{ type: "spring", stiffness: 320, damping: 32 }}
-              className="absolute right-0 top-0 h-full w-80 max-w-[90vw] bg-sand p-6"
-              onClick={(e) => e.stopPropagation()}
+              transition={{ type: "spring", stiffness: 340, damping: 34 }}
+              style={{ backgroundColor: "#F2EEE6" }}
+              className="fixed right-0 top-0 z-[70] flex h-[100dvh] w-[88vw] max-w-sm flex-col border-l border-[#E2DBCB] shadow-2xl lg:hidden"
             >
-              <div className="flex items-center justify-between">
-                <span className="font-serif text-lg">Menu</span>
-                <button onClick={() => setOpen(false)} className="grid h-10 w-10 place-items-center rounded-xl hover:bg-ink/5">
+              <div className="flex items-center justify-between border-b border-[#E2DBCB] px-5 py-4">
+                <Link
+                  href="/"
+                  onClick={() => setOpen(false)}
+                  className="flex items-center gap-2"
+                >
+                  <span className="grid h-9 w-9 place-items-center rounded-xl bg-ink">
+                    <Mountain className="h-5 w-5 text-white" />
+                  </span>
+                  <span className="font-serif text-base font-medium text-ink">Sangam Travels</span>
+                </Link>
+                <button
+                  aria-label="Close menu"
+                  onClick={() => setOpen(false)}
+                  className="grid h-10 w-10 place-items-center rounded-full text-ink/70 hover:bg-ink/5 hover:text-ink"
+                >
                   <X className="h-5 w-5" />
                 </button>
               </div>
-              <nav className="mt-8 flex flex-col gap-1">
+
+              <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-3 py-4">
                 {nav.map((item) => (
                   <Link
                     key={item.label}
                     href={item.href}
                     onClick={() => setOpen(false)}
-                    className="rounded-xl px-4 py-3 text-base font-medium hover:bg-ink/5"
+                    className="flex items-center justify-between rounded-xl px-4 py-3.5 text-base font-medium text-ink/85 transition-colors hover:bg-ink/5 hover:text-ink"
                   >
-                    {item.label}
+                    <span>{item.label}</span>
+                    <ChevronDown className="-rotate-90 h-4 w-4 text-ink/30" />
                   </Link>
                 ))}
               </nav>
-              <div className="mt-8 flex flex-col gap-2">
-                <Button variant="outline" onClick={() => { setOpen(false); openSignin(); }}>Sign In</Button>
-                <Button onClick={() => { setOpen(false); scrollToPackages(); }}>Book Now</Button>
+
+              <div
+                className="border-t border-[#E2DBCB] px-4 pt-4"
+                style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 16px)" }}
+              >
+                <div className="flex flex-col gap-2">
+                  <Button variant="outline" onClick={() => { setOpen(false); openSignin(); }}>Sign In</Button>
+                  <Button onClick={() => { setOpen(false); scrollToPackages(); }}>Book Now</Button>
+                </div>
+                <div className="mt-4 flex items-center justify-center gap-4 text-xs text-muted">
+                  <a href="tel:+9779800000000" className="inline-flex items-center gap-1.5 hover:text-ink">
+                    <Phone className="h-3.5 w-3.5" /> Call
+                  </a>
+                  <span className="h-3 w-px bg-ink/15" />
+                  <a
+                    href="https://wa.me/9779800000000"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 hover:text-ink"
+                  >
+                    <MessageCircle className="h-3.5 w-3.5" /> WhatsApp
+                  </a>
+                </div>
               </div>
             </motion.aside>
-          </motion.div>
+          </>
         )}
       </AnimatePresence>
     </motion.header>
