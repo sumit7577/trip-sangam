@@ -9,19 +9,24 @@ export function CountUp({
   suffix = "",
   prefix = "",
   decimals = 0,
+  separator = true,
 }: {
   to: number;
   duration?: number;
   suffix?: string;
   prefix?: string;
   decimals?: number;
+  /** Insert thousands separators. Disable for year values like 2018. */
+  separator?: boolean;
 }) {
   const ref = useRef<HTMLSpanElement>(null);
   const inView = useInView(ref, { once: true, margin: "-10% 0px" });
   const mv = useMotionValue(0);
-  const rounded = useTransform(mv, (v) =>
-    `${prefix}${v.toFixed(decimals).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}${suffix}`
-  );
+  const rounded = useTransform(mv, (v) => {
+    const fixed = v.toFixed(decimals);
+    const body = separator ? fixed.replace(/\B(?=(\d{3})+(?!\d))/g, ",") : fixed;
+    return `${prefix}${body}${suffix}`;
+  });
 
   useEffect(() => {
     if (!inView) return;

@@ -7,7 +7,7 @@ const stats = [
   { value: 500, suffix: "+", label: "Travelers hosted" },
   { value: 12, suffix: "", label: "Destinations" },
   { value: 4.9, suffix: "★", label: "Average rating", decimals: 1 },
-  { value: 2018, prefix: "Since ", label: "Trusted since" },
+  { value: 2018, label: "Established", separator: false },
 ];
 
 export function StatsStrip() {
@@ -30,6 +30,7 @@ export function StatsStrip() {
                   to={s.value}
                   suffix={s.suffix ?? ""}
                   decimals={s.decimals ?? 0}
+                  separator={s.separator ?? true}
                 />
               </p>
               <p className="mt-1 text-xs uppercase tracking-[0.18em] text-muted md:text-sm md:tracking-wider">

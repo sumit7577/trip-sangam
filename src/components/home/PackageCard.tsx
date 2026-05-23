@@ -88,7 +88,7 @@ export function PackageCard({ pkg, index }: { pkg: Package; index: number }) {
               className="absolute right-4 top-4 grid h-10 w-10 place-items-center rounded-full bg-white/95 shadow-soft backdrop-blur transition-transform hover:scale-110"
             >
               <motion.span animate={saved ? { scale: [1, 1.35, 1] } : { scale: 1 }} transition={{ duration: 0.35 }}>
-                <Heart className={cn("h-4 w-4 transition-colors", saved ? "fill-crimson text-crimson" : "text-ink")} />
+                <Heart className={cn("h-4 w-4 transition-colors", saved ? "fill-crimson text-crimson" : "text-[#1C1C1A]")} />
               </motion.span>
             </button>
           </div>

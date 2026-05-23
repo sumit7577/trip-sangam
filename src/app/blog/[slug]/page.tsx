@@ -14,7 +14,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   const post = await getBlogPost(params.slug);
   if (!post) return { title: "Not found" };
   return {
-    title: `${post.title} · Sangam Travels`,
+    title: `${post.title} · Trip Sangam`,
     description: post.excerpt,
   };
 }

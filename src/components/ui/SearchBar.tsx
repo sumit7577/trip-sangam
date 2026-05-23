@@ -17,6 +17,23 @@ export function SearchBar({ packages }: { packages: Package[] }) {
   const [children, setChildren] = useState(0);
   const [popover, setPopover] = useState<Popover>(null);
   const formRef = useRef<HTMLFormElement>(null);
+  const dateInputRef = useRef<HTMLInputElement>(null);
+
+  function openDatePicker() {
+    setPopover(null);
+    const el = dateInputRef.current;
+    if (!el) return;
+    if (typeof el.showPicker === "function") {
+      try {
+        el.showPicker();
+        return;
+      } catch {
+        /* fall through */
+      }
+    }
+    el.focus();
+    el.click();
+  }
 
   // Click outside closes any open popover
   useEffect(() => {
@@ -30,7 +47,7 @@ export function SearchBar({ packages }: { packages: Package[] }) {
   }, []);
 
   const suggestions = useMemo(() => {
-    if (!destination) return packages.slice(0, 5);
+    if (!destination) return packages.slice(0, 4);
     const q = destination.toLowerCase();
     return packages
       .filter(
@@ -39,7 +56,7 @@ export function SearchBar({ packages }: { packages: Package[] }) {
           p.location.toLowerCase().includes(q) ||
           p.category.toLowerCase().includes(q)
       )
-      .slice(0, 5);
+      .slice(0, 4);
   }, [destination, packages]);
 
   const dateDisplay = date
@@ -66,13 +83,30 @@ export function SearchBar({ packages }: { packages: Package[] }) {
   }
 
   return (
+    <>
+      <AnimatePresence>
+        {popover !== null && (
+          <motion.div
+            key="popover-backdrop"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.18 }}
+            className="fixed inset-0 z-40 bg-ink/20 backdrop-blur-[2px] md:hidden"
+            onClick={() => setPopover(null)}
+          />
+        )}
+      </AnimatePresence>
     <motion.form
       ref={formRef}
       initial={{ opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.6, duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
       onSubmit={onSubmit}
-      className="glass relative mx-auto mt-8 w-full max-w-4xl rounded-[24px] p-1 shadow-lift md:mt-10 md:rounded-full md:p-1.5"
+      className={cn(
+        "glass relative mx-auto mt-8 w-full max-w-4xl rounded-[28px] p-2 text-left shadow-lift md:mt-10 md:rounded-full md:p-1.5",
+        popover ? "z-50" : "z-30"
+      )}
     >
       <div className="flex flex-col items-stretch gap-1 md:flex-row md:items-stretch md:gap-0">
         {/* DESTINATION */}
@@ -100,6 +134,7 @@ export function SearchBar({ packages }: { packages: Package[] }) {
           icon={<Calendar className="h-3.5 w-3.5" strokeWidth={1.5} />}
           label="When"
           active={false}
+          onActivate={openDatePicker}
         >
           <div className="relative">
             <span
@@ -111,12 +146,13 @@ export function SearchBar({ packages }: { packages: Package[] }) {
               {dateDisplay || "Add dates"}
             </span>
             <input
+              ref={dateInputRef}
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
               onFocus={() => setPopover(null)}
               aria-label="Departure date"
-              className="absolute inset-0 cursor-pointer opacity-0"
+              className="pointer-events-none absolute inset-0 opacity-0"
             />
           </div>
         </Field>
@@ -146,7 +182,7 @@ export function SearchBar({ packages }: { packages: Package[] }) {
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.97 }}
           type="submit"
-          className="mt-1 inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-2xl bg-ink text-sm font-semibold text-white shadow-glow transition-colors hover:bg-ink/90 md:ml-1 md:mt-0 md:h-auto md:min-h-[52px] md:rounded-full md:px-6"
+          className="mt-2 inline-flex h-12 shrink-0 items-center justify-center gap-2 rounded-xl bg-ink text-[15px] font-semibold tracking-wide text-white shadow-glow transition-colors hover:bg-ink/90 md:ml-1 md:mt-0 md:h-auto md:min-h-[52px] md:rounded-full md:px-6 md:text-sm"
         >
           <Search className="h-4 w-4" strokeWidth={1.75} />
           <span>Search</span>
@@ -157,17 +193,17 @@ export function SearchBar({ packages }: { packages: Package[] }) {
       <AnimatePresence>
         {popover === "dest" && (
           <motion.div
-            initial={{ opacity: 0, y: -8, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -8, scale: 0.98 }}
-            transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
-            className="absolute left-0 right-0 top-full mt-3 overflow-hidden rounded-3xl border border-line/70 bg-white p-2 shadow-lift"
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 16 }}
+            transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+            className="absolute left-0 right-0 top-full z-50 mt-3 max-h-[60dvh] overflow-y-auto rounded-2xl border border-line/60 bg-white p-1.5 shadow-[0_24px_64px_-20px_rgba(28,28,26,0.35)] ring-1 ring-ink/5 md:max-h-none md:overflow-hidden"
           >
-            <p className="px-3 pb-2 pt-2 font-mono text-[9px] uppercase tracking-[0.22em] text-muted">
+            <p className="px-2.5 pb-1.5 pt-1.5 font-mono text-[9px] uppercase tracking-[0.22em] text-muted">
               {destination ? `Matches for "${destination}"` : "Popular right now"}
             </p>
             {suggestions.length > 0 ? (
-              <ul className="max-h-72 space-y-0.5 overflow-y-auto">
+              <ul className="space-y-0.5">
                 {suggestions.map((p) => (
                   <li key={p.slug}>
                     <button
@@ -176,18 +212,18 @@ export function SearchBar({ packages }: { packages: Package[] }) {
                         setDestination(p.name);
                         setPopover(null);
                       }}
-                      className="flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left transition-colors hover:bg-sand"
+                      className="flex w-full items-center gap-2.5 rounded-xl px-2 py-2 text-left transition-colors hover:bg-sand"
                     >
-                      <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-xl">
-                        <Image src={p.heroImage} alt="" fill sizes="44px" className="object-cover" />
+                      <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-lg">
+                        <Image src={p.heroImage} alt="" fill sizes="36px" className="object-cover" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium text-ink">{p.name}</p>
-                        <p className="truncate text-xs text-muted">
-                          {p.location} · {p.durationDays}d · {p.category}
+                        <p className="truncate text-sm font-medium leading-tight text-ink">{p.name}</p>
+                        <p className="truncate text-[11px] leading-tight text-muted">
+                          {p.location} · {p.durationDays}d
                         </p>
                       </div>
-                      <span className="hidden shrink-0 font-mono text-[10px] uppercase tracking-wider text-muted sm:inline">
+                      <span className="shrink-0 font-mono text-[10px] uppercase tracking-wider text-muted">
                         ₹{Math.round(p.priceINR / 1000)}k
                       </span>
                     </button>
@@ -209,11 +245,11 @@ export function SearchBar({ packages }: { packages: Package[] }) {
       <AnimatePresence>
         {popover === "trav" && (
           <motion.div
-            initial={{ opacity: 0, y: -8, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -8, scale: 0.98 }}
-            transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
-            className="absolute right-0 top-full mt-3 w-[calc(100vw-2.5rem)] max-w-sm overflow-hidden rounded-3xl border border-line/70 bg-white p-5 shadow-lift sm:w-80"
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 16 }}
+            transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+            className="absolute left-0 right-0 top-full z-50 mt-3 overflow-hidden rounded-2xl border border-line/60 bg-white p-4 shadow-[0_24px_64px_-20px_rgba(28,28,26,0.35)] ring-1 ring-ink/5 md:left-auto md:w-80"
           >
             <Counter
               label="Adults"
@@ -223,7 +259,7 @@ export function SearchBar({ packages }: { packages: Package[] }) {
               max={10}
               onChange={setAdults}
             />
-            <div className="my-4 h-px bg-line" />
+            <div className="my-3 h-px bg-line" />
             <Counter
               label="Children"
               hint="Ages 2–17"
@@ -235,7 +271,7 @@ export function SearchBar({ packages }: { packages: Package[] }) {
             <button
               type="button"
               onClick={() => setPopover(null)}
-              className="mt-5 inline-flex h-10 w-full items-center justify-center rounded-xl bg-ink text-sm font-semibold text-white transition-colors hover:bg-ink/90"
+              className="mt-4 inline-flex h-10 w-full items-center justify-center rounded-xl bg-ink text-sm font-semibold text-white transition-colors hover:bg-ink/90"
             >
               Apply
             </button>
@@ -243,6 +279,7 @@ export function SearchBar({ packages }: { packages: Package[] }) {
         )}
       </AnimatePresence>
     </motion.form>
+    </>
   );
 }
 
@@ -267,18 +304,23 @@ function Field({
     <div
       onClick={onActivate}
       className={cn(
-        "group relative flex flex-1 cursor-pointer items-center gap-3 rounded-2xl px-3.5 py-2 transition-all md:rounded-full md:px-5 md:py-3",
-        active ? "bg-white shadow-soft" : "hover:bg-white/35"
+        "group relative flex flex-1 cursor-pointer items-center gap-3 rounded-2xl px-4 py-3 text-left transition-all md:rounded-full md:px-5 md:py-3",
+        active ? "bg-white shadow-soft" : "hover:bg-white/40"
       )}
     >
-      <span className={cn("shrink-0 transition-colors", active ? "text-ink" : "text-ink/55")}>
+      <span
+        className={cn(
+          "grid h-8 w-8 shrink-0 place-items-center rounded-full transition-colors md:h-auto md:w-auto md:bg-transparent",
+          active ? "bg-ink/5 text-ink" : "bg-white/45 text-ink/65 md:bg-transparent"
+        )}
+      >
         {icon}
       </span>
-      <span className="flex min-w-0 flex-1 flex-col">
-        <span className="font-mono text-[9px] font-semibold uppercase leading-none tracking-[0.22em] text-ink/55">
+      <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+        <span className="font-mono text-[10px] font-semibold uppercase leading-none tracking-[0.18em] text-ink/55">
           {label}
         </span>
-        <span className="mt-1.5 min-h-[18px] leading-tight">{children}</span>
+        <span className="min-h-[18px] leading-tight">{children}</span>
       </span>
     </div>
   );

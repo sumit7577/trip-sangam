@@ -37,20 +37,22 @@ export function Hero({ packages, eyebrow, title, subtitle, imageUrl }: HeroProps
   const heroSubtitle = subtitle || DEFAULT_SUBTITLE;
 
   return (
-    <section className="relative isolate min-h-[100svh] w-full overflow-hidden">
-      <div className="absolute inset-0 animate-ken-burns">
-        <Image
-          src={heroImage}
-          alt={heroTitle}
-          fill
-          priority
-          sizes="100vw"
-          className="object-cover"
-          unoptimized={heroImage.startsWith("http://")}
-        />
+    <section className="relative min-h-[100svh] w-full">
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute inset-0 animate-ken-burns">
+          <Image
+            src={heroImage}
+            alt={heroTitle}
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover"
+            unoptimized={heroImage.startsWith("http://")}
+          />
+        </div>
+        <div className="absolute inset-0 bg-ink/45" />
+        <div className="absolute inset-0 bg-grain opacity-20 mix-blend-overlay" />
       </div>
-      <div className="absolute inset-0 bg-ink/45" />
-      <div className="absolute inset-0 bg-grain opacity-20 mix-blend-overlay" />
 
       <div className="relative mx-auto flex min-h-[100svh] max-w-7xl flex-col items-center justify-center px-5 pt-24 pb-20 text-center md:px-8 md:pt-32 md:pb-24">
         <motion.span

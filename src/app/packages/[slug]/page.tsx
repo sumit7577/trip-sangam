@@ -24,7 +24,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   const base = await getPackage(params.slug);
   if (!base) return { title: "Not found" };
   return {
-    title: `${base.name} · ${base.durationDays} days · Sangam Travels`,
+    title: `${base.name} · ${base.durationDays} days · Trip Sangam`,
     description: base.shortDescription,
     openGraph: {
       title: base.name,

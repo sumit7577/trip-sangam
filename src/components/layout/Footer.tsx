@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { Mountain, Instagram, Facebook, Youtube, Twitter, ShieldCheck, Award } from "lucide-react";
+import Image from "next/image";
+import { Instagram, Facebook, MessageCircle, Phone, ShieldCheck, Award } from "lucide-react";
 import { toast } from "@/lib/toast";
 
 const cols = [
@@ -20,10 +21,10 @@ const cols = [
 ];
 
 const socials: { Icon: typeof Instagram; href: string; label: string }[] = [
-  { Icon: Instagram, href: "https://instagram.com/sangamtravels", label: "Instagram" },
-  { Icon: Facebook, href: "https://facebook.com/sangamtravels", label: "Facebook" },
-  { Icon: Youtube, href: "https://youtube.com/@sangamtravels", label: "YouTube" },
-  { Icon: Twitter, href: "https://twitter.com/sangamtravels", label: "Twitter / X" },
+  { Icon: Instagram, href: "https://www.instagram.com/sangam_tr.avels?igsh=cjhmN3RjZ3gyMmYx&utm_source=qr", label: "Instagram" },
+  { Icon: Facebook, href: "https://www.facebook.com/share/1BTLAVtUaM/?mibextid=wwXIfr", label: "Facebook" },
+  { Icon: MessageCircle, href: "https://wa.me/917070406193", label: "WhatsApp" },
+  { Icon: Phone, href: "tel:+917070406193", label: "Call" },
 ];
 
 function scrollOrToast(target: string, label: string) {
@@ -43,14 +44,23 @@ function scrollOrToast(target: string, label: string) {
 
 export function Footer() {
   return (
-    <footer className="mt-24 border-t border-ink/8 bg-white">
+    <footer className="mt-24 border-t border-ink/8 bg-white dark:border-white/10 dark:bg-[#0E0E0D]">
       <div className="mx-auto grid max-w-7xl grid-cols-1 gap-10 px-5 py-14 md:grid-cols-12 md:gap-12 md:px-8 md:py-16">
         <div className="min-w-0 md:col-span-4">
-          <Link href="/" className="flex items-center gap-2">
-            <span className="grid h-9 w-9 place-items-center rounded-xl bg-ink">
-              <Mountain className="h-5 w-5 text-white" />
+          <Link href="/" className="flex items-center gap-2.5">
+            <span className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-xl bg-[#fff] shadow-soft ring-1 ring-ink/5">
+              <Image
+                src="/tripsangam-logo.jpg"
+                alt="Trip Sangam"
+                width={44}
+                height={44}
+                className="h-full w-full object-cover"
+              />
             </span>
-            <span className="font-serif text-xl">Sangam Travels</span>
+            <span className="flex flex-col leading-none">
+              <span className="font-serif text-xl text-ink">Trip Sangam</span>
+              <span className="mt-1 text-[10px] uppercase tracking-[0.18em] text-muted">Journey Beyond Borders</span>
+            </span>
           </Link>
           <p className="pretty mt-4 max-w-sm text-sm leading-relaxed text-muted">
             A small team of Nepali guides and itinerary designers building considered journeys across the
@@ -102,7 +112,7 @@ export function Footer() {
 
       <div className="border-t border-ink/8">
         <div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-3 px-5 py-6 text-xs text-muted md:flex-row md:items-center md:px-8">
-          <p>© {new Date().getFullYear()} Sangam Travels Pvt. Ltd. · Kathmandu, Nepal</p>
+          <p>© {new Date().getFullYear()} Trip Sangam Pvt. Ltd. · Kathmandu, Nepal</p>
           <div className="flex items-center gap-4">
             <button onClick={() => toast("Privacy policy — prototype", "default")} className="hover:text-ink">Privacy</button>
             <button onClick={() => toast("Terms of service — prototype", "default")} className="hover:text-ink">Terms</button>

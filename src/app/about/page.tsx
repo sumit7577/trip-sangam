@@ -8,7 +8,7 @@ import { CountUp } from "@/components/ui/CountUp";
 import { Newsletter } from "@/components/home/Newsletter";
 
 export const metadata: Metadata = {
-  title: "About · Sangam Travels",
+  title: "About · Trip Sangam",
   description:
     "A small team of Nepali guides and itinerary designers building considered journeys across the Himalayan belt since 2018.",
 };

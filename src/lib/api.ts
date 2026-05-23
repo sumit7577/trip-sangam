@@ -83,7 +83,7 @@ export interface HomepagePayload {
 
 const HOMEPAGE_FALLBACK: HomepagePayload = {
   heroEyebrow: "",
-  heroTitle: "Sangam Travels",
+  heroTitle: "Trip Sangam",
   heroSubtitle: "",
   heroImage: "",
   stats: [],

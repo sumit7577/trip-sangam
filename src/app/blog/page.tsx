@@ -5,7 +5,7 @@ import { Newsletter } from "@/components/home/Newsletter";
 import { getBlogPosts, getTeamBySlug } from "@/lib/api";
 
 export const metadata: Metadata = {
-  title: "Field Notes · Sangam Travels",
+  title: "Field Notes · Trip Sangam",
   description:
     "Editorial dispatches from our guides — trekking essays, cultural notes, practical tips, and stories from the trail.",
 };

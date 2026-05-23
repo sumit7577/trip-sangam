@@ -1,12 +1,15 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence, useScroll, useMotionValueEvent } from "framer-motion";
-import { Mountain, Menu, X, ChevronDown, Phone, MessageCircle } from "lucide-react";
+import { Menu, X, ChevronDown, Phone, MessageCircle, Compass, Sparkles, BookOpen, Newspaper } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { useCurrency, type Currency } from "@/lib/currency";
 import { useModal } from "@/lib/modal";
+import { useTheme } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 
 const nav = [
@@ -16,12 +19,21 @@ const nav = [
   { label: "Blog", href: "/blog" },
 ];
 
+const drawerNav = [
+  { label: "Destinations", href: "/#packages", icon: Compass, hint: "Trails, peaks & valleys" },
+  { label: "Experiences", href: "/#packages", icon: Sparkles, hint: "Curated departures" },
+  { label: "About", href: "/about", icon: BookOpen, hint: "Our story" },
+  { label: "Blog", href: "/blog", icon: Newspaper, hint: "Field notes" },
+];
+
 export function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const { scrollY } = useScroll();
   useMotionValueEvent(scrollY, "change", (y) => setScrolled(y > 32));
   const { openSignin } = useModal();
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
 
   function scrollToPackages() {
     const el = document.getElementById("packages");
@@ -41,28 +53,35 @@ export function Header() {
       className={cn(
         "fixed top-0 z-50 w-full transition-all duration-500",
         scrolled
-          ? "border-b border-ink/8 bg-sand/90 backdrop-blur-xl"
+          ? "border-b border-ink/8 bg-sand/90 backdrop-blur-xl dark:border-white/10 dark:bg-[#0E0E0D]/90"
           // Always-on subtle dark scrim — guarantees white text legibility on any hero image (snow, sky, sand…)
           : "bg-ink/25 backdrop-blur-md"
       )}
     >
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4 md:h-[72px] md:px-8">
-        <Link href="/" className="flex items-center gap-2">
-          <span className="relative grid h-9 w-9 place-items-center rounded-xl bg-ink shadow-soft">
-            <Mountain className="h-5 w-5 text-white" />
+        <Link href="/" className="flex items-center gap-2.5">
+          <span className="relative grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-xl bg-[#fff] shadow-soft ring-1 ring-ink/5">
+            <Image
+              src="/tripsangam-logo.jpg"
+              alt="Trip Sangam"
+              width={40}
+              height={40}
+              priority
+              className="h-full w-full object-cover"
+            />
           </span>
           <span className="flex flex-col leading-none">
             <span className={cn(
               "font-serif text-base font-medium tracking-tight transition-colors sm:text-lg",
               scrolled ? "text-ink" : "text-white"
             )}>
-              Sangam Travels
+              Trip Sangam
             </span>
             <span className={cn(
               "hidden text-[10px] uppercase tracking-[0.18em] transition-colors sm:inline",
               scrolled ? "text-muted" : "text-white/70"
             )}>
-              Tour &amp; Taxi Service
+              Journey Beyond Borders
             </span>
           </span>
         </Link>
@@ -85,6 +104,7 @@ export function Header() {
         </nav>
 
         <div className="flex items-center gap-1.5 md:gap-2">
+          <ThemeToggle dark={!scrolled} />
           <CurrencySwitcher dark={!scrolled} />
           <button
             onClick={openSignin}
@@ -117,8 +137,12 @@ export function Header() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="fixed inset-0 z-[60] bg-black/55 backdrop-blur-sm lg:hidden"
+              transition={{ duration: 0.22 }}
+              style={{
+                backdropFilter: "blur(80px) saturate(180%)",
+                WebkitBackdropFilter: "blur(80px) saturate(180%)",
+              }}
+              className="fixed inset-0 z-[60] bg-white/30 lg:hidden"
               onClick={() => setOpen(false)}
             />
             <motion.aside
@@ -127,61 +151,103 @@ export function Header() {
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", stiffness: 340, damping: 34 }}
-              style={{ backgroundColor: "#F2EEE6" }}
-              className="fixed right-0 top-0 z-[70] flex h-[100dvh] w-[88vw] max-w-sm flex-col border-l border-[#E2DBCB] shadow-2xl lg:hidden"
+              style={{
+                backgroundColor: isDark ? "#141413" : "#FFFFFF",
+                backgroundImage: isDark
+                  ? "linear-gradient(165deg, rgba(201,168,118,0.08) 0%, rgba(255,255,255,0) 45%)"
+                  : "linear-gradient(165deg, rgba(242,238,230,0.55) 0%, rgba(255,255,255,0) 45%)",
+                boxShadow: isDark
+                  ? "-36px 0 96px -20px rgba(0,0,0,0.7), inset 1px 0 0 rgba(255,255,255,0.06)"
+                  : "-36px 0 96px -20px rgba(28,28,26,0.55), inset 1px 0 0 rgba(255,255,255,0.95)",
+              }}
+              className="fixed right-0 top-0 z-[70] flex h-[100dvh] w-[88vw] max-w-sm flex-col overflow-hidden rounded-l-[32px] lg:hidden"
             >
-              <div className="flex items-center justify-between border-b border-[#E2DBCB] px-5 py-4">
+              {/* Subtle warm tint at top-right for premium depth */}
+              <div className="pointer-events-none absolute -top-24 -right-16 h-60 w-60 rounded-full bg-gold/10 blur-3xl" />
+
+              {/* Header */}
+              <div className="relative flex items-center justify-between px-5 pt-5 pb-4">
                 <Link
                   href="/"
                   onClick={() => setOpen(false)}
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-3"
                 >
-                  <span className="grid h-9 w-9 place-items-center rounded-xl bg-ink">
-                    <Mountain className="h-5 w-5 text-white" />
+                  <span className="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-2xl bg-[#fff] shadow-glow ring-1 ring-ink/5">
+                    <Image
+                      src="/tripsangam-logo.jpg"
+                      alt="Trip Sangam"
+                      width={48}
+                      height={48}
+                      className="h-full w-full object-cover"
+                    />
                   </span>
-                  <span className="font-serif text-base font-medium text-ink">Sangam Travels</span>
+                  <span className="flex flex-col leading-none">
+                    <span className="font-serif text-[17px] font-medium tracking-tight text-ink">Trip Sangam</span>
+                    <span className="mt-1.5 font-mono text-[9px] uppercase tracking-[0.24em] text-ink/55">
+                      Journey Beyond Borders
+                    </span>
+                  </span>
                 </Link>
                 <button
                   aria-label="Close menu"
                   onClick={() => setOpen(false)}
-                  className="grid h-10 w-10 place-items-center rounded-full text-ink/70 hover:bg-ink/5 hover:text-ink"
+                  className="grid h-10 w-10 place-items-center rounded-full border border-white/60 bg-white/60 text-ink/70 backdrop-blur transition-all hover:bg-white/90 hover:text-ink"
                 >
-                  <X className="h-5 w-5" />
+                  <X className="h-4 w-4" />
                 </button>
               </div>
 
-              <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-3 py-4">
-                {nav.map((item) => (
-                  <Link
-                    key={item.label}
-                    href={item.href}
-                    onClick={() => setOpen(false)}
-                    className="flex items-center justify-between rounded-xl px-4 py-3.5 text-base font-medium text-ink/85 transition-colors hover:bg-ink/5 hover:text-ink"
-                  >
-                    <span>{item.label}</span>
-                    <ChevronDown className="-rotate-90 h-4 w-4 text-ink/30" />
-                  </Link>
-                ))}
+              {/* Eyebrow chip */}
+              <div className="relative mx-5 mb-4 inline-flex w-fit items-center gap-1.5 rounded-full border border-ink/8 bg-white/55 px-3 py-1 backdrop-blur">
+                <span className="h-1.5 w-1.5 rounded-full bg-gold animate-pulse" />
+                <span className="font-mono text-[9px] uppercase tracking-[0.22em] text-ink/70">
+                  Spring '26 departures open
+                </span>
+              </div>
+
+              {/* Nav */}
+              <nav className="relative flex flex-1 flex-col gap-1 overflow-y-auto px-3 pb-4">
+                {drawerNav.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <Link
+                      key={item.label}
+                      href={item.href}
+                      onClick={() => setOpen(false)}
+                      className="group flex items-center gap-3 rounded-2xl border border-transparent px-3 py-3 transition-all hover:border-white/60 hover:bg-white/55 hover:shadow-soft"
+                    >
+                      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-white/60 bg-white/45 text-ink/75 backdrop-blur transition-all group-hover:border-transparent group-hover:bg-ink group-hover:text-white group-hover:shadow-glow">
+                        <Icon className="h-[18px] w-[18px]" strokeWidth={1.5} />
+                      </span>
+                      <span className="flex min-w-0 flex-1 flex-col">
+                        <span className="font-serif text-[17px] leading-none text-ink">{item.label}</span>
+                        <span className="mt-1 truncate text-[11px] text-muted">{item.hint}</span>
+                      </span>
+                      <ChevronDown className="h-4 w-4 shrink-0 -rotate-90 text-ink/25 transition-all group-hover:translate-x-0.5 group-hover:text-ink/70" />
+                    </Link>
+                  );
+                })}
               </nav>
 
+              {/* CTAs + contact */}
               <div
-                className="border-t border-[#E2DBCB] px-4 pt-4"
+                className="relative border-t border-white/40 bg-white/30 px-4 pt-4 backdrop-blur"
                 style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 16px)" }}
               >
                 <div className="flex flex-col gap-2">
                   <Button variant="outline" onClick={() => { setOpen(false); openSignin(); }}>Sign In</Button>
                   <Button onClick={() => { setOpen(false); scrollToPackages(); }}>Book Now</Button>
                 </div>
-                <div className="mt-4 flex items-center justify-center gap-4 text-xs text-muted">
-                  <a href="tel:+9779800000000" className="inline-flex items-center gap-1.5 hover:text-ink">
-                    <Phone className="h-3.5 w-3.5" /> Call
+                <div className="mt-4 flex items-center justify-center gap-4 text-[11px] text-muted">
+                  <a href="tel:+917070406193" className="inline-flex items-center gap-1.5 transition-colors hover:text-ink">
+                    <Phone className="h-3.5 w-3.5" /> Call us
                   </a>
                   <span className="h-3 w-px bg-ink/15" />
                   <a
-                    href="https://wa.me/9779800000000"
+                    href="https://wa.me/917070406193"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 hover:text-ink"
+                    className="inline-flex items-center gap-1.5 transition-colors hover:text-ink"
                   >
                     <MessageCircle className="h-3.5 w-3.5" /> WhatsApp
                   </a>

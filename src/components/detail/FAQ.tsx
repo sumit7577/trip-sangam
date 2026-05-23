@@ -16,7 +16,7 @@ export function FAQ({ items }: { items: FAQItem[] }) {
         <p className="pretty mt-2 text-muted">
           The eight we get most often. Anything missing?{" "}
           <a
-            href="https://wa.me/9779800000000?text=Hi%2C%20I%20have%20a%20question%20about%20a%20trek."
+            href="https://wa.me/917070406193?text=Hi%2C%20I%20have%20a%20question%20about%20a%20trek."
             target="_blank"
             rel="noopener noreferrer"
             className="text-crimson underline-offset-4 hover:underline"
