@@ -43,6 +43,11 @@ COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
+# sharp is required by Next.js Image optimization in standalone mode.
+# Installed AFTER the standalone copy so it lands inside /app/node_modules.
+RUN npm install --omit=dev --no-package-lock sharp@^0.33.0 && \
+    chown -R nextjs:nodejs /app/node_modules
+
 USER nextjs
 EXPOSE 3000
 
