@@ -3,7 +3,16 @@
 import { motion } from "framer-motion";
 import { CountUp } from "@/components/ui/CountUp";
 
-const stats = [
+type Stat = {
+  value: number;
+  label: string;
+  suffix?: string;
+  prefix?: string;
+  decimals?: number;
+  separator?: boolean;
+};
+
+const stats: Stat[] = [
   { value: 500, suffix: "+", label: "Travelers hosted" },
   { value: 12, suffix: "", label: "Destinations" },
   { value: 4.9, suffix: "★", label: "Average rating", decimals: 1 },
