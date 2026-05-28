@@ -277,12 +277,12 @@ ANNAPURNA_DETAIL = {
         {"question": "What if I want to bail mid-trek?", "answer": "Jeep evacuation is possible from most villages up to Manang and from Muktinath onwards. Mid-trek exits are at the trekker's cost but our guide will arrange everything."},
     ],
     "journey": [
-        {"stop_id": "s1", "name": "Kathmandu", "day": 1, "activity": "Arrival & briefing", "x": 0.62, "y": 0.55},
-        {"stop_id": "s2", "name": "Besisahar", "day": 2, "activity": "Drive in, trail start", "x": 0.50, "y": 0.50},
-        {"stop_id": "s3", "name": "Manang", "day": 4, "activity": "Acclimatisation", "x": 0.41, "y": 0.39},
-        {"stop_id": "s4", "name": "Thorong La Pass", "day": 8, "activity": "5,416m crossing", "x": 0.36, "y": 0.34},
-        {"stop_id": "s5", "name": "Muktinath", "day": 8, "activity": "Sacred temple", "x": 0.33, "y": 0.32},
-        {"stop_id": "s6", "name": "Pokhara", "day": 10, "activity": "Lakeside finish", "x": 0.46, "y": 0.55},
+        {"stop_id": "s1", "name": "Kathmandu",       "day": 1,  "activity": "Arrival & briefing",     "latitude": 27.7172, "longitude": 85.3240},
+        {"stop_id": "s2", "name": "Besisahar",       "day": 2,  "activity": "Drive in, trail start",  "latitude": 28.2331, "longitude": 84.3833},
+        {"stop_id": "s3", "name": "Manang",          "day": 4,  "activity": "Acclimatisation",        "latitude": 28.6667, "longitude": 84.0167},
+        {"stop_id": "s4", "name": "Thorong La Pass", "day": 8,  "activity": "5,416m crossing",        "latitude": 28.7900, "longitude": 83.9437},
+        {"stop_id": "s5", "name": "Muktinath",       "day": 8,  "activity": "Sacred temple",          "latitude": 28.8169, "longitude": 83.8717},
+        {"stop_id": "s6", "name": "Pokhara",         "day": 10, "activity": "Lakeside finish",        "latitude": 28.2096, "longitude": 83.9856},
     ],
 }
 

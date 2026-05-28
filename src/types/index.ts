@@ -34,9 +34,9 @@ export interface JourneyStop {
   name: string;
   day: number;
   activity: string;
-  // Normalized coordinates inside the Nepal SVG viewBox (0..1)
-  x: number;
-  y: number;
+  // WGS84 geographic coordinates (decimal degrees)
+  lat: number;
+  lng: number;
 }
 
 export interface Review {

@@ -1,252 +1,452 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import mapboxgl, { type LngLatLike } from "mapbox-gl";
 import { motion } from "framer-motion";
-import { RotateCcw, MapPin } from "lucide-react";
+import { Maximize2, MapPin, Play, RotateCcw, X } from "lucide-react";
 import type { JourneyStop } from "@/types";
 
-// Stylized Nepal silhouette (approx) in a 1000x500 viewBox
-const NEPAL_PATH =
-  "M 60 360 L 110 320 L 170 305 L 220 280 L 280 260 L 340 240 L 400 220 L 460 200 L 520 180 L 580 170 L 640 165 L 700 175 L 760 190 L 820 210 L 880 240 L 920 270 L 940 310 L 920 350 L 870 380 L 810 395 L 740 405 L 670 405 L 600 410 L 530 415 L 460 415 L 390 410 L 320 405 L 250 395 L 180 380 L 120 380 L 80 380 Z";
+import "mapbox-gl/dist/mapbox-gl.css";
 
-const W = 1000;
-const H = 500;
+const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || "";
+
+if (MAPBOX_TOKEN) {
+  mapboxgl.accessToken = MAPBOX_TOKEN;
+}
+
+// Bezier-smoothed polyline through the journey stops. Mapbox draws
+// LineString as straight segments; sampling a quadratic bezier between
+// consecutive points adds the gentle curve from the old SVG map.
+function smoothRoute(stops: JourneyStop[]): [number, number][] {
+  if (stops.length < 2) return stops.map((s) => [s.lng, s.lat]);
+  const out: [number, number][] = [];
+  const STEPS = 32;
+  for (let i = 0; i < stops.length - 1; i++) {
+    const a = stops[i];
+    const b = stops[i + 1];
+    // Perpendicular offset for the control point so the curve bows
+    // slightly to one side — same trick as the SVG version, just on
+    // lng/lat instead of viewBox units.
+    const dx = b.lng - a.lng;
+    const dy = b.lat - a.lat;
+    const len = Math.hypot(dx, dy) || 1;
+    const nx = -dy / len;
+    const ny = dx / len;
+    const k = 0.18 * len;
+    const cx = (a.lng + b.lng) / 2 + nx * k;
+    const cy = (a.lat + b.lat) / 2 + ny * k;
+    for (let t = 0; t <= STEPS; t++) {
+      const u = t / STEPS;
+      const x = (1 - u) * (1 - u) * a.lng + 2 * (1 - u) * u * cx + u * u * b.lng;
+      const y = (1 - u) * (1 - u) * a.lat + 2 * (1 - u) * u * cy + u * u * b.lat;
+      out.push([x, y]);
+    }
+  }
+  return out;
+}
+
+function bounds(stops: JourneyStop[]): mapboxgl.LngLatBoundsLike {
+  const lngs = stops.map((s) => s.lng);
+  const lats = stops.map((s) => s.lat);
+  return [
+    [Math.min(...lngs), Math.min(...lats)],
+    [Math.max(...lngs), Math.max(...lats)],
+  ];
+}
 
 export function JourneyMap({ stops }: { stops: JourneyStop[] }) {
-  const [hovered, setHovered] = useState<string | null>(null);
-  const [replayKey, setReplayKey] = useState(0);
-  const ref = useRef<SVGSVGElement>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const mapRef = useRef<mapboxgl.Map | null>(null);
+  const jeepMarkerRef = useRef<mapboxgl.Marker | null>(null);
+  const animFrameRef = useRef<number | null>(null);
+  const sectionRef = useRef<HTMLDivElement | null>(null);
 
-  // Build a smooth path through the stops using cubic Bezier
-  const routeD = useMemo(() => {
-    const pts = stops.map((s) => ({ x: s.x * W, y: s.y * H }));
-    if (pts.length < 2) return "";
-    let d = `M ${pts[0].x} ${pts[0].y}`;
-    for (let i = 0; i < pts.length - 1; i++) {
-      const p0 = pts[i];
-      const p1 = pts[i + 1];
-      const mx = (p0.x + p1.x) / 2;
-      d += ` Q ${mx} ${p0.y - 20}, ${p1.x} ${p1.y}`;
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [hasAutoPlayed, setHasAutoPlayed] = useState(false);
+  const [activeStopId, setActiveStopId] = useState<string | null>(null);
+
+  const route = useMemo(() => smoothRoute(stops), [stops]);
+
+  const startAnimation = useCallback(() => {
+    const map = mapRef.current;
+    const jeep = jeepMarkerRef.current;
+    if (!map || !jeep || route.length < 2) return;
+    if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+
+    setIsPlaying(true);
+    setActiveStopId(stops[0]?.id ?? null);
+    const DURATION_MS = 7000;
+    const startTs = performance.now();
+
+    // Convert route into cumulative-distance samples so easing maps onto
+    // physical progress instead of array index — keeps speed consistent
+    // even when bezier sampling is uneven.
+    const cum: number[] = [0];
+    for (let i = 1; i < route.length; i++) {
+      const [x1, y1] = route[i - 1];
+      const [x2, y2] = route[i];
+      cum.push(cum[i - 1] + Math.hypot(x2 - x1, y2 - y1));
     }
-    return d;
-  }, [stops]);
+    const total = cum[cum.length - 1] || 1;
 
-  // For positioning the vehicle along the route, we use motion's offsetPath
-  // but since browser support varies we'll animate cx/cy via path length sampling.
-  const [pathSamples, setPathSamples] = useState<{ x: number; y: number }[]>([]);
+    function frame(now: number) {
+      const t = Math.min(1, (now - startTs) / DURATION_MS);
+      // easeInOutCubic — matches the gentle ramp of the SVG version.
+      const eased = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+      const dist = eased * total;
+
+      // Binary search for the segment our distance lands in.
+      let lo = 0, hi = route.length - 1;
+      while (lo < hi - 1) {
+        const mid = (lo + hi) >> 1;
+        if (cum[mid] < dist) lo = mid; else hi = mid;
+      }
+      const segLen = cum[hi] - cum[lo] || 1;
+      const segT = (dist - cum[lo]) / segLen;
+      const [x1, y1] = route[lo];
+      const [x2, y2] = route[hi];
+      const lng = x1 + (x2 - x1) * segT;
+      const lat = y1 + (y2 - y1) * segT;
+
+      jeep!.setLngLat([lng, lat]);
+
+      // Camera glides with the jeep; we keep it slightly behind by easing
+      // toward the jeep instead of snapping, which feels less jittery.
+      map!.easeTo({
+        center: [lng, lat],
+        duration: 120,
+        easing: (x) => x,
+      });
+
+      // Highlight the closest stop as we pass it.
+      const closest = stops.reduce((best, s) => {
+        const d = Math.hypot(s.lng - lng, s.lat - lat);
+        return d < best.d ? { d, id: s.id } : best;
+      }, { d: Infinity, id: stops[0]?.id ?? null });
+      if (closest.id !== activeStopIdRef.current) {
+        activeStopIdRef.current = closest.id;
+        setActiveStopId(closest.id);
+      }
+
+      if (t < 1) {
+        animFrameRef.current = requestAnimationFrame(frame);
+      } else {
+        setIsPlaying(false);
+        animFrameRef.current = null;
+        // Settle the camera on the whole journey at the end so the user
+        // can see the full route before tapping replay.
+        map!.fitBounds(bounds(stops), { padding: 80, duration: 1400, pitch: 45 });
+      }
+    }
+
+    animFrameRef.current = requestAnimationFrame(frame);
+  }, [route, stops]);
+
+  // useRef-backed mirror of activeStopId so the rAF loop can compare
+  // without re-creating the closure every frame.
+  const activeStopIdRef = useRef<string | null>(null);
+
+  // Build map once on mount.
   useEffect(() => {
-    const svg = ref.current;
-    if (!svg) return;
-    const pathEl = svg.querySelector<SVGPathElement>("#journey-route");
-    if (!pathEl) return;
-    const len = pathEl.getTotalLength();
-    const N = 60;
-    const samples: { x: number; y: number }[] = [];
-    for (let i = 0; i <= N; i++) {
-      const p = pathEl.getPointAtLength((i / N) * len);
-      samples.push({ x: p.x, y: p.y });
-    }
-    setPathSamples(samples);
-  }, [routeD, replayKey]);
+    if (!containerRef.current || mapRef.current || !MAPBOX_TOKEN || stops.length === 0) return;
 
-  function replay() {
-    setReplayKey((k) => k + 1);
-  }
+    const map = new mapboxgl.Map({
+      container: containerRef.current,
+      style: "mapbox://styles/mapbox/standard",
+      bounds: bounds(stops),
+      fitBoundsOptions: { padding: 80, pitch: 45 },
+      attributionControl: false,
+      // Disable the rotate gesture so users don't accidentally tilt the map.
+      pitchWithRotate: false,
+      dragRotate: false,
+    });
+    mapRef.current = map;
+
+    map.addControl(new mapboxgl.NavigationControl({ visualizePitch: true, showCompass: false }), "top-right");
+    map.addControl(new mapboxgl.AttributionControl({ compact: true }), "bottom-right");
+
+    map.on("style.load", () => {
+      // Mapbox Standard style accepts a few config slots; "day" gives the
+      // cream-leaning daylight tone that fits the brand palette.
+      try {
+        (map as unknown as { setConfigProperty?: (a: string, b: string, c: string) => void })
+          .setConfigProperty?.("basemap", "lightPreset", "day");
+        (map as unknown as { setConfigProperty?: (a: string, b: string, c: string) => void })
+          .setConfigProperty?.("basemap", "show3dObjects", "true");
+      } catch {}
+
+      // Route polyline. The dashed under-line + solid over-line trick is
+      // borrowed from the SVG version so the route reads even where the
+      // basemap has busy contour lines.
+      map.addSource("journey", {
+        type: "geojson",
+        data: {
+          type: "Feature",
+          properties: {},
+          geometry: { type: "LineString", coordinates: route },
+        },
+      });
+      map.addLayer({
+        id: "journey-glow",
+        type: "line",
+        source: "journey",
+        layout: { "line-cap": "round", "line-join": "round" },
+        paint: {
+          "line-color": "#2C3D2E",
+          "line-width": 10,
+          "line-opacity": 0.10,
+          "line-blur": 4,
+        },
+      });
+      map.addLayer({
+        id: "journey-dash",
+        type: "line",
+        source: "journey",
+        layout: { "line-cap": "round", "line-join": "round" },
+        paint: {
+          "line-color": "#1E2D5C",
+          "line-width": 2.5,
+          "line-opacity": 0.45,
+          "line-dasharray": [2, 3],
+        },
+      });
+      map.addLayer({
+        id: "journey-line",
+        type: "line",
+        source: "journey",
+        layout: { "line-cap": "round", "line-join": "round" },
+        paint: {
+          "line-color": "#C9A876",
+          "line-width": 3.5,
+          "line-opacity": 0.95,
+        },
+      });
+
+      // Stop markers.
+      stops.forEach((s) => {
+        const el = document.createElement("div");
+        el.className =
+          "group cursor-pointer transform-gpu transition-transform duration-200 ease-out";
+        el.innerHTML = `
+          <div class="relative flex items-center justify-center">
+            <span class="absolute inline-flex h-9 w-9 rounded-full bg-[#2C3D2E]/15 group-hover:scale-110 transition-transform"></span>
+            <span class="relative flex h-5 w-5 items-center justify-center rounded-full bg-[#2C3D2E] ring-4 ring-white shadow-md text-[10px] font-bold text-white">${s.day}</span>
+          </div>
+          <div class="absolute left-1/2 top-full mt-2 -translate-x-1/2 whitespace-nowrap rounded-full bg-white/95 backdrop-blur px-2.5 py-1 text-[11px] font-medium text-ink shadow-sm border border-ink/8 pointer-events-none">${s.name}</div>
+        `;
+        el.addEventListener("click", () => {
+          setActiveStopId(s.id);
+          activeStopIdRef.current = s.id;
+          mapRef.current?.flyTo({
+            center: [s.lng, s.lat],
+            zoom: Math.max(map.getZoom(), 10),
+            pitch: 55,
+            duration: 1400,
+            essential: true,
+          });
+        });
+        new mapboxgl.Marker({ element: el, anchor: "center" })
+          .setLngLat([s.lng, s.lat])
+          .addTo(map);
+      });
+
+      // Jeep marker — circular badge holding the travel icon.
+      const jeepEl = document.createElement("div");
+      jeepEl.className = "z-10";
+      jeepEl.innerHTML = `
+        <div class="relative flex h-10 w-10 items-center justify-center rounded-full bg-white ring-2 ring-[#2C3D2E] shadow-lift">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#2C3D2E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5">
+            <path d="M5 17h14M3 13l2-5h14l2 5M5 17v2m14-2v2M7 17a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm10 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z" />
+          </svg>
+          <span class="absolute -inset-1 rounded-full border-2 border-[#C9A876] animate-ping" style="animation-duration:1.6s"></span>
+        </div>
+      `;
+      const jeep = new mapboxgl.Marker({ element: jeepEl, anchor: "center" })
+        .setLngLat(stops[0] ? [stops[0].lng, stops[0].lat] : [0, 0])
+        .addTo(map);
+      jeepMarkerRef.current = jeep;
+    });
+
+    return () => {
+      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+      map.remove();
+      mapRef.current = null;
+      jeepMarkerRef.current = null;
+    };
+  }, [route, stops]);
+
+  // Auto-play once when the section scrolls into view.
+  useEffect(() => {
+    if (hasAutoPlayed || !sectionRef.current) return;
+    const obs = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          obs.disconnect();
+          setHasAutoPlayed(true);
+          // Slight delay so the basemap has a chance to render tiles
+          // before the jeep starts moving — avoids a janky first second.
+          setTimeout(startAnimation, 1200);
+        }
+      },
+      { threshold: 0.35 },
+    );
+    obs.observe(sectionRef.current);
+    return () => obs.disconnect();
+  }, [hasAutoPlayed, startAnimation]);
+
+  // Resize the map when toggling fullscreen so it fills the new container.
+  useEffect(() => {
+    if (!mapRef.current) return;
+    const id = window.setTimeout(() => mapRef.current?.resize(), 320);
+    return () => window.clearTimeout(id);
+  }, [isFullscreen]);
+
+  // Lock body scroll when fullscreen is open.
+  useEffect(() => {
+    if (!isFullscreen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prev; };
+  }, [isFullscreen]);
+
+  if (stops.length === 0) return null;
+
+  const missingToken = !MAPBOX_TOKEN;
 
   return (
-    <section className="mx-auto max-w-7xl px-5 py-14 sm:py-20 md:px-8 md:py-24">
+    <section ref={sectionRef} className="mx-auto max-w-7xl px-5 py-14 sm:py-20 md:px-8 md:py-24">
       <div className="flex items-end justify-between gap-6">
         <div>
           <p className="inline-flex items-center gap-2 text-xs font-medium uppercase tracking-[0.18em] text-crimson">
             <span className="h-px w-8 bg-crimson" /> Your Journey
           </p>
           <h2 className="balance mt-3 font-serif text-4xl tracking-tight md:text-5xl">
-            Kathmandu → Pokhara,<br />
-            <span className="italic text-crimson">over the Thorong La.</span>
+            {stops[0].name} → {stops[stops.length - 1].name},<br />
+            <span className="italic text-crimson">across {stops.length} stops.</span>
           </h2>
         </div>
-        <button
-          onClick={replay}
-          className="hidden items-center gap-2 rounded-full border border-ink/15 px-4 py-2 text-sm font-medium transition-colors hover:border-ink/40 md:inline-flex"
-        >
-          <RotateCcw className="h-3.5 w-3.5" />
-          Replay journey
-        </button>
+        <div className="hidden items-center gap-2 md:flex">
+          <button
+            onClick={startAnimation}
+            disabled={isPlaying}
+            className="inline-flex items-center gap-2 rounded-full border border-ink/15 px-4 py-2 text-sm font-medium transition-colors hover:border-ink/40 disabled:opacity-50"
+          >
+            {isPlaying ? <RotateCcw className="h-3.5 w-3.5 animate-spin" /> : <Play className="h-3.5 w-3.5" />}
+            {isPlaying ? "Travelling…" : "Replay journey"}
+          </button>
+          <button
+            onClick={() => setIsFullscreen(true)}
+            className="inline-flex items-center gap-2 rounded-full bg-ink px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-ink/90"
+          >
+            <Maximize2 className="h-3.5 w-3.5" /> Fullscreen
+          </button>
+        </div>
       </div>
 
-      <div className="relative mt-10 overflow-hidden rounded-3xl border border-ink/8 bg-sand p-2 shadow-soft">
-        <div className="relative aspect-[2/1] w-full">
-          <svg
-            key={replayKey}
-            ref={ref}
-            viewBox={`0 0 ${W} ${H}`}
-            className="h-full w-full"
-            preserveAspectRatio="xMidYMid meet"
-          >
-            <defs>
-              <linearGradient id="terrain" x1="0" x2="0" y1="0" y2="1">
-                <stop offset="0%" stopColor="#EDE5D2" />
-                <stop offset="100%" stopColor="#F5EDDD" />
-              </linearGradient>
-              <linearGradient id="route" x1="0" x2="1" y1="0" y2="0">
-                <stop offset="0%" stopColor="#1E2D5C" />
-                <stop offset="50%" stopColor="#2C3D2E" />
-                <stop offset="100%" stopColor="#C9A876" />
-              </linearGradient>
-              <pattern id="dots" width="20" height="20" patternUnits="userSpaceOnUse">
-                <circle cx="1" cy="1" r="0.8" fill="#1E2D5C" opacity="0.10" />
-              </pattern>
-            </defs>
+      <div
+        className={
+          isFullscreen
+            ? "fixed inset-0 z-50 bg-ink/95 backdrop-blur-sm"
+            : "relative mt-10 overflow-hidden rounded-3xl border border-ink/8 bg-sand p-2 shadow-soft"
+        }
+      >
+        <div
+          className={
+            isFullscreen
+              ? "relative h-full w-full"
+              : "relative aspect-[2/1] w-full overflow-hidden rounded-2xl"
+          }
+        >
+          <div ref={containerRef} className="absolute inset-0" />
 
-            <path d={NEPAL_PATH} fill="url(#terrain)" stroke="#1C2E3D" strokeOpacity="0.18" strokeWidth="3" />
-            <path d={NEPAL_PATH} fill="url(#dots)" />
+          {missingToken && (
+            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-sand/95 p-8 text-center">
+              <MapPin className="h-8 w-8 text-crimson" />
+              <h3 className="font-serif text-xl">Mapbox token not configured</h3>
+              <p className="max-w-md text-sm text-muted">
+                Set <code className="rounded bg-ink/8 px-1.5 py-0.5 text-xs">NEXT_PUBLIC_MAPBOX_TOKEN</code> in the
+                frontend environment to render the interactive map.
+              </p>
+            </div>
+          )}
 
-            <text x="80" y="455" fontSize="22" fill="#7A7268" fontFamily="serif" fontStyle="italic" letterSpacing="3">
-              NEPAL · हिमालय
-            </text>
+          {isFullscreen && (
+            <button
+              onClick={() => setIsFullscreen(false)}
+              className="absolute right-4 top-4 z-20 inline-flex h-10 w-10 items-center justify-center rounded-full bg-white text-ink shadow-lift transition-transform hover:scale-105"
+              aria-label="Close fullscreen"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
 
-            <path
-              id="journey-route"
-              d={routeD}
-              fill="none"
-              stroke="url(#route)"
-              strokeWidth="4"
-              strokeLinecap="round"
-              strokeDasharray="3 8"
-              opacity="0.45"
-            />
-
-            <motion.path
-              key={`anim-${replayKey}`}
-              d={routeD}
-              fill="none"
-              stroke="url(#route)"
-              strokeWidth="5"
-              strokeLinecap="round"
-              initial={{ pathLength: 0 }}
-              animate={{ pathLength: 1 }}
-              transition={{ duration: 4.5, ease: "easeInOut" }}
-            />
-
-            {stops.map((s, i) => (
-              <g
-                key={s.id}
-                onMouseEnter={() => setHovered(s.id)}
-                onMouseLeave={() => setHovered(null)}
-                style={{ cursor: "pointer" }}
+          {isFullscreen && (
+            <div className="absolute bottom-4 left-1/2 z-20 flex -translate-x-1/2 items-center gap-2">
+              <button
+                onClick={startAnimation}
+                disabled={isPlaying}
+                className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-medium text-ink shadow-lift transition-colors hover:bg-white/90 disabled:opacity-60"
               >
-                <motion.circle
-                  cx={s.x * W}
-                  cy={s.y * H}
-                  r={22}
-                  fill="#2C3D2E"
-                  fillOpacity="0.15"
-                  initial={{ scale: 0 }}
-                  animate={{ scale: [0, 1.4, 1] }}
-                  transition={{ delay: 0.4 + i * 0.7, duration: 0.6, ease: "backOut" }}
-                />
-                <motion.circle
-                  cx={s.x * W}
-                  cy={s.y * H}
-                  r={10}
-                  fill="#2C3D2E"
-                  stroke="#fff"
-                  strokeWidth="4"
-                  initial={{ scale: 0, y: -20 }}
-                  animate={{ scale: 1, y: 0 }}
-                  transition={{ delay: 0.4 + i * 0.7, type: "spring", stiffness: 300, damping: 14 }}
-                />
-                <motion.text
-                  x={s.x * W}
-                  y={s.y * H - 22}
-                  textAnchor="middle"
-                  fontSize="24"
-                  fontWeight="600"
-                  fill="#1C1C1A"
-                  initial={{ opacity: 0, y: -8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.6 + i * 0.7 }}
-                >
-                  {s.name}
-                </motion.text>
-              </g>
-            ))}
-
-            {pathSamples.length > 0 && (
-              <motion.g
-                key={`jeep-${replayKey}`}
-                initial={{ opacity: 0 }}
-                animate={{
-                  opacity: [0, 1, 1, 0],
-                  x: pathSamples.map((p) => p.x),
-                  y: pathSamples.map((p) => p.y),
-                }}
-                transition={{
-                  duration: 4.5,
-                  ease: "easeInOut",
-                  times: pathSamples.map((_, i) => i / pathSamples.length),
-                }}
-                style={{ originX: 0, originY: 0 }}
-              >
-                <circle r="20" fill="#fff" stroke="#2C3D2E" strokeWidth="3" />
-                <g transform="translate(-10, -10) scale(1.4)">
-                  <path
-                    d="M 2 9 L 2 6 L 4 3 L 10 3 L 12 6 L 12 9 M 2 9 L 14 9 M 4 9 a 1 1 0 1 0 0.01 0 M 10 9 a 1 1 0 1 0 0.01 0"
-                    fill="none"
-                    stroke="#2C3D2E"
-                    strokeWidth="1.4"
-                    strokeLinecap="round"
-                  />
-                </g>
-              </motion.g>
-            )}
-          </svg>
-
-          {hovered && (() => {
-            const stop = stops.find((s) => s.id === hovered);
-            if (!stop) return null;
-            return (
-              <motion.div
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-full rounded-2xl bg-ink px-4 py-3 text-xs text-white shadow-lift"
-                style={{
-                  left: `${stop.x * 100}%`,
-                  top: `${stop.y * 100}%`,
-                  marginTop: -16,
-                }}
-              >
-                <p className="font-mono text-[10px] uppercase tracking-wider text-gold">Day {stop.day}</p>
-                <p className="mt-0.5 font-medium">{stop.name}</p>
-                <p className="text-white/70">{stop.activity}</p>
-              </motion.div>
-            );
-          })()}
+                {isPlaying ? <RotateCcw className="h-3.5 w-3.5 animate-spin" /> : <Play className="h-3.5 w-3.5" />}
+                {isPlaying ? "Travelling…" : "Replay"}
+              </button>
+            </div>
+          )}
         </div>
 
-        <button
-          onClick={replay}
-          className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-ink/5 py-3 text-sm font-medium transition-colors hover:bg-ink/10 md:hidden"
-        >
-          <RotateCcw className="h-3.5 w-3.5" />
-          Replay journey
-        </button>
+        {!isFullscreen && (
+          <div className="mt-2 flex gap-2 md:hidden">
+            <button
+              onClick={startAnimation}
+              disabled={isPlaying}
+              className="inline-flex flex-1 items-center justify-center gap-2 rounded-2xl bg-ink/5 py-3 text-sm font-medium transition-colors hover:bg-ink/10 disabled:opacity-50"
+            >
+              {isPlaying ? <RotateCcw className="h-3.5 w-3.5 animate-spin" /> : <Play className="h-3.5 w-3.5" />}
+              {isPlaying ? "Travelling…" : "Replay"}
+            </button>
+            <button
+              onClick={() => setIsFullscreen(true)}
+              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-ink px-4 py-3 text-sm font-medium text-white"
+              aria-label="Open fullscreen"
+            >
+              <Maximize2 className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-        {stops.map((s) => (
-          <div
-            key={s.id}
-            className="flex items-start gap-2.5 rounded-2xl border border-line/70 bg-white p-3.5"
-          >
-            <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-crimson" />
-            <div className="min-w-0">
-              <p className="font-mono text-[10px] uppercase tracking-wider text-muted">Day {s.day}</p>
-              <p className="truncate text-sm font-semibold leading-tight text-ink">{s.name}</p>
-              <p className="line-clamp-2 text-xs leading-snug text-muted">{s.activity}</p>
-            </div>
-          </div>
-        ))}
+        {stops.map((s) => {
+          const isActive = s.id === activeStopId;
+          return (
+            <motion.button
+              key={s.id}
+              onClick={() => {
+                setActiveStopId(s.id);
+                activeStopIdRef.current = s.id;
+                mapRef.current?.flyTo({
+                  center: [s.lng, s.lat] as LngLatLike,
+                  zoom: Math.max(mapRef.current.getZoom(), 10),
+                  pitch: 55,
+                  duration: 1400,
+                });
+              }}
+              animate={{
+                borderColor: isActive ? "rgba(176, 35, 46, 0.65)" : "rgba(0,0,0,0.08)",
+                scale: isActive ? 1.02 : 1,
+              }}
+              className="flex items-start gap-2.5 rounded-2xl border bg-white p-3.5 text-left transition-shadow hover:shadow-soft"
+            >
+              <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-crimson" />
+              <div className="min-w-0">
+                <p className="font-mono text-[10px] uppercase tracking-wider text-muted">Day {s.day}</p>
+                <p className="truncate text-sm font-semibold leading-tight text-ink">{s.name}</p>
+                <p className="line-clamp-2 text-xs leading-snug text-muted">{s.activity}</p>
+              </div>
+            </motion.button>
+          );
+        })}
       </div>
     </section>
   );

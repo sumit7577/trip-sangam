@@ -77,8 +77,8 @@ class JourneyStopSerializer(serializers.Serializer):
     name = serializers.CharField()
     day = serializers.IntegerField()
     activity = serializers.CharField()
-    x = serializers.FloatField()
-    y = serializers.FloatField()
+    lat = serializers.FloatField(source="latitude")
+    lng = serializers.FloatField(source="longitude")
 
 
 class ReviewSerializer(serializers.Serializer):

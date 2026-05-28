@@ -391,16 +391,22 @@ class JourneyStop(Orderable):
     name = models.CharField(max_length=120)
     day = models.PositiveIntegerField()
     activity = models.CharField(max_length=200)
-    x = models.FloatField(help_text="Normalized 0..1 inside Nepal SVG viewBox")
-    y = models.FloatField(help_text="Normalized 0..1 inside Nepal SVG viewBox")
+    latitude = models.FloatField(
+        null=True, blank=True,
+        help_text="WGS84 latitude, e.g. 27.7172 for Kathmandu",
+    )
+    longitude = models.FloatField(
+        null=True, blank=True,
+        help_text="WGS84 longitude, e.g. 85.3240 for Kathmandu",
+    )
 
     panels = [
         FieldPanel("stop_id"),
         FieldPanel("name"),
         FieldPanel("day"),
         FieldPanel("activity"),
-        FieldPanel("x"),
-        FieldPanel("y"),
+        FieldPanel("latitude"),
+        FieldPanel("longitude"),
     ]
 
 
