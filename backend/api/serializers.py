@@ -273,8 +273,7 @@ class HomePagePayloadSerializer(serializers.Serializer):
     featuredPackages = serializers.SerializerMethodField()
 
     def get_heroImage(self, obj):
-        from cms.models import image_or_url
-        return image_or_url(obj, "hero_image", "hero_image_url")
+        return obj.hero_src
 
     def get_stats(self, obj):
         return [{"value": s.value, "label": s.label} for s in obj.stats.all()]
