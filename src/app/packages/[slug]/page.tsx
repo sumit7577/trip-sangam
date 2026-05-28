@@ -78,7 +78,10 @@ export default async function PackageDetailPage({ params }: { params: { slug: st
   return (
     <>
       <div className="h-[var(--header-h)]" />
-      <HeroSlider images={pkg.galleryImages.slice(0, 6)} title={pkg.name} />
+      <HeroSlider
+        images={[pkg.heroImage, ...pkg.galleryImages].filter(Boolean).slice(0, 6)}
+        title={pkg.name}
+      />
 
       <PackageHeader pkg={pkg} />
 

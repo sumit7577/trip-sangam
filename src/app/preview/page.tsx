@@ -128,7 +128,7 @@ function PackagePreview({
   data: Extract<PreviewPayload, { _type: "package" }>;
 }) {
   const pkg = data;
-  const images = pkg.galleryImages.length > 0 ? pkg.galleryImages : [pkg.heroImage];
+  const images = [pkg.heroImage, ...pkg.galleryImages].filter(Boolean);
 
   return (
     <>
