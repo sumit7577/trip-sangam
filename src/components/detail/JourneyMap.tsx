@@ -54,7 +54,15 @@ function bounds(stops: JourneyStop[]): mapboxgl.LngLatBoundsLike {
   ];
 }
 
-export function JourneyMap({ stops }: { stops: JourneyStop[] }) {
+export function JourneyMap({ stops: rawStops }: { stops: JourneyStop[] }) {
+  // Stops without lat/lng can't be plotted. This happens when:
+  // (a) editors created the stop via Wagtail admin but skipped the
+  //     coordinate fields, or (b) the row predates migration 0006
+  //     which dropped the old x/y normalized-SVG positioning.
+  const stops = rawStops.filter(
+    (s) => typeof s.lat === "number" && typeof s.lng === "number" &&
+           !Number.isNaN(s.lat) && !Number.isNaN(s.lng),
+  );
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const jeepMarkerRef = useRef<mapboxgl.Marker | null>(null);
