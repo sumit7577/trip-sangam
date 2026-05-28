@@ -38,6 +38,48 @@ BLOG_CATEGORY_CHOICES = [
 ]
 
 
+# Bunny CDN directory routing.
+#
+# These run during Django's FieldFile.save() — which Wagtail invokes during
+# `save_revision` (draft) and Revision.publish() (live). Critically, they
+# run BEFORE storage.save() sees the path, so the file lands in the right
+# Bunny directory regardless of which Wagtail code path triggered the
+# upload. An older save()-override approach didn't catch draft saves and
+# left files at the zone root.
+def upload_to_team_photo(instance, filename):
+    return f"sangam/team/{instance.slug}/{filename}"
+
+
+def upload_to_testimonial_avatar(instance, filename):
+    return f"sangam/testimonial/{instance.pk or '_new'}/{filename}"
+
+
+def upload_to_home_hero(instance, filename):
+    return f"sangam/home/{filename}"
+
+
+def upload_to_generic_hero(instance, filename):
+    return f"sangam/pages/{instance.slug}/{filename}"
+
+
+def upload_to_package_hero(instance, filename):
+    return f"sangam/package/{instance.slug}/hero/{filename}"
+
+
+def upload_to_package_gallery(instance, filename):
+    parent_slug = getattr(instance.page, "slug", None) or "_orphan"
+    return f"sangam/package/{parent_slug}/gallery/{filename}"
+
+
+def upload_to_package_review_avatar(instance, filename):
+    parent_slug = getattr(instance.page, "slug", None) or "_orphan"
+    return f"sangam/package/{parent_slug}/reviews/{filename}"
+
+
+def upload_to_blog_cover(instance, filename):
+    return f"sangam/blog/{instance.slug}/{filename}"
+
+
 def _img_url(field):
     return field.url if field and field.name else ""
 
@@ -52,7 +94,11 @@ class TeamMember(models.Model):
     languages = models.JSONField(
         default=list, help_text="List of language names, e.g. [\"English\", \"Nepali\"]"
     )
-    photo = models.ImageField(storage=BunnyStorage(), null=True, blank=True, max_length=500)
+    photo = models.ImageField(
+        storage=BunnyStorage(),
+        upload_to=upload_to_team_photo,
+        null=True, blank=True, max_length=500,
+    )
     bio = models.TextField()
     sort_order = models.PositiveIntegerField(default=0)
 
@@ -74,14 +120,6 @@ class TeamMember(models.Model):
     def __str__(self):
         return self.name
 
-    def createFileImage(self):
-        return f"team/{self.slug}/"
-
-    def save(self, *args, **kwargs):
-        if self.photo:
-            self.photo.storage = BunnyStorage(self.createFileImage())
-        super().save(*args, **kwargs)
-
     @property
     def photo_src(self):
         return _img_url(self.photo)
@@ -91,7 +129,11 @@ class TeamMember(models.Model):
 class Testimonial(models.Model):
     name = models.CharField(max_length=120)
     location = models.CharField(max_length=120)
-    avatar = models.ImageField(storage=BunnyStorage(), null=True, blank=True, max_length=500)
+    avatar = models.ImageField(
+        storage=BunnyStorage(),
+        upload_to=upload_to_testimonial_avatar,
+        null=True, blank=True, max_length=500,
+    )
     rating = models.PositiveSmallIntegerField(default=5)
     quote = models.TextField()
     trip = models.CharField(max_length=200, help_text="Name of the trip/package")
@@ -113,17 +155,6 @@ class Testimonial(models.Model):
     def __str__(self):
         return f"{self.name} — {self.trip}"
 
-    def createFileImage(self):
-        # pk is None on first save — file lands in `_new/` and moves to the
-        # numbered dir on the next save (mirrors allcoachingAdmin's pattern
-        # for models without a PublicId primary key).
-        return f"testimonial/{self.pk or '_new'}/"
-
-    def save(self, *args, **kwargs):
-        if self.avatar:
-            self.avatar.storage = BunnyStorage(self.createFileImage())
-        super().save(*args, **kwargs)
-
     @property
     def avatar_src(self):
         return _img_url(self.avatar)
@@ -139,7 +170,11 @@ class HomePage(HeadlessPreviewMixin, Page):
         blank=True,
         default="Trekking, cultural and spiritual experiences led by lifelong local guides.",
     )
-    hero_image = models.ImageField(storage=BunnyStorage(), null=True, blank=True, max_length=500)
+    hero_image = models.ImageField(
+        storage=BunnyStorage(),
+        upload_to=upload_to_home_hero,
+        null=True, blank=True, max_length=500,
+    )
 
     content_panels = Page.content_panels + [
         MultiFieldPanel(
@@ -161,14 +196,6 @@ class HomePage(HeadlessPreviewMixin, Page):
 
     class Meta:
         verbose_name = "Home page"
-
-    def createFileImage(self):
-        return "home/"
-
-    def save(self, *args, **kwargs):
-        if self.hero_image:
-            self.hero_image.storage = BunnyStorage(self.createFileImage())
-        super().save(*args, **kwargs)
 
     @property
     def hero_src(self):
@@ -196,20 +223,16 @@ class GenericPage(HeadlessPreviewMixin, Page):
     """Simple rich-text page for About, Privacy, Terms, etc."""
 
     body = RichTextField(blank=True)
-    hero_image = models.ImageField(storage=BunnyStorage(), null=True, blank=True, max_length=500)
+    hero_image = models.ImageField(
+        storage=BunnyStorage(),
+        upload_to=upload_to_generic_hero,
+        null=True, blank=True, max_length=500,
+    )
 
     content_panels = Page.content_panels + [
         FieldPanel("hero_image"),
         FieldPanel("body"),
     ]
-
-    def createFileImage(self):
-        return f"pages/{self.slug}/"
-
-    def save(self, *args, **kwargs):
-        if self.hero_image:
-            self.hero_image.storage = BunnyStorage(self.createFileImage())
-        super().save(*args, **kwargs)
 
 
 # ---------------------------------------------------------------------------
@@ -241,7 +264,11 @@ class PackagePage(HeadlessPreviewMixin, Page):
     discount_pct = models.PositiveSmallIntegerField(default=0)
     best_season = models.CharField(max_length=80)
 
-    hero_image = models.ImageField(storage=BunnyStorage(), null=True, blank=True, max_length=500)
+    hero_image = models.ImageField(
+        storage=BunnyStorage(),
+        upload_to=upload_to_package_hero,
+        null=True, blank=True, max_length=500,
+    )
     short_description = models.TextField()
 
     long_description = models.TextField(blank=True)
@@ -304,14 +331,6 @@ class PackagePage(HeadlessPreviewMixin, Page):
     class Meta:
         verbose_name = "Package"
 
-    def createFileImage(self):
-        return f"package/{self.slug}/hero/"
-
-    def save(self, *args, **kwargs):
-        if self.hero_image:
-            self.hero_image.storage = BunnyStorage(self.createFileImage())
-        super().save(*args, **kwargs)
-
     @property
     def hero_src(self):
         return _img_url(self.hero_image)
@@ -352,20 +371,14 @@ class Exclusion(Orderable):
 
 class GalleryImage(Orderable):
     page = ParentalKey(PackagePage, related_name="gallery_images", on_delete=models.CASCADE)
-    image = models.ImageField(storage=BunnyStorage(), null=True, blank=True, max_length=500)
+    image = models.ImageField(
+        storage=BunnyStorage(),
+        upload_to=upload_to_package_gallery,
+        null=True, blank=True, max_length=500,
+    )
     caption = models.CharField(max_length=200, blank=True)
 
     panels = [FieldPanel("image"), FieldPanel("caption")]
-
-    def createFileImage(self):
-        # `page` is the parent PackagePage (set via ParentalKey before save).
-        parent_slug = getattr(self.page, "slug", None) or "_orphan"
-        return f"package/{parent_slug}/gallery/"
-
-    def save(self, *args, **kwargs):
-        if self.image:
-            self.image.storage = BunnyStorage(self.createFileImage())
-        super().save(*args, **kwargs)
 
     @property
     def src(self):
@@ -396,7 +409,11 @@ class PackageReview(Orderable):
     review_id = models.CharField(max_length=40, help_text="Stable id, e.g. 'r1'")
     author = models.CharField(max_length=120)
     location = models.CharField(max_length=120, blank=True)
-    avatar = models.ImageField(storage=BunnyStorage(), null=True, blank=True, max_length=500)
+    avatar = models.ImageField(
+        storage=BunnyStorage(),
+        upload_to=upload_to_package_review_avatar,
+        null=True, blank=True, max_length=500,
+    )
     rating = models.PositiveSmallIntegerField(default=5)
     date = models.CharField(max_length=40, help_text="Human-readable, e.g. 'Oct 2025'")
     title = models.CharField(max_length=200)
@@ -414,15 +431,6 @@ class PackageReview(Orderable):
         FieldPanel("body"),
         FieldPanel("photos"),
     ]
-
-    def createFileImage(self):
-        parent_slug = getattr(self.page, "slug", None) or "_orphan"
-        return f"package/{parent_slug}/reviews/"
-
-    def save(self, *args, **kwargs):
-        if self.avatar:
-            self.avatar.storage = BunnyStorage(self.createFileImage())
-        super().save(*args, **kwargs)
 
     @property
     def avatar_src(self):
@@ -472,7 +480,11 @@ class BlogPostPage(HeadlessPreviewMixin, Page):
     )
     publish_date = models.DateField(help_text="Used as the canonical date")
     reading_time = models.PositiveSmallIntegerField(default=5, help_text="Minutes")
-    cover_image = models.ImageField(storage=BunnyStorage(), null=True, blank=True, max_length=500)
+    cover_image = models.ImageField(
+        storage=BunnyStorage(),
+        upload_to=upload_to_blog_cover,
+        null=True, blank=True, max_length=500,
+    )
     excerpt = models.TextField()
     pull_quote = models.TextField(blank=True)
     featured = models.BooleanField(default=False)
@@ -504,14 +516,6 @@ class BlogPostPage(HeadlessPreviewMixin, Page):
 
     class Meta:
         verbose_name = "Blog post"
-
-    def createFileImage(self):
-        return f"blog/{self.slug}/"
-
-    def save(self, *args, **kwargs):
-        if self.cover_image:
-            self.cover_image.storage = BunnyStorage(self.createFileImage())
-        super().save(*args, **kwargs)
 
     @property
     def cover_src(self):
