@@ -24,17 +24,28 @@ const MAP_STYLE: maplibregl.StyleSpecification = {
   sources: {
     "carto-positron": {
       type: "raster",
+      // Use 1x tiles. With @2x.png + tileSize:256 MapLibre v4 was
+      // computing the wrong zoom level math and the canvas stayed blank
+      // even though tiles fetched 200 OK — see Network panel showing
+      // 100 reqs + 5.8 MB transferred but nothing painted. The 1x tiles
+      // are still crisp at standard DPI and load roughly half the bytes.
       tiles: [
-        "https://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}@2x.png",
-        "https://b.basemaps.cartocdn.com/light_all/{z}/{x}/{y}@2x.png",
-        "https://c.basemaps.cartocdn.com/light_all/{z}/{x}/{y}@2x.png",
-        "https://d.basemaps.cartocdn.com/light_all/{z}/{x}/{y}@2x.png",
+        "https://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png",
+        "https://b.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png",
+        "https://c.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png",
+        "https://d.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png",
       ],
       tileSize: 256,
       attribution: "© CARTO · © OpenStreetMap",
+      minzoom: 0,
+      maxzoom: 19,
     },
   },
   layers: [
+    // Cream background fallback so we never see a flash of white below
+    // raster tiles, and so the map area looks intentional even before
+    // tiles paint.
+    { id: "bg", type: "background", paint: { "background-color": "#F5EDDD" } },
     { id: "carto-positron", type: "raster", source: "carto-positron" },
   ],
 };
@@ -171,13 +182,18 @@ export function JourneyMap({ stops: rawStops }: { stops: JourneyStop[] }) {
   useEffect(() => {
     if (!containerRef.current || mapRef.current || stops.length === 0) return;
 
+    // MapLibre v4 had a bug where passing both `bounds` and
+    // `fitBoundsOptions.pitch` at construct time could leave the camera
+    // in an invalid state and the canvas blank. Setting explicit
+    // center/zoom on init, then fitBounds() after style.load works
+    // reliably.
+    const first = stops[0];
     const map = new maplibregl.Map({
       container: containerRef.current,
       style: MAP_STYLE,
-      bounds: bounds(stops),
-      // Pitch lower for raster — distant tiles get pixelly when tilted hard.
-      // 30° gives the route a bit of depth without showing the seams.
-      fitBoundsOptions: { padding: 80, pitch: 30 },
+      center: [first.lng, first.lat],
+      zoom: 7,
+      pitch: 30,
       attributionControl: false,
       pitchWithRotate: false,
       dragRotate: false,
@@ -190,6 +206,11 @@ export function JourneyMap({ stops: rawStops }: { stops: JourneyStop[] }) {
     map.addControl(new maplibregl.AttributionControl({ compact: true }), "bottom-right");
 
     map.on("style.load", () => {
+      // Move camera to fit all stops now that the style is ready.
+      // Doing this here (instead of in the constructor) avoids a v4 bug
+      // where bounds+pitch at init left the canvas blank.
+      map.fitBounds(bounds(stops), { padding: 80, pitch: 30, duration: 0 });
+
       // Route polyline. Dashed under-line + solid over-line so the
       // route stays readable over the busy basemap (contour lines, etc.)
       map.addSource("journey", {
