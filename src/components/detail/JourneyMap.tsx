@@ -607,7 +607,15 @@ export function JourneyMap({ stops: rawStops }: { stops: JourneyStop[] }) {
         flatCoords.length,
         "vertices across",
         route.length,
-        "segments",
+        "segments. first coord:",
+        flatCoords[0],
+        "last coord:",
+        flatCoords[flatCoords.length - 1],
+      );
+      // eslint-disable-next-line no-console
+      console.log(
+        "[journey-map] OFM layer count BEFORE addSource:",
+        map.getStyle().layers?.length,
       );
       map.addSource("journey", {
         type: "geojson",
@@ -660,50 +668,52 @@ export function JourneyMap({ stops: rawStops }: { stops: JourneyStop[] }) {
           "line-opacity": 1.0,
         },
       });
-      // Direction arrows so the user can see "go this way" along the
-      // polyline.
-      map.addLayer({
-        id: "journey-arrows",
-        type: "symbol",
-        source: "journey",
-        layout: {
-          "symbol-placement": "line",
-          "symbol-spacing": 90,
-          "text-field": "▶",
-          "text-size": 18,
-          "text-keep-upright": false,
-          "text-allow-overlap": true,
-          "text-ignore-placement": true,
-        },
-        paint: {
-          "text-color": "#FFFFFF",
-          "text-halo-color": "#E91E63",
-          "text-halo-width": 3,
-        },
+      // Direction arrow symbol layer removed — OpenFreeMap doesn't
+      // serve glyph .pbf at the path MapLibre expects, so every font
+      // request 404'd and the symbol layer rendered nothing. Direction
+      // of travel is still obvious from the sequence-numbered markers
+      // (1 → 11). Will revisit with icon-image + sprite if arrows
+      // become important.
+
+      // Verify each journey layer was actually added + log its
+      // current position in the layer stack. If the count after each
+      // addLayer doesn't grow, addLayer is silently failing.
+      ["journey-shadow", "journey-casing", "journey-line"].forEach((id) => {
+        const layers = map.getStyle().layers || [];
+        const found = layers.find((l) => l.id === id);
+        const idx = layers.findIndex((l) => l.id === id);
+        // eslint-disable-next-line no-console
+        console.log(
+          `[journey-map] layer "${id}": present=${!!found}`,
+          `position=${idx + 1}/${layers.length}`,
+          `paint=`, (found && "paint" in found ? found.paint : "n/a"),
+        );
       });
 
-      // Force the route layers to the top of the stack. OpenFreeMap
-      // adds road-casing / road-fill layers AFTER style.load fires
-      // (asynchronously, as the style continues hydrating), so layers
-      // we addLayer'd here can end up underneath them — which is why
-      // the pink line was being painted over by the yellow road.
-      // moveLayer with no beforeId pushes the layer to the end of
-      // the array = drawn last = on top.
+      // Brute-force lift the journey layers to the very top of the
+      // stack. OpenFreeMap Liberty re-injects roads/labels after
+      // style.load, so single-shot moveLayer can lose the race.
       const liftJourneyLayers = () => {
         if (!mapRef.current) return;
-        ["journey-shadow", "journey-casing", "journey-line", "journey-arrows"].forEach((id) => {
+        ["journey-shadow", "journey-casing", "journey-line"].forEach((id) => {
           try {
             if (mapRef.current!.getLayer(id)) mapRef.current!.moveLayer(id);
           } catch {}
         });
       };
-      // Lift immediately, again on next paint (catches the typical
-      // OpenFreeMap layer-add-after-styleload race), and one more
-      // time on the first idle (covers slow networks where the style
-      // finishes hydrating later still).
       liftJourneyLayers();
       requestAnimationFrame(liftJourneyLayers);
-      map.once("idle", liftJourneyLayers);
+      map.on("styledata", liftJourneyLayers);
+      const liftInterval = window.setInterval(liftJourneyLayers, 500);
+      window.setTimeout(() => {
+        window.clearInterval(liftInterval);
+        try { map.off("styledata", liftJourneyLayers); } catch {}
+        // eslint-disable-next-line no-console
+        console.log(
+          "[journey-map] final layer order tail (top 10):",
+          map.getStyle().layers?.slice(-10).map((l) => l.id),
+        );
+      }, 10_000);
 
       // Stop markers — badge shows the sequence number (1, 2, 3…),
       // pill below shows "Day N · <name>" so the user can see both
@@ -716,8 +726,8 @@ export function JourneyMap({ stops: rawStops }: { stops: JourneyStop[] }) {
         el.className = "group cursor-pointer transform-gpu transition-transform duration-200 ease-out";
         el.innerHTML = `
           <div class="relative flex items-center justify-center">
-            <span class="absolute inline-flex h-10 w-10 rounded-full bg-[#E91E63]/20 group-hover:scale-110 transition-transform"></span>
-            <span class="relative flex h-7 w-7 items-center justify-center rounded-full bg-[#E91E63] ring-[3px] ring-white shadow-lg text-[12px] font-bold text-white">${seq}</span>
+            <span class="absolute inline-flex h-10 w-10 rounded-full bg-[#2C3D2E]/25 group-hover:scale-110 transition-transform"></span>
+            <span class="relative flex h-7 w-7 items-center justify-center rounded-full bg-[#2C3D2E] ring-[3px] ring-white shadow-lg text-[12px] font-bold text-white">${seq}</span>
           </div>
           <div class="absolute left-1/2 top-full mt-2 -translate-x-1/2 whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-semibold shadow-md border pointer-events-none bg-white text-ink border-ink/15 dark:bg-ink/95 dark:text-sand dark:border-sand/25">
             <span class="opacity-60">Day ${s.day} ·</span> ${s.name}
@@ -743,48 +753,51 @@ export function JourneyMap({ stops: rawStops }: { stops: JourneyStop[] }) {
           .addTo(map);
       });
 
-      // Car marker — isometric 3/4-view car like Google Maps / Waze
-      // navigation arrow. Drawn inline as SVG so we can colour it from
-      // the brand palette without shipping a separate asset.
-      // The inner #car-rotation wrapper is what we rotate to point
-      // along the heading (the outer marker stays anchor-centered).
+      // Car marker — Freepik-style flat top-down car icon. Saturated
+      // single-color body, dark navy windshields, clear silhouette,
+      // strong dark outline. No gradients (flat-design aesthetic).
+      // Looks like the "flat car collection" illustrations the user
+      // linked. 60×84 SVG, rendered at 48×68 — big enough for the
+      // shape to read instantly at any zoom.
       const jeepEl = document.createElement("div");
       jeepEl.className = "z-10";
       jeepEl.innerHTML = `
         <div class="relative">
-          <span class="absolute inset-0 -m-2 rounded-full bg-[#2C3D2E]/15 animate-ping" style="animation-duration:2.2s"></span>
-          <div id="car-rotation" class="relative transition-transform duration-150 ease-out" style="transform: rotate(0deg);">
-            <svg viewBox="0 0 64 64" width="46" height="46" xmlns="http://www.w3.org/2000/svg">
-              <defs>
-                <linearGradient id="carBody" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0" stop-color="#5A8F5C"/>
-                  <stop offset="1" stop-color="#2C3D2E"/>
-                </linearGradient>
-                <radialGradient id="carShadow" cx="0.5" cy="0.5" r="0.5">
-                  <stop offset="0" stop-color="rgba(0,0,0,0.35)"/>
-                  <stop offset="1" stop-color="rgba(0,0,0,0)"/>
-                </radialGradient>
-              </defs>
-              <!-- ground shadow -->
-              <ellipse cx="32" cy="58" rx="18" ry="3.5" fill="url(#carShadow)"/>
-              <!-- car body (rounded rectangle) -->
-              <rect x="14" y="14" width="36" height="40" rx="14" fill="url(#carBody)" stroke="#1B2A1D" stroke-width="1.5"/>
-              <!-- hood highlight -->
-              <rect x="18" y="18" width="28" height="10" rx="6" fill="#F5EDDD" opacity="0.85"/>
-              <!-- windshield -->
-              <rect x="20" y="20" width="24" height="6" rx="3" fill="#1E2D5C" opacity="0.85"/>
-              <!-- side windows -->
-              <rect x="18" y="32" width="6" height="10" rx="2" fill="#1E2D5C" opacity="0.6"/>
-              <rect x="40" y="32" width="6" height="10" rx="2" fill="#1E2D5C" opacity="0.6"/>
-              <!-- wheels -->
-              <rect x="11" y="22" width="4" height="8" rx="1.5" fill="#1B2A1D"/>
-              <rect x="49" y="22" width="4" height="8" rx="1.5" fill="#1B2A1D"/>
-              <rect x="11" y="40" width="4" height="8" rx="1.5" fill="#1B2A1D"/>
-              <rect x="49" y="40" width="4" height="8" rx="1.5" fill="#1B2A1D"/>
-              <!-- direction triangle (front) -->
-              <path d="M 32 6 L 38 16 L 26 16 Z" fill="#C9A876" stroke="#1B2A1D" stroke-width="1.5" stroke-linejoin="round"/>
-            </svg>
-          </div>
+          <span class="absolute inset-0 -m-3 rounded-full bg-[#E91E63]/25 animate-ping" style="animation-duration:2s"></span>
+          <svg viewBox="0 0 60 84" width="48" height="68" xmlns="http://www.w3.org/2000/svg" class="relative drop-shadow-xl">
+            <!-- ground shadow -->
+            <ellipse cx="30" cy="80" rx="22" ry="3" fill="rgba(0,0,0,0.25)"/>
+            <!-- wheel arches (visible behind body) -->
+            <rect x="0" y="14" width="8" height="14" rx="3" fill="#1A1A1A"/>
+            <rect x="52" y="14" width="8" height="14" rx="3" fill="#1A1A1A"/>
+            <rect x="0" y="50" width="8" height="14" rx="3" fill="#1A1A1A"/>
+            <rect x="52" y="50" width="8" height="14" rx="3" fill="#1A1A1A"/>
+            <!-- side mirrors -->
+            <rect x="2" y="30" width="6" height="4" rx="1.5" fill="#D94343" stroke="#1A1A1A" stroke-width="1.5"/>
+            <rect x="52" y="30" width="6" height="4" rx="1.5" fill="#D94343" stroke="#1A1A1A" stroke-width="1.5"/>
+            <!-- main car body (saturated brand red, flat) -->
+            <path d="M 6 22 Q 6 8 22 6 L 38 6 Q 54 8 54 22 L 54 60 Q 54 74 38 76 L 22 76 Q 6 74 6 60 Z"
+                  fill="#D94343" stroke="#1A1A1A" stroke-width="2.5"/>
+            <!-- front grille / bumper -->
+            <rect x="16" y="6" width="28" height="4" rx="1.5" fill="#1A1A1A"/>
+            <!-- headlights -->
+            <rect x="10" y="10" width="8" height="4" rx="1.5" fill="#FFFCEA" stroke="#1A1A1A" stroke-width="1.4"/>
+            <rect x="42" y="10" width="8" height="4" rx="1.5" fill="#FFFCEA" stroke="#1A1A1A" stroke-width="1.4"/>
+            <!-- windshield (single dark sheet — flat style) -->
+            <path d="M 14 18 L 46 18 L 42 34 L 18 34 Z" fill="#1E2D5C" stroke="#1A1A1A" stroke-width="1.5"/>
+            <!-- windshield reflection (single white slash) -->
+            <path d="M 18 21 L 42 21 L 40 24 L 20 24 Z" fill="#FFFFFF" opacity="0.4"/>
+            <!-- roof -->
+            <rect x="14" y="34" width="32" height="16" rx="3" fill="#B23838" stroke="#1A1A1A" stroke-width="1.5"/>
+            <!-- side windows (just two rectangles, flat) -->
+            <rect x="6" y="36" width="6" height="12" rx="1" fill="#1E2D5C"/>
+            <rect x="48" y="36" width="6" height="12" rx="1" fill="#1E2D5C"/>
+            <!-- rear windshield -->
+            <path d="M 18 50 L 42 50 L 46 66 L 14 66 Z" fill="#1E2D5C" stroke="#1A1A1A" stroke-width="1.5"/>
+            <!-- tail lights -->
+            <rect x="10" y="70" width="8" height="3" rx="1" fill="#1A1A1A"/>
+            <rect x="42" y="70" width="8" height="3" rx="1" fill="#1A1A1A"/>
+          </svg>
         </div>
       `;
       const jeep = new maplibregl.Marker({ element: jeepEl, anchor: "center" })
