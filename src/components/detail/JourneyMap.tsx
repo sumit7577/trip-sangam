@@ -8,11 +8,36 @@ import type { JourneyStop } from "@/types";
 
 import "maplibre-gl/dist/maplibre-gl.css";
 
-// OpenFreeMap "liberty" — vector tiles + style hosted free, no API key,
-// no quota. Drop-in equivalent of Mapbox style URLs. The style ships
-// with 3D building extrusions in the building layer so we still get the
-// elevated city blocks at high zoom that the old Mapbox Standard had.
-const MAP_STYLE_URL = "https://tiles.openfreemap.org/styles/liberty";
+// CartoCDN Positron raster basemap — free, no API key, hosted on
+// AWS CloudFront so it's fast worldwide. We previously tried
+// OpenFreeMap (vector tiles, same look as Mapbox) but their CDN was
+// ~1.2s per tile and the first paint took 15-20s — too slow.
+//
+// Trade-off vs vector tiles: no 3D building extrusion, slightly less
+// crisp zoom. Acceptable since the journey map is mostly about the
+// animated route line and the day markers, not micro-detail.
+//
+// The {a,b,c,d} subdomains let MapLibre fetch tiles in parallel across
+// 4 connections, dropping full-view load from ~3s to ~700ms.
+const MAP_STYLE: maplibregl.StyleSpecification = {
+  version: 8,
+  sources: {
+    "carto-positron": {
+      type: "raster",
+      tiles: [
+        "https://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}@2x.png",
+        "https://b.basemaps.cartocdn.com/light_all/{z}/{x}/{y}@2x.png",
+        "https://c.basemaps.cartocdn.com/light_all/{z}/{x}/{y}@2x.png",
+        "https://d.basemaps.cartocdn.com/light_all/{z}/{x}/{y}@2x.png",
+      ],
+      tileSize: 256,
+      attribution: "© CARTO · © OpenStreetMap",
+    },
+  },
+  layers: [
+    { id: "carto-positron", type: "raster", source: "carto-positron" },
+  ],
+};
 
 // Bezier-smoothed polyline through the journey stops. MapLibre draws
 // LineString as straight segments; sampling a quadratic bezier between
@@ -135,7 +160,7 @@ export function JourneyMap({ stops: rawStops }: { stops: JourneyStop[] }) {
       } else {
         setIsPlaying(false);
         animFrameRef.current = null;
-        map!.fitBounds(bounds(stops), { padding: 80, duration: 1400, pitch: 45 });
+        map!.fitBounds(bounds(stops), { padding: 80, duration: 1400, pitch: 30 });
       }
     }
 
@@ -148,9 +173,11 @@ export function JourneyMap({ stops: rawStops }: { stops: JourneyStop[] }) {
 
     const map = new maplibregl.Map({
       container: containerRef.current,
-      style: MAP_STYLE_URL,
+      style: MAP_STYLE,
       bounds: bounds(stops),
-      fitBoundsOptions: { padding: 80, pitch: 45 },
+      // Pitch lower for raster — distant tiles get pixelly when tilted hard.
+      // 30° gives the route a bit of depth without showing the seams.
+      fitBoundsOptions: { padding: 80, pitch: 30 },
       attributionControl: false,
       pitchWithRotate: false,
       dragRotate: false,
@@ -158,15 +185,9 @@ export function JourneyMap({ stops: rawStops }: { stops: JourneyStop[] }) {
     mapRef.current = map;
 
     map.addControl(new maplibregl.NavigationControl({ visualizePitch: true, showCompass: false }), "top-right");
-    map.addControl(
-      new maplibregl.AttributionControl({
-        compact: true,
-        // Liberty style is OSM + OpenFreeMap data — attribution required
-        // by ODbL. The compact pill is unobtrusive.
-        customAttribution: "© OpenFreeMap · OpenStreetMap",
-      }),
-      "bottom-right",
-    );
+    // CartoCDN style declares its own attribution on the source, so the
+    // default AttributionControl auto-aggregates it — no custom string needed.
+    map.addControl(new maplibregl.AttributionControl({ compact: true }), "bottom-right");
 
     map.on("style.load", () => {
       // Route polyline. Dashed under-line + solid over-line so the
@@ -233,7 +254,7 @@ export function JourneyMap({ stops: rawStops }: { stops: JourneyStop[] }) {
           mapRef.current?.flyTo({
             center: [s.lng, s.lat],
             zoom: Math.max(map.getZoom(), 10),
-            pitch: 55,
+            pitch: 40,
             duration: 1400,
             essential: true,
           });
@@ -405,7 +426,7 @@ export function JourneyMap({ stops: rawStops }: { stops: JourneyStop[] }) {
                 mapRef.current?.flyTo({
                   center: [s.lng, s.lat] as LngLatLike,
                   zoom: Math.max(mapRef.current.getZoom(), 10),
-                  pitch: 55,
+                  pitch: 40,
                   duration: 1400,
                 });
               }}
