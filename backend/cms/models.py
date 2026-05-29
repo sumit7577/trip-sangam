@@ -80,6 +80,11 @@ def upload_to_blog_cover(instance, filename):
     return f"sangam/blog/{instance.slug}/{filename}"
 
 
+def upload_to_journey_stop(instance, filename):
+    parent_slug = getattr(instance.page, "slug", None) or "_orphan"
+    return f"sangam/package/{parent_slug}/journey/{instance.stop_id or 'unnamed'}/{filename}"
+
+
 def _img_url(field):
     return field.url if field and field.name else ""
 
@@ -399,6 +404,12 @@ class JourneyStop(Orderable):
         null=True, blank=True,
         help_text="WGS84 longitude, e.g. 85.3240 for Kathmandu",
     )
+    image = models.ImageField(
+        storage=BunnyStorage(),
+        upload_to=upload_to_journey_stop,
+        null=True, blank=True, max_length=500,
+        help_text="Photo shown in a lightbox when the user clicks this stop's marker on the map.",
+    )
 
     panels = [
         FieldPanel("stop_id"),
@@ -407,7 +418,12 @@ class JourneyStop(Orderable):
         FieldPanel("activity"),
         FieldPanel("latitude"),
         FieldPanel("longitude"),
+        FieldPanel("image"),
     ]
+
+    @property
+    def image_src(self):
+        return self.image.url if self.image and self.image.name else ""
 
 
 class PackageReview(Orderable):

@@ -37,6 +37,9 @@ export interface JourneyStop {
   // WGS84 geographic coordinates (decimal degrees)
   lat: number;
   lng: number;
+  // Bunny CDN URL of the photo shown in the marker lightbox.
+  // Empty string when the editor hasn't uploaded one yet.
+  image: string;
 }
 
 export interface Review {

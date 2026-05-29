@@ -51,8 +51,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <script dangerouslySetInnerHTML={{ __html: translateInitScript }} />
         <script src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit" async />
       </head>
-      <body className="font-sans bg-sand text-ink antialiased dark:bg-[#0E0E0D] dark:text-sand">
-        <div id="google_translate_element" aria-hidden="true" />
+      <body
+        className="font-sans bg-sand text-ink antialiased dark:bg-[#0E0E0D] dark:text-sand"
+        suppressHydrationWarning
+      >
+        <div id="google_translate_element" aria-hidden="true" suppressHydrationWarning />
         <Providers>
           <Header />
           <main className="w-full overflow-x-hidden">{children}</main>

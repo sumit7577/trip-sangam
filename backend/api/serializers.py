@@ -79,6 +79,10 @@ class JourneyStopSerializer(serializers.Serializer):
     activity = serializers.CharField()
     lat = serializers.FloatField(source="latitude")
     lng = serializers.FloatField(source="longitude")
+    image = serializers.SerializerMethodField()
+
+    def get_image(self, obj):
+        return obj.image_src
 
 
 class ReviewSerializer(serializers.Serializer):
