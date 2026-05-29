@@ -42,10 +42,6 @@ const MAP_STYLE: maplibregl.StyleSpecification = {
     },
   },
   layers: [
-    // Cream background fallback so we never see a flash of white below
-    // raster tiles, and so the map area looks intentional even before
-    // tiles paint.
-    { id: "bg", type: "background", paint: { "background-color": "#F5EDDD" } },
     { id: "carto-positron", type: "raster", source: "carto-positron" },
   ],
 };
@@ -199,6 +195,14 @@ export function JourneyMap({ stops: rawStops }: { stops: JourneyStop[] }) {
       dragRotate: false,
     });
     mapRef.current = map;
+
+    // Surface any MapLibre internal error directly so it's not swallowed.
+    // Useful for debugging style/source/WebGL issues that would otherwise
+    // only manifest as a blank canvas.
+    map.on("error", (e) => {
+      // eslint-disable-next-line no-console
+      console.error("[maplibre]", e?.error || e);
+    });
 
     map.addControl(new maplibregl.NavigationControl({ visualizePitch: true, showCompass: false }), "top-right");
     // CartoCDN style declares its own attribution on the source, so the
