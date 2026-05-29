@@ -66,9 +66,6 @@ services:
         # service name via the shared sangam-net network.
         NEXT_PUBLIC_API_URL: http://sangam-backend:8000
         NEXT_PUBLIC_SITE_URL: https://${SITE_DOMAIN}
-        # Mapbox token for the JourneyMap component. Free up to 50k loads/month;
-        # leave blank to render the "token not configured" fallback instead.
-        NEXT_PUBLIC_MAPBOX_TOKEN: ${NEXT_PUBLIC_MAPBOX_TOKEN:-}
     image: sangam-frontend:latest
     container_name: sangam-frontend
     restart: always

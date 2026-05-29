@@ -1,20 +1,20 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import mapboxgl, { type LngLatLike } from "mapbox-gl";
+import maplibregl, { type LngLatLike } from "maplibre-gl";
 import { motion } from "framer-motion";
 import { Maximize2, MapPin, Play, RotateCcw, X } from "lucide-react";
 import type { JourneyStop } from "@/types";
 
-import "mapbox-gl/dist/mapbox-gl.css";
+import "maplibre-gl/dist/maplibre-gl.css";
 
-const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || "";
+// OpenFreeMap "liberty" — vector tiles + style hosted free, no API key,
+// no quota. Drop-in equivalent of Mapbox style URLs. The style ships
+// with 3D building extrusions in the building layer so we still get the
+// elevated city blocks at high zoom that the old Mapbox Standard had.
+const MAP_STYLE_URL = "https://tiles.openfreemap.org/styles/liberty";
 
-if (MAPBOX_TOKEN) {
-  mapboxgl.accessToken = MAPBOX_TOKEN;
-}
-
-// Bezier-smoothed polyline through the journey stops. Mapbox draws
+// Bezier-smoothed polyline through the journey stops. MapLibre draws
 // LineString as straight segments; sampling a quadratic bezier between
 // consecutive points adds the gentle curve from the old SVG map.
 function smoothRoute(stops: JourneyStop[]): [number, number][] {
@@ -24,9 +24,6 @@ function smoothRoute(stops: JourneyStop[]): [number, number][] {
   for (let i = 0; i < stops.length - 1; i++) {
     const a = stops[i];
     const b = stops[i + 1];
-    // Perpendicular offset for the control point so the curve bows
-    // slightly to one side — same trick as the SVG version, just on
-    // lng/lat instead of viewBox units.
     const dx = b.lng - a.lng;
     const dy = b.lat - a.lat;
     const len = Math.hypot(dx, dy) || 1;
@@ -45,7 +42,7 @@ function smoothRoute(stops: JourneyStop[]): [number, number][] {
   return out;
 }
 
-function bounds(stops: JourneyStop[]): mapboxgl.LngLatBoundsLike {
+function bounds(stops: JourneyStop[]): maplibregl.LngLatBoundsLike {
   const lngs = stops.map((s) => s.lng);
   const lats = stops.map((s) => s.lat);
   return [
@@ -63,9 +60,10 @@ export function JourneyMap({ stops: rawStops }: { stops: JourneyStop[] }) {
     (s) => typeof s.lat === "number" && typeof s.lng === "number" &&
            !Number.isNaN(s.lat) && !Number.isNaN(s.lng),
   );
+
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const mapRef = useRef<mapboxgl.Map | null>(null);
-  const jeepMarkerRef = useRef<mapboxgl.Marker | null>(null);
+  const mapRef = useRef<maplibregl.Map | null>(null);
+  const jeepMarkerRef = useRef<maplibregl.Marker | null>(null);
   const animFrameRef = useRef<number | null>(null);
   const sectionRef = useRef<HTMLDivElement | null>(null);
 
@@ -75,6 +73,10 @@ export function JourneyMap({ stops: rawStops }: { stops: JourneyStop[] }) {
   const [activeStopId, setActiveStopId] = useState<string | null>(null);
 
   const route = useMemo(() => smoothRoute(stops), [stops]);
+
+  // useRef-backed mirror of activeStopId so the rAF loop can compare
+  // without re-creating the closure every frame.
+  const activeStopIdRef = useRef<string | null>(null);
 
   const startAnimation = useCallback(() => {
     const map = mapRef.current;
@@ -87,9 +89,6 @@ export function JourneyMap({ stops: rawStops }: { stops: JourneyStop[] }) {
     const DURATION_MS = 7000;
     const startTs = performance.now();
 
-    // Convert route into cumulative-distance samples so easing maps onto
-    // physical progress instead of array index — keeps speed consistent
-    // even when bezier sampling is uneven.
     const cum: number[] = [0];
     for (let i = 1; i < route.length; i++) {
       const [x1, y1] = route[i - 1];
@@ -100,11 +99,9 @@ export function JourneyMap({ stops: rawStops }: { stops: JourneyStop[] }) {
 
     function frame(now: number) {
       const t = Math.min(1, (now - startTs) / DURATION_MS);
-      // easeInOutCubic — matches the gentle ramp of the SVG version.
       const eased = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
       const dist = eased * total;
 
-      // Binary search for the segment our distance lands in.
       let lo = 0, hi = route.length - 1;
       while (lo < hi - 1) {
         const mid = (lo + hi) >> 1;
@@ -119,15 +116,11 @@ export function JourneyMap({ stops: rawStops }: { stops: JourneyStop[] }) {
 
       jeep!.setLngLat([lng, lat]);
 
-      // Camera glides with the jeep; we keep it slightly behind by easing
-      // toward the jeep instead of snapping, which feels less jittery.
       map!.easeTo({
         center: [lng, lat],
         duration: 120,
-        easing: (x) => x,
       });
 
-      // Highlight the closest stop as we pass it.
       const closest = stops.reduce((best, s) => {
         const d = Math.hypot(s.lng - lng, s.lat - lat);
         return d < best.d ? { d, id: s.id } : best;
@@ -142,8 +135,6 @@ export function JourneyMap({ stops: rawStops }: { stops: JourneyStop[] }) {
       } else {
         setIsPlaying(false);
         animFrameRef.current = null;
-        // Settle the camera on the whole journey at the end so the user
-        // can see the full route before tapping replay.
         map!.fitBounds(bounds(stops), { padding: 80, duration: 1400, pitch: 45 });
       }
     }
@@ -151,42 +142,35 @@ export function JourneyMap({ stops: rawStops }: { stops: JourneyStop[] }) {
     animFrameRef.current = requestAnimationFrame(frame);
   }, [route, stops]);
 
-  // useRef-backed mirror of activeStopId so the rAF loop can compare
-  // without re-creating the closure every frame.
-  const activeStopIdRef = useRef<string | null>(null);
-
   // Build map once on mount.
   useEffect(() => {
-    if (!containerRef.current || mapRef.current || !MAPBOX_TOKEN || stops.length === 0) return;
+    if (!containerRef.current || mapRef.current || stops.length === 0) return;
 
-    const map = new mapboxgl.Map({
+    const map = new maplibregl.Map({
       container: containerRef.current,
-      style: "mapbox://styles/mapbox/standard",
+      style: MAP_STYLE_URL,
       bounds: bounds(stops),
       fitBoundsOptions: { padding: 80, pitch: 45 },
       attributionControl: false,
-      // Disable the rotate gesture so users don't accidentally tilt the map.
       pitchWithRotate: false,
       dragRotate: false,
     });
     mapRef.current = map;
 
-    map.addControl(new mapboxgl.NavigationControl({ visualizePitch: true, showCompass: false }), "top-right");
-    map.addControl(new mapboxgl.AttributionControl({ compact: true }), "bottom-right");
+    map.addControl(new maplibregl.NavigationControl({ visualizePitch: true, showCompass: false }), "top-right");
+    map.addControl(
+      new maplibregl.AttributionControl({
+        compact: true,
+        // Liberty style is OSM + OpenFreeMap data — attribution required
+        // by ODbL. The compact pill is unobtrusive.
+        customAttribution: "© OpenFreeMap · OpenStreetMap",
+      }),
+      "bottom-right",
+    );
 
     map.on("style.load", () => {
-      // Mapbox Standard style accepts a few config slots; "day" gives the
-      // cream-leaning daylight tone that fits the brand palette.
-      try {
-        (map as unknown as { setConfigProperty?: (a: string, b: string, c: string) => void })
-          .setConfigProperty?.("basemap", "lightPreset", "day");
-        (map as unknown as { setConfigProperty?: (a: string, b: string, c: string) => void })
-          .setConfigProperty?.("basemap", "show3dObjects", "true");
-      } catch {}
-
-      // Route polyline. The dashed under-line + solid over-line trick is
-      // borrowed from the SVG version so the route reads even where the
-      // basemap has busy contour lines.
+      // Route polyline. Dashed under-line + solid over-line so the
+      // route stays readable over the busy basemap (contour lines, etc.)
       map.addSource("journey", {
         type: "geojson",
         data: {
@@ -254,12 +238,12 @@ export function JourneyMap({ stops: rawStops }: { stops: JourneyStop[] }) {
             essential: true,
           });
         });
-        new mapboxgl.Marker({ element: el, anchor: "center" })
+        new maplibregl.Marker({ element: el, anchor: "center" })
           .setLngLat([s.lng, s.lat])
           .addTo(map);
       });
 
-      // Jeep marker — circular badge holding the travel icon.
+      // Jeep marker.
       const jeepEl = document.createElement("div");
       jeepEl.className = "z-10";
       jeepEl.innerHTML = `
@@ -270,7 +254,7 @@ export function JourneyMap({ stops: rawStops }: { stops: JourneyStop[] }) {
           <span class="absolute -inset-1 rounded-full border-2 border-[#C9A876] animate-ping" style="animation-duration:1.6s"></span>
         </div>
       `;
-      const jeep = new mapboxgl.Marker({ element: jeepEl, anchor: "center" })
+      const jeep = new maplibregl.Marker({ element: jeepEl, anchor: "center" })
         .setLngLat(stops[0] ? [stops[0].lng, stops[0].lat] : [0, 0])
         .addTo(map);
       jeepMarkerRef.current = jeep;
@@ -292,8 +276,6 @@ export function JourneyMap({ stops: rawStops }: { stops: JourneyStop[] }) {
         if (entries.some((e) => e.isIntersecting)) {
           obs.disconnect();
           setHasAutoPlayed(true);
-          // Slight delay so the basemap has a chance to render tiles
-          // before the jeep starts moving — avoids a janky first second.
           setTimeout(startAnimation, 1200);
         }
       },
@@ -319,8 +301,6 @@ export function JourneyMap({ stops: rawStops }: { stops: JourneyStop[] }) {
   }, [isFullscreen]);
 
   if (stops.length === 0) return null;
-
-  const missingToken = !MAPBOX_TOKEN;
 
   return (
     <section ref={sectionRef} className="mx-auto max-w-7xl px-5 py-14 sm:py-20 md:px-8 md:py-24">
@@ -367,17 +347,6 @@ export function JourneyMap({ stops: rawStops }: { stops: JourneyStop[] }) {
           }
         >
           <div ref={containerRef} className="absolute inset-0" />
-
-          {missingToken && (
-            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-sand/95 p-8 text-center">
-              <MapPin className="h-8 w-8 text-crimson" />
-              <h3 className="font-serif text-xl">Mapbox token not configured</h3>
-              <p className="max-w-md text-sm text-muted">
-                Set <code className="rounded bg-ink/8 px-1.5 py-0.5 text-xs">NEXT_PUBLIC_MAPBOX_TOKEN</code> in the
-                frontend environment to render the interactive map.
-              </p>
-            </div>
-          )}
 
           {isFullscreen && (
             <button
