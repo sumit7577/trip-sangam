@@ -4,6 +4,7 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import { Star } from "lucide-react";
 import type { PackageDetail } from "@/types";
+import { Avatar } from "@/components/ui/Avatar";
 
 export function Reviews({ pkg }: { pkg: PackageDetail }) {
   return (
@@ -56,13 +57,7 @@ export function Reviews({ pkg }: { pkg: PackageDetail }) {
               className="border-b border-ink/8 pb-7 last:border-0 last:pb-0"
             >
               <div className="flex items-start gap-4">
-                <Image
-                  src={r.avatar}
-                  alt={r.author}
-                  width={48}
-                  height={48}
-                  className="h-12 w-12 rounded-full object-cover"
-                />
+                <Avatar src={r.avatar} alt={r.author} size={48} className="h-12 w-12" />
                 <div className="flex-1">
                   <div className="flex flex-wrap items-baseline gap-2">
                     <p className="font-medium">{r.author}</p>

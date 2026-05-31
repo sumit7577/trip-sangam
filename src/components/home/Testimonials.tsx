@@ -1,9 +1,9 @@
 "use client";
 
-import Image from "next/image";
 import { motion } from "framer-motion";
 import { Star, Quote } from "lucide-react";
 import type { Testimonial } from "@/types";
+import { Avatar } from "@/components/ui/Avatar";
 
 export function Testimonials({ testimonials }: { testimonials: Testimonial[] }) {
   const loop = [...testimonials, ...testimonials];
@@ -41,13 +41,7 @@ export function Testimonials({ testimonials }: { testimonials: Testimonial[] }) 
                 "{t.quote}"
               </p>
               <div className="mt-6 flex items-center gap-3 border-t border-ink/6 pt-4">
-                <Image
-                  src={t.avatar}
-                  alt={t.name}
-                  width={44}
-                  height={44}
-                  className="h-11 w-11 rounded-full object-cover"
-                />
+                <Avatar src={t.avatar} alt={t.name} size={44} className="h-11 w-11" />
                 <div className="flex-1">
                   <p className="text-sm font-medium">{t.name}</p>
                   <p className="text-xs text-muted">{t.location} · {t.trip}</p>
