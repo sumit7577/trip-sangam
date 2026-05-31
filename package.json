@@ -11,6 +11,7 @@
     "serve": "npx http-server out -p 4000 -s"
   },
   "dependencies": {
+    "@photo-sphere-viewer/core": "^5.14.1",
     "clsx": "^2.1.1",
     "framer-motion": "^11.3.19",
     "lucide-react": "^0.424.0",

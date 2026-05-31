@@ -85,6 +85,11 @@ def upload_to_journey_stop(instance, filename):
     return f"sangam/package/{parent_slug}/journey/{instance.stop_id or 'unnamed'}/{filename}"
 
 
+def upload_to_journey_stop_panorama(instance, filename):
+    parent_slug = getattr(instance.page, "slug", None) or "_orphan"
+    return f"sangam/package/{parent_slug}/journey/{instance.stop_id or 'unnamed'}/panorama/{filename}"
+
+
 def _img_url(field):
     return field.url if field and field.name else ""
 
@@ -435,6 +440,16 @@ class JourneyStop(Orderable):
         null=True, blank=True, max_length=500,
         help_text="Photo shown in a lightbox when the user clicks this stop's marker on the map.",
     )
+    panorama = models.ImageField(
+        storage=BunnyStorage(),
+        upload_to=upload_to_journey_stop_panorama,
+        null=True, blank=True, max_length=500,
+        help_text="Equirectangular 360° photo (2:1 ratio, e.g. 4096×2048). Shown as an interactive panorama when the marker is clicked.",
+    )
+    panorama_url = models.URLField(
+        blank=True, max_length=500,
+        help_text="Alternative to uploading: a direct equirectangular 360° image URL (e.g. a Google Drive/Photos direct image link) OR a Google Maps Street View 'embed' iframe URL. Used only when no panorama is uploaded above.",
+    )
 
     panels = [
         FieldPanel("stop_id"),
@@ -444,11 +459,19 @@ class JourneyStop(Orderable):
         FieldPanel("latitude"),
         FieldPanel("longitude"),
         FieldPanel("image"),
+        FieldPanel("panorama"),
+        FieldPanel("panorama_url"),
     ]
 
     @property
     def image_src(self):
         return self.image.url if self.image and self.image.name else ""
+
+    @property
+    def panorama_src(self):
+        if self.panorama and self.panorama.name:
+            return self.panorama.url
+        return self.panorama_url or ""
 
 
 class PackageReview(Orderable):

@@ -1,10 +1,26 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import maplibregl, { type LngLatLike } from "maplibre-gl";
 import { AnimatePresence, motion } from "framer-motion";
 import { Maximize2, MapPin, Pause, Play, RotateCcw, X } from "lucide-react";
 import type { JourneyStop } from "@/types";
+import { isEmbedPanorama } from "@/lib/panorama";
+
+// 360° viewer is heavy (Photo Sphere Viewer + three.js). Load it on demand,
+// client-only, so it never enters the initial bundle or SSR.
+const Panorama360 = dynamic(
+  () => import("./Panorama360").then((m) => m.Panorama360),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex aspect-[16/10] w-full items-center justify-center bg-ink text-sm text-sand/70">
+        Loading 360° view…
+      </div>
+    ),
+  },
+);
 
 // Realistic driving speed for the car. Per-segment animation time
 // is computed as distance / SPEED_KMH so the visual pace matches what
@@ -743,6 +759,7 @@ export function JourneyMap({ stops: rawStops }: { stops: JourneyStop[] }) {
           <div class="relative flex items-center justify-center">
             <span class="absolute inline-flex h-10 w-10 rounded-full bg-[#2C3D2E]/25 group-hover:scale-110 transition-transform"></span>
             <span class="relative flex h-7 w-7 items-center justify-center rounded-full bg-[#2C3D2E] ring-[3px] ring-white shadow-lg text-[12px] font-bold text-white">${seq}</span>
+            ${s.panorama ? `<span class="absolute -right-2 -top-2 rounded-full bg-[#C9A876] px-1 py-px text-[7px] font-bold leading-none text-[#1C1C1A] ring-1 ring-white shadow" title="360° view available">360°</span>` : ""}
           </div>
           <div class="absolute left-1/2 top-full mt-2 -translate-x-1/2 whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-semibold shadow-md border pointer-events-none bg-white text-ink border-ink/15 dark:bg-ink/95 dark:text-sand dark:border-sand/25">
             <span class="opacity-60">Day ${s.day} ·</span> ${s.name}
@@ -925,7 +942,19 @@ export function JourneyMap({ stops: rawStops }: { stops: JourneyStop[] }) {
                 <X className="h-4 w-4" />
               </button>
 
-              {selectedStop.image ? (
+              {selectedStop.panorama ? (
+                isEmbedPanorama(selectedStop.panorama) ? (
+                  <iframe
+                    src={selectedStop.panorama}
+                    title={`${selectedStop.name} — 360° view`}
+                    className="block aspect-[16/10] w-full border-0"
+                    allow="accelerometer; gyroscope; fullscreen; xr-spatial-tracking"
+                    loading="lazy"
+                  />
+                ) : (
+                  <Panorama360 src={selectedStop.panorama} caption={selectedStop.name} />
+                )
+              ) : selectedStop.image ? (
                 /* eslint-disable-next-line @next/next/no-img-element */
                 <img
                   src={selectedStop.image}
@@ -952,6 +981,11 @@ export function JourneyMap({ stops: rawStops }: { stops: JourneyStop[] }) {
                 </p>
                 <h3 className="balance mt-1 font-serif text-2xl md:text-3xl">{selectedStop.name}</h3>
                 <p className="mt-1 text-sm text-muted dark:text-sand/70">{selectedStop.activity}</p>
+                {selectedStop.panorama && (
+                  <p className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-gold/15 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-gold-600 dark:text-gold">
+                    360° · Drag to look around
+                  </p>
+                )}
               </div>
             </motion.div>
           </motion.div>

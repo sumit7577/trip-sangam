@@ -40,6 +40,9 @@ export interface JourneyStop {
   // Bunny CDN URL of the photo shown in the marker lightbox.
   // Empty string when the editor hasn't uploaded one yet.
   image: string;
+  // Equirectangular 360° image URL (uploaded pano, or an external/Google
+  // image URL, or a Google Street View embed URL). "" when none set.
+  panorama: string;
 }
 
 export interface Review {
