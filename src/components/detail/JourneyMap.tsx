@@ -61,6 +61,29 @@ const DAY_NIGHT_KEYFRAMES = [
 ];
 const DAY_NIGHT_TIMES = [0.0, 0.15, 0.35, 0.55, 0.75, 0.9, 1.0];
 
+// Parse "rgba(r,g,b,a)" → [r,g,b,a] so we can interpolate the tint
+// ourselves from journey progress instead of letting framer-motion run a
+// free clock (which desynced from the car and reset to clear on pause).
+const DAY_NIGHT_RGBA: [number, number, number, number][] = DAY_NIGHT_KEYFRAMES.map((s) => {
+  const p = s.replace(/rgba?\(|\)/g, "").split(",").map((x) => parseFloat(x.trim()));
+  return [p[0], p[1], p[2], p[3] ?? 1];
+});
+
+// Tint colour for a given trip progress (0..1). Driven by the car's real
+// elapsed time, so pausing freezes it and resuming continues seamlessly.
+function dayNightColor(progress: number): string {
+  const t = Math.max(0, Math.min(1, progress));
+  let i = 0;
+  while (i < DAY_NIGHT_TIMES.length - 2 && t > DAY_NIGHT_TIMES[i + 1]) i++;
+  const t0 = DAY_NIGHT_TIMES[i];
+  const t1 = DAY_NIGHT_TIMES[i + 1];
+  const f = t1 > t0 ? (t - t0) / (t1 - t0) : 0;
+  const a = DAY_NIGHT_RGBA[i];
+  const b = DAY_NIGHT_RGBA[i + 1];
+  const m = (x: number, y: number) => x + (y - x) * f;
+  return `rgba(${Math.round(m(a[0], b[0]))}, ${Math.round(m(a[1], b[1]))}, ${Math.round(m(a[2], b[2]))}, ${m(a[3], b[3]).toFixed(3)})`;
+}
+
 import "maplibre-gl/dist/maplibre-gl.css";
 
 // OpenFreeMap "liberty" — vector tiles + style hosted free, no API key,
@@ -224,8 +247,11 @@ export function JourneyMap({ stops: rawStops }: { stops: JourneyStop[] }) {
   const [activeStopId, setActiveStopId] = useState<string | null>(null);
   const activeStopIdRef = useRef<string | null>(null);
   const [isUserPaused, setIsUserPaused] = useState(false);
-  // Stop whose lightbox is currently open (null = none).
+  // Stop whose panorama/photo is currently open (null = none). 360° stops
+  // open as a small docked preview by default; isExpanded promotes it (or a
+  // photo-only stop) to the full-screen lightbox.
   const [selectedStopId, setSelectedStopId] = useState<string | null>(null);
+  const [isExpanded, setIsExpanded] = useState(false);
   // Ref-backed handler used by the MapLibre marker's native onclick —
   // markers are imperative DOM nodes built in useEffect, so we can't
   // capture the latest setSelectedStopId closure directly without
@@ -375,6 +401,11 @@ export function JourneyMap({ stops: rawStops }: { stops: JourneyStop[] }) {
     // because we want resume to pick up exactly where it stopped.
     let pauseAccumMs = 0;
     let userPauseStartedAt = 0;
+    // After resume, the camera eases back to the car over a longer
+    // duration until this timestamp, then snaps back to tight 220ms
+    // tracking. Replaces the old resume flyTo, which fought the rAF
+    // loop's per-frame easeTo and left tracking stale/linear.
+    let resumeSettleUntil = 0;
     // Skip-in-flight guard so the rAF loop doesn't fight the flyTo's
     // own moveend handler while the camera arcs to the next stop.
     let skipping = false;
@@ -389,22 +420,14 @@ export function JourneyMap({ stops: rawStops }: { stops: JourneyStop[] }) {
         setIsUserPaused(true);
       } else {
         // Resume requested. Add the paused duration to the accumulator
-        // so elapsed time computation continues seamlessly. Snap the
-        // camera back to the car position before letting the rAF loop
-        // take over again.
+        // so elapsed time computation continues seamlessly. Open a settle
+        // window: the rAF loop's easeTo eases back to the car over ~900ms
+        // (and keeps tracking it) instead of a one-shot flyTo that the
+        // loop would immediately cancel and fight.
         pauseAccumMs += performance.now() - userPauseStartedAt;
         isUserPausedRef.current = false;
         setIsUserPaused(false);
-        if (lastCarLngLat) {
-          mapRef.current?.flyTo({
-            center: lastCarLngLat,
-            zoom: FOLLOW_ZOOM,
-            pitch: FOLLOW_PITCH,
-            bearing: lastCarBearing,
-            duration: 900,
-            essential: true,
-          });
-        }
+        resumeSettleUntil = performance.now() + 900;
       }
     };
 
@@ -448,11 +471,6 @@ export function JourneyMap({ stops: rawStops }: { stops: JourneyStop[] }) {
       });
     };
 
-    // Track last known car position so Resume can snap back to it
-    // without waiting for the next frame.
-    let lastCarLngLat: [number, number] | null = null;
-    let lastCarBearing = 0;
-
     function frame(now: number) {
       // While the user has paused or a Skip flyTo is in flight, the
       // rAF loop just idles — no camera updates, no setLngLat. The
@@ -486,7 +504,17 @@ export function JourneyMap({ stops: rawStops }: { stops: JourneyStop[] }) {
         // Hold position at the stop, show overlay, speed = 0.
         const stop = stops[entry.stopIdx];
         jeep!.setLngLat([stop.lng, stop.lat]);
-        lastCarLngLat = [stop.lng, stop.lat];
+        // If the user resumed while parked at a stop, ease the camera
+        // back to it (it may have been panned away during the pause).
+        if (now < resumeSettleUntil) {
+          map!.easeTo({
+            center: [stop.lng, stop.lat],
+            zoom: FOLLOW_ZOOM,
+            pitch: FOLLOW_PITCH,
+            duration: 900,
+            essential: true,
+          });
+        }
         if (!isPausedRef.current) {
           isPausedRef.current = true;
           setIsPaused(true);
@@ -530,8 +558,6 @@ export function JourneyMap({ stops: rawStops }: { stops: JourneyStop[] }) {
       const heading = (Math.atan2(x2 - x1, y2 - y1) * 180) / Math.PI;
 
       jeep!.setLngLat([lng, lat]);
-      lastCarLngLat = [lng, lat];
-      lastCarBearing = heading;
 
       // Speed display = SPEED_KMH throughout the travel entry (we
       // paced the segment specifically to match this), capped at the
@@ -546,7 +572,9 @@ export function JourneyMap({ stops: rawStops }: { stops: JourneyStop[] }) {
         bearing: heading,
         zoom: FOLLOW_ZOOM,
         pitch: FOLLOW_PITCH,
-        duration: 220,
+        // Ease back gently right after resume (camera may have been
+        // panned away), then snap to tight per-frame tracking.
+        duration: now < resumeSettleUntil ? 900 : 220,
         essential: true,
       });
 
@@ -838,7 +866,16 @@ export function JourneyMap({ stops: rawStops }: { stops: JourneyStop[] }) {
       jeepMarkerRef.current = jeep;
     });
 
+    // Keep the GL canvas matched to its container. The container resizes
+    // when toggling fullscreen / rotating the device; without this the
+    // canvas keeps stale dimensions and markers project to wrong screen
+    // positions (spilling outside the map). ResizeObserver catches every
+    // size change, including each frame of the fullscreen CSS transition.
+    const ro = new ResizeObserver(() => map.resize());
+    ro.observe(containerRef.current);
+
     return () => {
+      ro.disconnect();
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
       map.remove();
       mapRef.current = null;
@@ -874,11 +911,25 @@ export function JourneyMap({ stops: rawStops }: { stops: JourneyStop[] }) {
   }, [isPlaying, introFlyTo, startAnimation]);
 
   // Resize the map when toggling fullscreen so it fills the new container.
+  // The ResizeObserver (in the init effect) handles most of this, but we
+  // also nudge resize across the transition frames and then re-fit the
+  // route so the whole journey stays framed in the new viewport.
   useEffect(() => {
     if (!mapRef.current) return;
-    const id = window.setTimeout(() => mapRef.current?.resize(), 320);
-    return () => window.clearTimeout(id);
-  }, [isFullscreen]);
+    const raf = requestAnimationFrame(() => mapRef.current?.resize());
+    const ids = [60, 200, 360, 520].map((ms) =>
+      window.setTimeout(() => mapRef.current?.resize(), ms),
+    );
+    const fit = window.setTimeout(() => {
+      if (!hasStarted) mapRef.current?.fitBounds(bounds(stops), { padding: 60, pitch: 0 });
+    }, 560);
+    return () => {
+      cancelAnimationFrame(raf);
+      ids.forEach(window.clearTimeout);
+      window.clearTimeout(fit);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isFullscreen, hasStarted, stopsKey]);
 
   // Lock body scroll when fullscreen is open.
   useEffect(() => {
@@ -892,17 +943,24 @@ export function JourneyMap({ stops: rawStops }: { stops: JourneyStop[] }) {
   // selecting a stop opens the lightbox even if the component has
   // re-rendered (which closures on the imperative marker DOM would
   // otherwise lose).
-  openLightboxRef.current = (id) => setSelectedStopId(id);
+  openLightboxRef.current = (id) => {
+    setIsExpanded(false);
+    setSelectedStopId(id);
+  };
 
-  // ESC key closes the lightbox.
+  // ESC key: collapse the expanded lightbox back to the docked preview if
+  // a panorama is showing, otherwise close entirely.
   useEffect(() => {
     if (!selectedStopId) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setSelectedStopId(null);
+      if (e.key !== "Escape") return;
+      const s = stops.find((st) => st.id === selectedStopId);
+      if (isExpanded && s?.panorama) setIsExpanded(false);
+      else setSelectedStopId(null);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [selectedStopId]);
+  }, [selectedStopId, isExpanded, stops]);
 
   const selectedStop = selectedStopId
     ? stops.find((s) => s.id === selectedStopId) ?? null
@@ -910,12 +968,19 @@ export function JourneyMap({ stops: rawStops }: { stops: JourneyStop[] }) {
 
   if (stops.length === 0) return null;
 
+  const closeOverlay = () => {
+    setSelectedStopId(null);
+    setIsExpanded(false);
+  };
+
   return (
     <section ref={sectionRef} className="mx-auto max-w-7xl px-5 py-14 sm:py-20 md:px-8 md:py-24">
       {/* Lightbox — fixed overlay above the map (and above MapLibre's
-          own controls). Click outside / X button / Escape closes. */}
+          own controls). Click outside / X button / Escape closes. Shown for
+          photo-only stops, or when a 360° stop is expanded from its docked
+          preview. */}
       <AnimatePresence>
-        {selectedStop && (
+        {selectedStop && (isExpanded || !selectedStop.panorama) && (
           <motion.div
             key="stop-lightbox"
             initial={{ opacity: 0 }}
@@ -923,7 +988,7 @@ export function JourneyMap({ stops: rawStops }: { stops: JourneyStop[] }) {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.25 }}
             className="fixed inset-0 z-[60] flex items-center justify-center bg-ink/80 p-4 backdrop-blur-sm"
-            onClick={() => setSelectedStopId(null)}
+            onClick={closeOverlay}
           >
             <motion.div
               key="stop-lightbox-card"
@@ -935,7 +1000,7 @@ export function JourneyMap({ stops: rawStops }: { stops: JourneyStop[] }) {
               onClick={(e) => e.stopPropagation()}
             >
               <button
-                onClick={() => setSelectedStopId(null)}
+                onClick={closeOverlay}
                 aria-label="Close"
                 className="absolute right-3 top-3 z-10 inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/95 text-ink shadow-md hover:bg-white dark:bg-ink/90 dark:text-sand dark:hover:bg-ink"
               >
@@ -1041,7 +1106,7 @@ export function JourneyMap({ stops: rawStops }: { stops: JourneyStop[] }) {
             className={
               isFullscreen
                 ? "absolute inset-0 overflow-hidden rounded-2xl"
-                : "aspect-[2/1] w-full overflow-hidden rounded-2xl"
+                : "aspect-[4/5] w-full overflow-hidden rounded-2xl sm:aspect-[2/1]"
             }
           />
 
@@ -1052,26 +1117,15 @@ export function JourneyMap({ stops: rawStops }: { stops: JourneyStop[] }) {
               duration, simulating a 24-hour pass while you drive.
               When isPlaying is false, it resets to clear.
               pointer-events:none keeps zoom controls accessible. */}
-          <motion.div
+          <div
             aria-hidden
-            initial={{ backgroundColor: "rgba(255,255,255,0)" }}
-            animate={
-              isPlaying
-                ? { backgroundColor: DAY_NIGHT_KEYFRAMES }
-                : { backgroundColor: "rgba(255,255,255,0)" }
-            }
-            transition={
-              isPlaying
-                ? {
-                    // Day/night cycle compressed into one full trip length.
-                    // Falls back to 2 min if the schedule hasn't computed
-                    // yet so we never divide-by-zero or hand framer NaN.
-                    duration: Math.max(totalTripMs, 120_000) / 1000,
-                    times: DAY_NIGHT_TIMES,
-                    ease: "linear",
-                  }
-                : { duration: 1.2, ease: "easeOut" }
-            }
+            style={{
+              backgroundColor:
+                isPlaying && totalTripMs > 0
+                  ? dayNightColor(elapsedMs / totalTripMs)
+                  : "rgba(255,255,255,0)",
+              transition: "background-color 0.5s linear",
+            }}
             className="pointer-events-none absolute inset-0 rounded-2xl mix-blend-multiply"
           />
 
@@ -1200,27 +1254,59 @@ export function JourneyMap({ stops: rawStops }: { stops: JourneyStop[] }) {
             )}
           </AnimatePresence>
 
-          {/* Big centered "Start journey" overlay — hidden once the
-              user has kicked things off. We dim the map behind it so
-              the call to action reads cleanly. */}
-          {/* Floating Start-journey pill — anchored bottom-center so it
-              doesn't cover the map. Disappears once the trip kicks off. */}
+
+          {/* Docked 360° preview — Google-Maps-style mini panorama panel
+              that appears when a stop with a 360° image is selected.
+              Auto-rotates; the expand button promotes it to the full
+              lightbox. Photo-only stops use the lightbox directly. */}
           <AnimatePresence>
-            {!hasStarted && !isPlaying && (
-              <motion.button
-                key="start-pill"
-                onClick={startJourney}
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 16 }}
-                transition={{ duration: 0.35, ease: "easeOut" }}
-                className="group absolute bottom-4 left-1/2 z-20 inline-flex -translate-x-1/2 items-center gap-2 rounded-full bg-ink/95 px-5 py-2.5 text-sm font-semibold text-white shadow-lift backdrop-blur transition-transform hover:scale-[1.03]"
+            {selectedStop?.panorama && !isExpanded && (
+              <motion.div
+                key="pano-dock"
+                initial={{ opacity: 0, y: 16, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 16, scale: 0.95 }}
+                transition={{ duration: 0.28, ease: "easeOut" }}
+                className="absolute bottom-4 left-4 z-30 w-[260px] overflow-hidden rounded-2xl bg-ink shadow-lift ring-1 ring-white/10 sm:w-[330px]"
               >
-                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#C9A876] text-ink transition-transform group-hover:translate-x-0.5">
-                  <Play className="h-3.5 w-3.5" fill="currentColor" />
-                </span>
-                Start journey
-              </motion.button>
+                <div className="relative">
+                  {isEmbedPanorama(selectedStop.panorama) ? (
+                    <iframe
+                      src={selectedStop.panorama}
+                      title={`${selectedStop.name} — 360° view`}
+                      className="block aspect-[16/10] w-full border-0"
+                      allow="accelerometer; gyroscope; fullscreen; xr-spatial-tracking"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <Panorama360 src={selectedStop.panorama} caption={selectedStop.name} compact />
+                  )}
+                  <div className="absolute right-2 top-2 z-10 flex gap-1.5">
+                    <button
+                      onClick={() => setIsExpanded(true)}
+                      aria-label="Expand 360° view"
+                      className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-white/90 text-ink shadow-md transition hover:bg-white"
+                    >
+                      <Maximize2 className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      onClick={closeOverlay}
+                      aria-label="Close 360° preview"
+                      className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-white/90 text-ink shadow-md transition hover:bg-white"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setIsExpanded(true)}
+                  className="flex w-full items-center gap-2 px-3 py-2 text-left"
+                >
+                  <span className="rounded-full bg-[#C9A876] px-1.5 py-0.5 text-[9px] font-bold leading-none text-[#1C1C1A]">360°</span>
+                  <span className="truncate text-xs font-medium text-sand">{selectedStop.name}</span>
+                  <Maximize2 className="ml-auto h-3 w-3 shrink-0 text-sand/50" />
+                </button>
+              </motion.div>
             )}
           </AnimatePresence>
         </div>
