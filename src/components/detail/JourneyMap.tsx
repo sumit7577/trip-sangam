@@ -236,6 +236,21 @@ export function JourneyMap({ stops: rawStops }: { stops: JourneyStop[] }) {
     [stops],
   );
 
+  // Headline destination. When the trip is a round trip (last stop is the
+  // same place as the first — the return leg), show the second-to-last stop
+  // as the endpoint so the heading reads "Raxaul → Pokhara", not
+  // "Raxaul → Raxaul". One-way trips keep their actual last stop.
+  const endStop = useMemo(() => {
+    const first = stops[0];
+    const last = stops[stops.length - 1];
+    const sameName = (a: JourneyStop, b: JourneyStop) =>
+      a.name.trim().toLowerCase() === b.name.trim().toLowerCase();
+    if (stops.length > 2 && sameName(first, last)) {
+      return stops[stops.length - 2];
+    }
+    return last;
+  }, [stops]);
+
   // Current day derived from active stop. Drives the day banner +
   // day/night tint. Total days = the highest day index across all
   // stops, so we can normalise the night tint over the trip length.
@@ -949,7 +964,7 @@ export function JourneyMap({ stops: rawStops }: { stops: JourneyStop[] }) {
             <span className="h-px w-8 bg-crimson" /> Your Journey
           </p>
           <h2 className="balance mt-3 font-serif text-4xl tracking-tight md:text-5xl">
-            {stops[0].name} → {stops[stops.length - 1].name},<br />
+            {stops[0].name} → {endStop.name},<br />
             <span className="italic text-crimson">across {stops.length} stops.</span>
           </h2>
         </div>
