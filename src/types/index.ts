@@ -62,6 +62,12 @@ export interface FAQItem {
 export interface PackageDetail extends Package {
   longDescription: string;
   pullQuote: string;
+  tripStyle: string;
+  maxAltitude: string;
+  dailyWalking: string;
+  startEnd: string;
+  minAge: string;
+  languages: string;
   galleryImages: string[];
   itinerary: ItineraryDay[];
   inclusions: string[];

@@ -279,6 +279,15 @@ class PackagePage(HeadlessPreviewMixin, Page):
     long_description = models.TextField(blank=True)
     pull_quote = models.TextField(blank=True)
 
+    # "At a glance" card on the detail page. Free-form display strings (include
+    # units), all optional — blank fields are simply hidden on the frontend.
+    trip_style = models.CharField(max_length=120, blank=True, help_text="e.g. 'Small-group teahouse trek'")
+    max_altitude = models.CharField(max_length=80, blank=True, help_text="e.g. '5,416m (Thorong La)'")
+    daily_walking = models.CharField(max_length=80, blank=True, help_text="e.g. '5–7 hrs'")
+    start_end = models.CharField(max_length=120, blank=True, help_text="e.g. 'Kathmandu / Pokhara'")
+    min_age = models.CharField(max_length=40, blank=True, help_text="e.g. '14 years'")
+    languages = models.CharField(max_length=120, blank=True, help_text="e.g. 'English, Hindi, Nepali'")
+
     content_panels = Page.content_panels + [
         MultiFieldPanel(
             [
@@ -319,6 +328,17 @@ class PackagePage(HeadlessPreviewMixin, Page):
                 FieldPanel("pull_quote"),
             ],
             heading="Detail body",
+        ),
+        MultiFieldPanel(
+            [
+                FieldPanel("trip_style"),
+                FieldPanel("max_altitude"),
+                FieldPanel("daily_walking"),
+                FieldPanel("start_end"),
+                FieldPanel("min_age"),
+                FieldPanel("languages"),
+            ],
+            heading="At a glance",
         ),
         InlinePanel("itinerary_days", label="Itinerary"),
         InlinePanel("inclusions", label="Inclusions"),

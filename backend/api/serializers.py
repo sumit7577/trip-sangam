@@ -115,6 +115,12 @@ class PackageDetailSerializer(PackageSummarySerializer):
 
     longDescription = serializers.CharField(source="long_description")
     pullQuote = serializers.CharField(source="pull_quote")
+    tripStyle = serializers.CharField(source="trip_style")
+    maxAltitude = serializers.CharField(source="max_altitude")
+    dailyWalking = serializers.CharField(source="daily_walking")
+    startEnd = serializers.CharField(source="start_end")
+    minAge = serializers.CharField(source="min_age")
+    languages = serializers.CharField()
     galleryImages = serializers.SerializerMethodField()
     itinerary = ItineraryDaySerializer(source="itinerary_days", many=True)
     inclusions = serializers.SerializerMethodField()
@@ -128,6 +134,12 @@ class PackageDetailSerializer(PackageSummarySerializer):
         fields = PackageSummarySerializer.Meta.fields + [
             "longDescription",
             "pullQuote",
+            "tripStyle",
+            "maxAltitude",
+            "dailyWalking",
+            "startEnd",
+            "minAge",
+            "languages",
             "galleryImages",
             "itinerary",
             "inclusions",

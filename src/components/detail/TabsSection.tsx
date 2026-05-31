@@ -86,6 +86,15 @@ export function TabsSection({ pkg }: { pkg: PackageDetail }) {
 }
 
 function Overview({ pkg }: { pkg: PackageDetail }) {
+  const glance = [
+    { k: "Trip style", v: pkg.tripStyle },
+    { k: "Max altitude", v: pkg.maxAltitude },
+    { k: "Daily walking", v: pkg.dailyWalking },
+    { k: "Start / End", v: pkg.startEnd },
+    { k: "Min age", v: pkg.minAge },
+    { k: "Languages", v: pkg.languages },
+  ].filter((item) => item.v);
+
   return (
     <div className="grid grid-cols-1 gap-12 md:grid-cols-12">
       <div className="min-w-0 md:col-span-8">
@@ -110,19 +119,18 @@ function Overview({ pkg }: { pkg: PackageDetail }) {
           </p>
         </div>
       </div>
-      <div className="min-w-0 md:col-span-4">
-        <div className="rounded-3xl border border-ink/8 bg-white p-6">
-          <h3 className="font-serif text-xl">At a glance</h3>
-          <dl className="mt-4 space-y-3 text-sm">
-            <Item k="Trip style" v="Small-group teahouse trek" />
-            <Item k="Max altitude" v="5,416m (Thorong La)" />
-            <Item k="Daily walking" v="5–7 hrs" />
-            <Item k="Start / End" v="Kathmandu / Pokhara" />
-            <Item k="Min age" v="14 years" />
-            <Item k="Languages" v="English, Hindi, Nepali" />
-          </dl>
+      {glance.length > 0 && (
+        <div className="min-w-0 md:col-span-4">
+          <div className="rounded-3xl border border-ink/8 bg-white p-6">
+            <h3 className="font-serif text-xl">At a glance</h3>
+            <dl className="mt-4 space-y-3 text-sm">
+              {glance.map((item) => (
+                <Item key={item.k} k={item.k} v={item.v} />
+              ))}
+            </dl>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
