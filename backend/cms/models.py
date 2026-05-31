@@ -1,3 +1,6 @@
+import re
+from urllib.parse import unquote
+
 from django.db import models
 from modelcluster.fields import ParentalKey
 from modelcluster.models import ClusterableModel
@@ -92,6 +95,21 @@ def upload_to_journey_stop_panorama(instance, filename):
 
 def _img_url(field):
     return field.url if field and field.name else ""
+
+
+def _google_maps_pano_to_equirect(url):
+    """Pull a full equirectangular image URL out of a Google Maps photo-sphere
+    link. Maps share URLs embed the panorama image on googleusercontent.com;
+    requesting that base with a plain `=w<W>-h<H>` size param (no projection
+    params) returns the 2:1 equirectangular, which Photo Sphere Viewer can
+    render directly — no API key needed. Returns None if no such image is
+    present (e.g. a tiled car Street View, which can't be a single image)."""
+    decoded = unquote(url)
+    m = re.search(r"https?://lh\d+\.googleusercontent\.com/[^\s!]+", decoded)
+    if not m:
+        return None
+    base = re.sub(r"=.*$", "", m.group(0))
+    return f"{base}=w4096-h2048"
 
 
 @register_snippet
@@ -447,8 +465,8 @@ class JourneyStop(Orderable):
         help_text="Equirectangular 360° photo (2:1 ratio, e.g. 4096×2048). Shown as an interactive panorama when the marker is clicked.",
     )
     panorama_url = models.URLField(
-        blank=True, max_length=500,
-        help_text="Alternative to uploading: a direct equirectangular 360° image URL (e.g. a Google Drive/Photos direct image link) OR a Google Maps Street View 'embed' iframe URL. Used only when no panorama is uploaded above.",
+        blank=True, max_length=2000,
+        help_text="Alternative to uploading: paste a Google Maps Street View / photo-sphere link (the full maps.google URL) and the 360° image is pulled out automatically. A direct equirectangular image URL also works. Used only when no panorama is uploaded above.",
     )
 
     panels = [
@@ -471,7 +489,12 @@ class JourneyStop(Orderable):
     def panorama_src(self):
         if self.panorama and self.panorama.name:
             return self.panorama.url
-        return self.panorama_url or ""
+        url = self.panorama_url or ""
+        if "google." in url and "/maps" in url:
+            extracted = _google_maps_pano_to_equirect(url)
+            if extracted:
+                return extracted
+        return url
 
 
 class PackageReview(Orderable):
