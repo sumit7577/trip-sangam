@@ -95,29 +95,38 @@ function Overview({ pkg }: { pkg: PackageDetail }) {
     { k: "Languages", v: pkg.languages },
   ].filter((item) => item.v);
 
+  // Pull quote is stored as "quote — attribution". Split the two parts and
+  // strip any quote marks the editor already typed so we don't double them up.
+  const [rawQuote, attribution] = pkg.pullQuote
+    ? pkg.pullQuote.split(" — ")
+    : ["", ""];
+  const quote = rawQuote.trim().replace(/^["'“”]+|["'“”]+$/g, "");
+
   return (
     <div className="grid grid-cols-1 gap-12 md:grid-cols-12">
       <div className="min-w-0 md:col-span-8">
         <p className="pretty font-serif text-xl leading-relaxed text-ink md:text-2xl">
           {pkg.longDescription}
         </p>
-        <blockquote className="my-12 border-l-2 border-crimson pl-6">
-          <p className="font-serif text-2xl italic leading-snug text-ink md:text-3xl">
-            "{pkg.pullQuote.split(" — ")[0]}"
-          </p>
-          <footer className="mt-3 text-sm uppercase tracking-wider text-muted">
-            — {pkg.pullQuote.split(" — ")[1]}
-          </footer>
-        </blockquote>
-        <div className="prose prose-stone max-w-none">
-          <p className="text-base leading-relaxed text-muted">
-            The pace is deliberate — we'd rather you finish strong than fast. Days average 5–7 hours of walking
-            with built-in acclimatisation, hot dal bhat at every dinner, and porters carrying anything heavier than
-            your daypack. The route is well-traveled but the moments are not: a private breakfast above the
-            clouds at Ghyaru, a late-night candle at the Muktinath temple, the sudden silence at the top of
-            Thorong La.
-          </p>
-        </div>
+        {quote && (
+          <blockquote className="my-12 border-l-2 border-crimson pl-6">
+            <p className="font-serif text-2xl italic leading-snug text-ink md:text-3xl">
+              "{quote}"
+            </p>
+            {attribution?.trim() && (
+              <footer className="mt-3 text-sm uppercase tracking-wider text-muted">
+                — {attribution.trim()}
+              </footer>
+            )}
+          </blockquote>
+        )}
+        {pkg.overviewNote && (
+          <div className="prose prose-stone max-w-none">
+            <p className="whitespace-pre-line text-base leading-relaxed text-muted">
+              {pkg.overviewNote}
+            </p>
+          </div>
+        )}
       </div>
       {glance.length > 0 && (
         <div className="min-w-0 md:col-span-4">

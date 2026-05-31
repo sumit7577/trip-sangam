@@ -278,6 +278,10 @@ class PackagePage(HeadlessPreviewMixin, Page):
 
     long_description = models.TextField(blank=True)
     pull_quote = models.TextField(blank=True)
+    overview_note = models.TextField(
+        blank=True,
+        help_text="Secondary paragraph under the pull quote in the Overview tab (pace, highlights, etc.). Optional.",
+    )
 
     # "At a glance" card on the detail page. Free-form display strings (include
     # units), all optional — blank fields are simply hidden on the frontend.
@@ -326,6 +330,7 @@ class PackagePage(HeadlessPreviewMixin, Page):
             [
                 FieldPanel("long_description"),
                 FieldPanel("pull_quote"),
+                FieldPanel("overview_note"),
             ],
             heading="Detail body",
         ),

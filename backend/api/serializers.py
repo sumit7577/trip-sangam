@@ -115,6 +115,7 @@ class PackageDetailSerializer(PackageSummarySerializer):
 
     longDescription = serializers.CharField(source="long_description")
     pullQuote = serializers.CharField(source="pull_quote")
+    overviewNote = serializers.CharField(source="overview_note")
     tripStyle = serializers.CharField(source="trip_style")
     maxAltitude = serializers.CharField(source="max_altitude")
     dailyWalking = serializers.CharField(source="daily_walking")
@@ -134,6 +135,7 @@ class PackageDetailSerializer(PackageSummarySerializer):
         fields = PackageSummarySerializer.Meta.fields + [
             "longDescription",
             "pullQuote",
+            "overviewNote",
             "tripStyle",
             "maxAltitude",
             "dailyWalking",
