@@ -241,12 +241,12 @@ export function Header() {
                   <Button onClick={() => { setOpen(false); scrollToPackages(); }}>Book Now</Button>
                 </div>
                 <div className="mt-4 flex items-center justify-center gap-4 text-[11px] text-muted">
-                  <a href="tel:+917070406193" className="inline-flex items-center gap-1.5 transition-colors hover:text-ink">
+                  <a href="tel:+917678538192" className="inline-flex items-center gap-1.5 transition-colors hover:text-ink">
                     <Phone className="h-3.5 w-3.5" /> Call us
                   </a>
                   <span className="h-3 w-px bg-ink/15" />
                   <a
-                    href="https://wa.me/917070406193"
+                    href="https://wa.me/917678538192"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1.5 transition-colors hover:text-ink"

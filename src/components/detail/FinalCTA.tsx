@@ -65,7 +65,7 @@ export function FinalCTA({ pkg }: { pkg?: PackageDetail }) {
             <ArrowRight className="h-4 w-4" />
           </Button>
           <a
-            href="tel:+917070406193"
+            href="tel:+917678538192"
             className="inline-flex h-14 items-center gap-3 rounded-2xl border border-white/25 px-7 text-base font-medium text-white transition-colors hover:bg-white/10"
           >
             <Phone className="h-4 w-4" />

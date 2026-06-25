@@ -23,8 +23,8 @@ const cols = [
 const socials: { Icon: typeof Instagram; href: string; label: string }[] = [
   { Icon: Instagram, href: "https://www.instagram.com/trip_sangam_?igsh=cjhmN3RjZ3gyMmYx&utm_source=qr", label: "Instagram" },
   { Icon: Facebook, href: "https://www.facebook.com/share/1BTLAVtUaM/?mibextid=wwXIfr", label: "Facebook" },
-  { Icon: MessageCircle, href: "https://wa.me/917070406193", label: "WhatsApp" },
-  { Icon: Phone, href: "tel:+917070406193", label: "Call" },
+  { Icon: MessageCircle, href: "https://wa.me/917678538192", label: "WhatsApp" },
+  { Icon: Phone, href: "tel:+917678538192", label: "Call" },
 ];
 
 function scrollOrToast(target: string, label: string) {

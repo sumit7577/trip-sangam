@@ -3,8 +3,8 @@
 import { motion } from "framer-motion";
 import { Phone } from "lucide-react";
 
-const WHATSAPP_NUMBER = "917070406193";
-const PHONE_NUMBER = "+917070406193";
+const WHATSAPP_NUMBER = "917678538192";
+const PHONE_NUMBER = "+917678538192";
 
 /** Official WhatsApp glyph (one-piece silhouette). */
 function WhatsAppIcon({ className }: { className?: string }) {
