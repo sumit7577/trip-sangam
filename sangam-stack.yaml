@@ -61,10 +61,10 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        # NEXT_PUBLIC_* must be present at build time — bake the public site
-        # URL into the bundle. The internal API URL points at the backend
-        # service name via the shared sangam-net network.
-        NEXT_PUBLIC_API_URL: http://sangam-backend:8000
+        # NEXT_PUBLIC_* are baked into the CLIENT bundle at build time, so the
+        # browser must get the PUBLIC API URL. Server-side (ISR) fetches use
+        # API_INTERNAL_URL (set at runtime below) to stay in-cluster.
+        NEXT_PUBLIC_API_URL: https://${CMS_DOMAIN}
         NEXT_PUBLIC_SITE_URL: https://${SITE_DOMAIN}
     image: sangam-frontend:latest
     container_name: sangam-frontend
@@ -78,7 +78,8 @@ services:
       - LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}
       - REDIRECT_HTTPS=false
       - NODE_ENV=production
-      - NEXT_PUBLIC_API_URL=http://sangam-backend:8000
+      - NEXT_PUBLIC_API_URL=https://${CMS_DOMAIN}
+      - API_INTERNAL_URL=http://sangam-backend:8000
       - NEXT_PUBLIC_SITE_URL=https://${SITE_DOMAIN}
     depends_on:
       - sangam-backend

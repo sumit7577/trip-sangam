@@ -315,6 +315,36 @@ class PackagePage(HeadlessPreviewMixin, Page):
     min_age = models.CharField(max_length=40, blank=True, help_text="e.g. '14 years'")
     languages = models.CharField(max_length=120, blank=True, help_text="e.g. 'English, Hindi, Nepali'")
 
+    # ------------------------------------------------------------------
+    # Slot booking / auto-grouping config (see docs/slot-booking-design.md).
+    # `group_size` above stays as the human display string ("4-12"); these
+    # numeric fields drive the actual slotting engine in the `scheduling` app.
+    # ------------------------------------------------------------------
+    min_group = models.PositiveSmallIntegerField(
+        default=6, help_text="Minimum travellers for a departure to be guaranteed/run."
+    )
+    max_group = models.PositiveSmallIntegerField(
+        default=18, help_text="Maximum travellers per group/slot."
+    )
+    max_groups_per_date = models.PositiveSmallIntegerField(
+        default=2,
+        help_text="How many parallel groups (A, B, …) may run on the same date — limited by guides/permits.",
+    )
+    deposit_pct = models.PositiveSmallIntegerField(
+        default=50, help_text="Percent of total payable as deposit to confirm a seat (e.g. 50)."
+    )
+    cutoff_days = models.PositiveSmallIntegerField(
+        default=14, help_text="Booking closes this many days before a departure's start date."
+    )
+    departure_weekdays = models.CharField(
+        max_length=20,
+        blank=True,
+        help_text="Comma-separated weekdays the auto-calendar seeds departures on. Mon=0 … Sun=6. e.g. '5' = Saturdays. Blank = no auto-calendar (slots seeded on demand).",
+    )
+    schedule_weeks_ahead = models.PositiveSmallIntegerField(
+        default=12, help_text="How many weeks ahead the auto-calendar pre-creates empty departures."
+    )
+
     content_panels = Page.content_panels + [
         MultiFieldPanel(
             [
@@ -367,6 +397,18 @@ class PackagePage(HeadlessPreviewMixin, Page):
                 FieldPanel("languages"),
             ],
             heading="At a glance",
+        ),
+        MultiFieldPanel(
+            [
+                FieldPanel("min_group"),
+                FieldPanel("max_group"),
+                FieldPanel("max_groups_per_date"),
+                FieldPanel("deposit_pct"),
+                FieldPanel("cutoff_days"),
+                FieldPanel("departure_weekdays"),
+                FieldPanel("schedule_weeks_ahead"),
+            ],
+            heading="Departures & slots",
         ),
         InlinePanel("itinerary_days", label="Itinerary"),
         InlinePanel("inclusions", label="Inclusions"),

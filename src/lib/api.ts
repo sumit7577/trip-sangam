@@ -6,7 +6,10 @@ import type {
   Testimonial,
 } from "@/types";
 
-const BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+// Server-side (ISR) fetches prefer the in-cluster URL; falls back to the public
+// one. Browser/client API calls use NEXT_PUBLIC_API_URL directly (see lib/auth.ts).
+const BASE =
+  process.env.API_INTERNAL_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 const REVALIDATE_SECONDS = 60;
 
 /**

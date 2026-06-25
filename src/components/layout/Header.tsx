@@ -4,12 +4,13 @@ import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence, useScroll, useMotionValueEvent } from "framer-motion";
-import { Menu, X, ChevronDown, Phone, MessageCircle, Compass, Sparkles, BookOpen, Newspaper } from "lucide-react";
+import { Menu, X, ChevronDown, Phone, MessageCircle, Compass, Sparkles, BookOpen, Newspaper, Briefcase, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
 import { useCurrency, type Currency } from "@/lib/currency";
 import { useModal } from "@/lib/modal";
+import { useAuth } from "@/lib/auth";
 import { useTheme } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 
@@ -34,6 +35,7 @@ export function Header() {
   useMotionValueEvent(scrollY, "change", (y) => setScrolled(y > 32));
   const { openSignin } = useModal();
   const { theme } = useTheme();
+  const { user, hydrated, logout } = useAuth();
   const isDark = theme === "dark";
 
   function scrollToPackages() {
@@ -108,15 +110,40 @@ export function Header() {
           <LanguageSwitcher dark={!scrolled} />
           <ThemeToggle dark={!scrolled} />
           <CurrencySwitcher dark={!scrolled} />
-          <button
-            onClick={openSignin}
-            className={cn(
-              "hidden h-10 items-center rounded-xl px-4 text-sm font-medium transition-colors lg:inline-flex",
-              scrolled ? "text-ink hover:bg-ink/5" : "text-white hover:bg-white/10"
-            )}
-          >
-            Sign In
-          </button>
+          {hydrated && user ? (
+            <>
+              <Link
+                href="/trips"
+                className={cn(
+                  "hidden h-10 items-center gap-1.5 rounded-xl px-4 text-sm font-medium transition-colors lg:inline-flex",
+                  scrolled ? "text-ink hover:bg-ink/5" : "text-white hover:bg-white/10"
+                )}
+              >
+                <Briefcase className="h-4 w-4" /> My Trips
+              </Link>
+              <button
+                onClick={logout}
+                aria-label="Log out"
+                title="Log out"
+                className={cn(
+                  "hidden h-10 w-10 place-items-center rounded-xl transition-colors lg:grid",
+                  scrolled ? "text-ink hover:bg-ink/5" : "text-white hover:bg-white/10"
+                )}
+              >
+                <LogOut className="h-4 w-4" />
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={openSignin}
+              className={cn(
+                "hidden h-10 items-center rounded-xl px-4 text-sm font-medium transition-colors lg:inline-flex",
+                scrolled ? "text-ink hover:bg-ink/5" : "text-white hover:bg-white/10"
+              )}
+            >
+              Sign In
+            </button>
+          )}
           <Button size="sm" onClick={scrollToPackages} className="hidden h-10 lg:inline-flex">Book Now</Button>
           <button
             aria-label="Menu"

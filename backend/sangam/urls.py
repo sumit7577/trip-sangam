@@ -21,6 +21,8 @@ urlpatterns = [
     path("documents/", include(wagtaildocs_urls)),
     path("api/v2/", wagtail_api_router.urls),
     path("api/", include("api.urls")),
+    path("api/", include("accounts.urls")),
+    path("api/", include("scheduling.urls")),
     path("", include(wagtail_urls)),
 ]
 

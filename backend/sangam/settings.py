@@ -33,6 +33,8 @@ INSTALLED_APPS = [
     "cms.apps.CmsConfig",
     "api.apps.ApiConfig",
     "bookings.apps.BookingsConfig",
+    "scheduling.apps.SchedulingConfig",
+    "accounts.apps.AccountsConfig",
 
     "wagtail.contrib.forms",
     "wagtail.contrib.redirects",
@@ -97,14 +99,30 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "sangam.wsgi.application"
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        # DJANGO_DB_PATH lets the SQLite file live on a Docker volume in prod
-        # (e.g. /app/data/db.sqlite3) so DB state survives container rebuilds.
-        "NAME": os.environ.get("DJANGO_DB_PATH") or str(BASE_DIR / "db.sqlite3"),
+# Database — Postgres when POSTGRES_DB is set (Docker/production), else SQLite
+# (local dev + tests run with no env). Lets us cut over to Postgres without a
+# code change. See docs/slot-booking-design.md / docker-compose.yml.
+if os.environ.get("POSTGRES_DB"):
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": os.environ["POSTGRES_DB"],
+            "USER": os.environ.get("POSTGRES_USER", "sangam"),
+            "PASSWORD": os.environ.get("POSTGRES_PASSWORD", ""),
+            "HOST": os.environ.get("POSTGRES_HOST", "127.0.0.1"),
+            "PORT": os.environ.get("POSTGRES_PORT", "5432"),
+            "CONN_MAX_AGE": int(os.environ.get("POSTGRES_CONN_MAX_AGE", "60")),
+        }
     }
-}
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            # DJANGO_DB_PATH lets the SQLite file live on a Docker volume in prod
+            # (e.g. /app/data/db.sqlite3) so DB state survives container rebuilds.
+            "NAME": os.environ.get("DJANGO_DB_PATH") or str(BASE_DIR / "db.sqlite3"),
+        }
+    }
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": f"django.contrib.auth.password_validation.{v}"}
@@ -189,6 +207,7 @@ REST_FRAMEWORK = {
         "rest_framework.renderers.BrowsableAPIRenderer",
     ),
     "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
         "rest_framework.authentication.SessionAuthentication",
     ),
     "DEFAULT_PERMISSION_CLASSES": (
@@ -197,6 +216,31 @@ REST_FRAMEWORK = {
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 50,
 }
+
+from datetime import timedelta  # noqa: E402
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(days=1),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=30),
+    "UPDATE_LAST_LOGIN": True,
+}
+
+# ---------------------------------------------------------------------------
+# Email (booking notifications). Console backend in dev; set EMAIL_HOST etc.
+# in prod for real SMTP. See scheduling/notifications.py.
+# ---------------------------------------------------------------------------
+EMAIL_BACKEND = os.environ.get(
+    "EMAIL_BACKEND",
+    "django.core.mail.backends.console.EmailBackend" if DEBUG
+    else "django.core.mail.backends.smtp.EmailBackend",
+)
+EMAIL_HOST = os.environ.get("EMAIL_HOST", "")
+EMAIL_PORT = int(os.environ.get("EMAIL_PORT", "587"))
+EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
+EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "true").lower() == "true"
+DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "Trip Sangam <noreply@tripsangam.com>")
+SITE_PUBLIC_URL = os.environ.get("SITE_PUBLIC_URL", "http://localhost:3000")
 
 CORS_ALLOWED_ORIGINS = [
     o.strip()
@@ -207,6 +251,38 @@ CORS_ALLOWED_ORIGINS = [
     if o.strip()
 ]
 CORS_ALLOW_CREDENTIALS = True
+
+# ---------------------------------------------------------------------------
+# PhonePe payment gateway (slot booking deposits/balance).
+# See docs/slot-booking-design.md §7. Credentials come from the PhonePe
+# business dashboard. Without them the client runs in "unconfigured" mode and
+# payment endpoints return 503 (so dev/staging works with no secrets).
+# ---------------------------------------------------------------------------
+PHONEPE_ENV = os.environ.get("PHONEPE_ENV", "sandbox").lower()  # sandbox | production
+PHONEPE_CLIENT_ID = os.environ.get("PHONEPE_CLIENT_ID", "")
+PHONEPE_CLIENT_SECRET = os.environ.get("PHONEPE_CLIENT_SECRET", "")
+PHONEPE_CLIENT_VERSION = os.environ.get("PHONEPE_CLIENT_VERSION", "1")
+# Webhook (S2S callback) Basic credentials configured on the PhonePe dashboard.
+# PhonePe sends `Authorization: SHA256(username:password)` on each callback.
+PHONEPE_WEBHOOK_USERNAME = os.environ.get("PHONEPE_WEBHOOK_USERNAME", "")
+PHONEPE_WEBHOOK_PASSWORD = os.environ.get("PHONEPE_WEBHOOK_PASSWORD", "")
+
+if PHONEPE_ENV == "production":
+    PHONEPE_AUTH_URL = "https://api.phonepe.com/apis/identity-manager/v1/oauth/token"
+    PHONEPE_PG_BASE = "https://api.phonepe.com/apis/pg"
+else:
+    PHONEPE_AUTH_URL = "https://api-preprod.phonepe.com/apis/pg-sandbox/v1/oauth/token"
+    PHONEPE_PG_BASE = "https://api-preprod.phonepe.com/apis/pg-sandbox"
+
+# Allow explicit overrides if PhonePe changes hostnames.
+PHONEPE_AUTH_URL = os.environ.get("PHONEPE_AUTH_URL", PHONEPE_AUTH_URL)
+PHONEPE_PG_BASE = os.environ.get("PHONEPE_PG_BASE", PHONEPE_PG_BASE)
+
+# Where PhonePe redirects the traveller back to after paying. The booking id is
+# appended, e.g. https://tripsangam.com/trips/<id>.
+PHONEPE_REDIRECT_BASE = os.environ.get(
+    "PHONEPE_REDIRECT_BASE", "http://localhost:3000/trips"
+)
 
 LOGGING = {
     "version": 1,

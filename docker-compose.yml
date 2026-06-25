@@ -1,0 +1,79 @@
+# Local dev stack with Postgres (the "dev/docker first" step before the
+# production cutover). Brings up Postgres + Django + Next.js wired together.
+#
+#   docker compose up --build
+#   → frontend  http://localhost:3000
+#   → backend   http://localhost:8000  (Wagtail admin at /admin)
+#   → postgres  localhost:5432
+#
+# To migrate existing SQLite data into this Postgres, see
+# backend/scripts/migrate_sqlite_to_postgres.sh.
+
+services:
+  db:
+    image: postgres:16
+    container_name: sangam-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-sangam}
+      POSTGRES_USER: ${POSTGRES_USER:-sangam}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-sangam}
+    ports:
+      - "5432:5432"
+    volumes:
+      - sangam-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-sangam} -d ${POSTGRES_DB:-sangam}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: sangam-backend-dev
+    restart: unless-stopped
+    environment:
+      DJANGO_DEBUG: "true"
+      DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1,backend
+      POSTGRES_DB: ${POSTGRES_DB:-sangam}
+      POSTGRES_USER: ${POSTGRES_USER:-sangam}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-sangam}
+      POSTGRES_HOST: db
+      POSTGRES_PORT: "5432"
+      CORS_ALLOWED_ORIGINS: http://localhost:3000
+      CSRF_TRUSTED_ORIGINS: http://localhost:3000,http://localhost:8000
+      # PhonePe — leave blank for dev; pay endpoints return 503 until set.
+      PHONEPE_ENV: sandbox
+      PHONEPE_REDIRECT_BASE: http://localhost:3000/trips
+    ports:
+      - "8000:8000"
+    volumes:
+      - sangam-dev-data:/app/data
+      - sangam-dev-media:/app/media
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:8000
+        NEXT_PUBLIC_SITE_URL: http://localhost:3000
+    container_name: sangam-frontend-dev
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+volumes:
+  sangam-pgdata:
+  sangam-dev-data:
+  sangam-dev-media:
