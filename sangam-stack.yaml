@@ -48,6 +48,26 @@ services:
       - BUNNY_STORAGE_PUBLIC_HOST=${BUNNY_STORAGE_PUBLIC_HOST:-}
       - BUNNY_STORAGE_API_HOST=${BUNNY_STORAGE_API_HOST:-storage.bunnycdn.com}
       - BUNNY_STORAGE_DIRECTORY=${BUNNY_STORAGE_DIRECTORY:-sangam/}
+
+      # PhonePe payments — set these in the VM .env to activate deposits.
+      # Blank ⇒ pay endpoints return 503 (booking/accept still work).
+      - PHONEPE_ENV=${PHONEPE_ENV:-sandbox}
+      - PHONEPE_CLIENT_ID=${PHONEPE_CLIENT_ID:-}
+      - PHONEPE_CLIENT_SECRET=${PHONEPE_CLIENT_SECRET:-}
+      - PHONEPE_CLIENT_VERSION=${PHONEPE_CLIENT_VERSION:-1}
+      - PHONEPE_WEBHOOK_USERNAME=${PHONEPE_WEBHOOK_USERNAME:-}
+      - PHONEPE_WEBHOOK_PASSWORD=${PHONEPE_WEBHOOK_PASSWORD:-}
+      - PHONEPE_REDIRECT_BASE=https://${SITE_DOMAIN}/trips
+
+      # Email (booking notifications) — set SMTP creds in the VM .env to send.
+      # Blank host ⇒ sends are attempted then silently swallowed.
+      - EMAIL_HOST=${EMAIL_HOST:-}
+      - EMAIL_PORT=${EMAIL_PORT:-587}
+      - EMAIL_HOST_USER=${EMAIL_HOST_USER:-}
+      - EMAIL_HOST_PASSWORD=${EMAIL_HOST_PASSWORD:-}
+      - EMAIL_USE_TLS=${EMAIL_USE_TLS:-true}
+      - DEFAULT_FROM_EMAIL=${DEFAULT_FROM_EMAIL:-Trip Sangam <noreply@tripsangam.com>}
+      - SITE_PUBLIC_URL=https://${SITE_DOMAIN}
     volumes:
       - sangam-db:/app/data
       - sangam-static:/app/staticfiles

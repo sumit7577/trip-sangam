@@ -13,6 +13,7 @@ import {
   getBooking, acceptBooking, declineBooking, payBalance, type Booking,
 } from "@/lib/bookingApi";
 import { statusLabel, statusClasses } from "@/lib/bookingStatus";
+import { TravellersForm } from "@/components/trips/TravellersForm";
 
 export default function TripDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -205,6 +206,10 @@ export default function TripDetailPage() {
         <p className="mt-3 flex items-center gap-1.5 text-xs text-muted">
           <Clock className="h-3.5 w-3.5" /> Accepted — complete your deposit to lock your seat.
         </p>
+      )}
+
+      {(isAccepted || isConfirmed) && (
+        <TravellersForm bookingId={b.id} partySize={b.partySize} />
       )}
     </Shell>
   );

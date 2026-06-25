@@ -103,3 +103,25 @@ export async function declineBooking(id: number | string): Promise<Booking> {
 export async function payBalance(id: number | string): Promise<PaymentInit> {
   return unwrap<PaymentInit>(await authFetch(`/api/bookings/${id}/pay-balance/`, { method: "POST" }));
 }
+
+export interface Traveller {
+  id?: number;
+  fullName: string;
+  age?: number | null;
+  gender?: string;
+  idType?: string;
+  idNumber?: string;
+}
+
+export async function getTravellers(id: number | string): Promise<Traveller[]> {
+  return unwrap<Traveller[]>(await authFetch(`/api/bookings/${id}/travellers/`));
+}
+
+export async function saveTravellers(id: number | string, list: Traveller[]): Promise<Traveller[]> {
+  return unwrap<Traveller[]>(
+    await authFetch(`/api/bookings/${id}/travellers/`, {
+      method: "POST",
+      body: JSON.stringify(list),
+    })
+  );
+}
