@@ -16,6 +16,7 @@ import {
 } from "@/lib/bookingApi";
 import { statusLabel, statusClasses } from "@/lib/bookingStatus";
 import { TravellersForm } from "@/components/trips/TravellersForm";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 
 export default function TripDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -25,6 +26,7 @@ export default function TripDetailPage() {
   const [b, setB] = useState<Booking | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const load = useCallback(() => {
     getBooking(id).then(setB).catch((e) => setError(e instanceof Error ? e.message : "Failed to load"));
@@ -74,7 +76,6 @@ export default function TripDetailPage() {
   }
 
   async function onCancel() {
-    if (!window.confirm("Cancel this booking? This frees your spot and can't be undone.")) return;
     setBusy(true);
     try {
       await cancelBooking(id);
@@ -83,6 +84,7 @@ export default function TripDetailPage() {
     } catch (e) {
       toast(e instanceof Error ? e.message : "Could not cancel", "error");
       setBusy(false);
+      setConfirmOpen(false);
     }
   }
 
@@ -259,13 +261,24 @@ export default function TripDetailPage() {
 
       {canCancel && (
         <div className="mt-8 border-t border-line pt-5">
-          <button onClick={onCancel} disabled={busy}
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-crimson transition-colors hover:underline disabled:opacity-50">
+          <button onClick={() => setConfirmOpen(true)} disabled={busy}
+            className="inline-flex items-center gap-1.5 rounded-full border border-line px-4 py-2 text-sm font-semibold text-ink/80 transition-colors hover:border-red-300 hover:bg-red-50 hover:text-red-700 disabled:opacity-50 dark:border-white/15 dark:text-white/80 dark:hover:border-red-500/40 dark:hover:bg-red-500/10 dark:hover:text-red-300">
             <X className="h-4 w-4" /> Cancel this booking
           </button>
-          <p className="mt-1 text-xs text-muted">Frees your spot in the group. This can&apos;t be undone.</p>
+          <p className="mt-2 text-xs text-muted">Frees your spot in the group. This can&apos;t be undone.</p>
         </div>
       )}
+
+      <ConfirmDialog
+        open={confirmOpen}
+        title="Cancel this booking?"
+        message="This frees your spot in the group and can't be undone."
+        confirmLabel="Yes, cancel booking"
+        cancelLabel="Keep booking"
+        busy={busy}
+        onConfirm={onCancel}
+        onClose={() => setConfirmOpen(false)}
+      />
     </Shell>
   );
 }

@@ -8,6 +8,7 @@ import { useModal } from "@/lib/modal";
 import { toast } from "@/lib/toast";
 import { getMyBookings, cancelBooking, type Booking } from "@/lib/bookingApi";
 import { statusLabel, statusClasses } from "@/lib/bookingStatus";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 
 // Bookings the user has finished with — hidden from "My Trips".
 const TERMINAL = ["cancelled", "declined", "expired"];
@@ -17,7 +18,8 @@ export default function TripsPage() {
   const { openSignin } = useModal();
   const [bookings, setBookings] = useState<Booking[] | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [cancelling, setCancelling] = useState<number | null>(null);
+  const [cancelling, setCancelling] = useState(false);
+  const [confirmId, setConfirmId] = useState<number | null>(null);
 
   useEffect(() => {
     if (!hydrated || !user) return;
@@ -26,17 +28,19 @@ export default function TripsPage() {
       .catch((e) => setError(e instanceof Error ? e.message : "Failed to load"));
   }, [hydrated, user]);
 
-  async function onCancel(id: number) {
-    if (!window.confirm("Cancel this trip? This frees your spot and can't be undone.")) return;
-    setCancelling(id);
+  async function doCancel() {
+    if (confirmId == null) return;
+    const id = confirmId;
+    setCancelling(true);
     try {
       await cancelBooking(id);
       setBookings((prev) => (prev ? prev.map((x) => (x.id === id ? { ...x, status: "cancelled" } : x)) : prev));
       toast("Trip cancelled.", "success");
+      setConfirmId(null);
     } catch (e) {
       toast(e instanceof Error ? e.message : "Could not cancel", "error");
     } finally {
-      setCancelling(null);
+      setCancelling(false);
     }
   }
 
@@ -115,17 +119,27 @@ export default function TripsPage() {
 
               {b.status !== "confirmed" && (
                 <button
-                  onClick={() => onCancel(b.id)}
-                  disabled={cancelling === b.id}
-                  className="relative z-10 mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-crimson transition-colors hover:underline disabled:opacity-50"
+                  onClick={() => setConfirmId(b.id)}
+                  className="relative z-10 mt-3 inline-flex items-center gap-1.5 rounded-full border border-line px-3 py-1.5 text-xs font-semibold text-ink/80 transition-colors hover:border-red-300 hover:bg-red-50 hover:text-red-700 dark:border-white/15 dark:text-white/80 dark:hover:border-red-500/40 dark:hover:bg-red-500/10 dark:hover:text-red-300"
                 >
-                  <X className="h-3.5 w-3.5" /> {cancelling === b.id ? "Cancelling…" : "Cancel trip"}
+                  <X className="h-3.5 w-3.5" /> Cancel trip
                 </button>
               )}
             </div>
           ))}
         </div>
       </div>
+
+      <ConfirmDialog
+        open={confirmId !== null}
+        title="Cancel this trip?"
+        message="This frees your spot in the group and can't be undone."
+        confirmLabel="Yes, cancel trip"
+        cancelLabel="Keep trip"
+        busy={cancelling}
+        onConfirm={doCancel}
+        onClose={() => setConfirmId(null)}
+      />
     </main>
   );
 }

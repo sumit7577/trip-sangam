@@ -6,8 +6,10 @@ import { toast } from "@/lib/toast";
 import { getTravellers, saveTravellers, type Traveller } from "@/lib/bookingApi";
 
 function blank(): Traveller {
-  return { fullName: "", age: null, gender: "", idType: "", idNumber: "" };
+  return { fullName: "", age: null, gender: "" };
 }
+
+const GENDERS = ["Male", "Female", "Other"];
 
 export function TravellersForm({ bookingId, partySize }: { bookingId: number; partySize: number }) {
   const [rows, setRows] = useState<Traveller[]>([]);
@@ -43,8 +45,6 @@ export function TravellersForm({ bookingId, partySize }: { bookingId: number; pa
           fullName: r.fullName.trim(),
           age: r.age ? Number(r.age) : null,
           gender: r.gender || "",
-          idType: r.idType || "",
-          idNumber: r.idNumber || "",
         }))
       );
       const next = [...saved];
@@ -73,19 +73,18 @@ export function TravellersForm({ bookingId, partySize }: { bookingId: number; pa
             <p className="mb-2 text-[10px] font-medium uppercase tracking-[0.18em] text-muted">
               Traveller {i + 1}
             </p>
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_90px_130px]">
               <input value={row.fullName} onChange={(e) => update(i, "fullName", e.target.value)}
-                placeholder="Full name (as on ID)"
+                placeholder="Full name"
                 className="h-11 rounded-xl border border-line bg-white px-3 text-sm focus:border-ink focus:outline-none dark:bg-transparent" />
               <input value={row.age ?? ""} onChange={(e) => update(i, "age", e.target.value)}
                 type="number" min={0} placeholder="Age"
                 className="h-11 rounded-xl border border-line bg-white px-3 text-sm focus:border-ink focus:outline-none dark:bg-transparent" />
-              <input value={row.idType ?? ""} onChange={(e) => update(i, "idType", e.target.value)}
-                placeholder="ID type (Passport / Aadhaar)"
-                className="h-11 rounded-xl border border-line bg-white px-3 text-sm focus:border-ink focus:outline-none dark:bg-transparent" />
-              <input value={row.idNumber ?? ""} onChange={(e) => update(i, "idNumber", e.target.value)}
-                placeholder="ID number"
-                className="h-11 rounded-xl border border-line bg-white px-3 text-sm focus:border-ink focus:outline-none dark:bg-transparent" />
+              <select value={row.gender ?? ""} onChange={(e) => update(i, "gender", e.target.value)}
+                className="h-11 rounded-xl border border-line bg-white px-3 text-sm focus:border-ink focus:outline-none dark:bg-transparent dark:[&>option]:text-ink">
+                <option value="">Gender</option>
+                {GENDERS.map((g) => <option key={g} value={g}>{g}</option>)}
+              </select>
             </div>
           </div>
         ))}
