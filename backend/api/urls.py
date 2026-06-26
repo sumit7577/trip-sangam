@@ -6,6 +6,7 @@ from .views import (
     PackageViewSet,
     TeamMemberViewSet,
     TestimonialViewSet,
+    health,
     homepage_payload,
     preview_view,
 )
@@ -17,6 +18,7 @@ router.register(r"team", TeamMemberViewSet, basename="team")
 router.register(r"testimonials", TestimonialViewSet, basename="testimonial")
 
 urlpatterns = [
+    path("health/", health, name="health"),
     path("homepage/", homepage_payload, name="homepage-payload"),
     path("preview/", preview_view, name="preview"),
     path("", include(router.urls)),

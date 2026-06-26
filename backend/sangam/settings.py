@@ -29,6 +29,18 @@ CSRF_TRUSTED_ORIGINS = [
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 USE_X_FORWARDED_HOST = True
 
+# Production security hardening — only active when DEBUG is off so local dev over
+# http keeps working. HSTS + secure cookies + nosniff. SSL redirect stays off by
+# default because nginx-proxy already terminates/redirects TLS (avoids loops).
+if not DEBUG:
+    SECURE_HSTS_SECONDS = int(os.environ.get("SECURE_HSTS_SECONDS", "31536000"))  # 1 year
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = os.environ.get("SECURE_HSTS_PRELOAD", "false").lower() == "true"
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_SSL_REDIRECT = os.environ.get("SECURE_SSL_REDIRECT", "false").lower() == "true"
+
 INSTALLED_APPS = [
     "cms.apps.CmsConfig",
     "api.apps.ApiConfig",
@@ -215,7 +227,22 @@ REST_FRAMEWORK = {
     ),
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 50,
+    # Throttling is applied per-endpoint via ScopedRateThrottle (auth/booking)
+    # and WebhookRateThrottle — not globally, so the public read API + SSR are
+    # unaffected. Rates are deliberately generous; tighten if abuse appears.
+    "DEFAULT_THROTTLE_RATES": {
+        "auth": "10/min",        # login/register attempts per IP
+        "booking": "40/hour",    # booking writes per user
+        "webhook": "240/min",    # PhonePe S2S callbacks (retry-friendly)
+    },
 }
+
+# Disable throttling under the test runner so suite runs stay deterministic.
+import sys as _sys  # noqa: E402
+if "test" in _sys.argv:
+    REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"] = {
+        k: None for k in REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]
+    }
 
 from datetime import timedelta  # noqa: E402
 

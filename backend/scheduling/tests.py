@@ -4,6 +4,7 @@ from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.core import mail
+from django.core.cache import cache
 from django.test import TestCase, override_settings
 from django.utils import timezone
 from rest_framework.test import APIClient
@@ -487,3 +488,37 @@ class TravellerApiTests(TestCase):
         res = self.client.post(f"/api/bookings/{self.bid}/travellers/", payload, format="json")
         self.assertEqual(res.status_code, 400)
         self.assertEqual(res.json()["code"], "too_many_travellers")
+
+
+# ---------------------------------------------------------------------------
+# Ops hardening — health check + throttling
+# ---------------------------------------------------------------------------
+
+class HealthTests(TestCase):
+    def test_health_ok(self):
+        res = APIClient().get("/api/health/")
+        self.assertEqual(res.status_code, 200)
+        body = res.json()
+        self.assertEqual(body["status"], "ok")
+        self.assertTrue(body["database"])
+
+
+class ThrottleTests(TestCase):
+    """Throttling is disabled globally under the test runner for determinism, so
+    we patch the rate directly to prove the mechanism is wired to login."""
+
+    def setUp(self):
+        cache.clear()  # throttle counters live in the cache
+        self.client = APIClient()
+        make_user(email="t@x.com", password="StrongPass123")
+
+    def tearDown(self):
+        cache.clear()
+
+    @patch("rest_framework.throttling.ScopedRateThrottle.get_rate", return_value="3/min")
+    def test_login_is_rate_limited(self, _rate):
+        creds = {"email": "t@x.com", "password": "StrongPass123"}
+        for _ in range(3):
+            self.assertEqual(self.client.post("/api/auth/login/", creds, format="json").status_code, 200)
+        # 4th within the window is throttled.
+        self.assertEqual(self.client.post("/api/auth/login/", creds, format="json").status_code, 429)

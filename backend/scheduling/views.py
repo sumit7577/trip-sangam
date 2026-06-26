@@ -2,9 +2,12 @@ import logging
 
 from django.utils import timezone
 from rest_framework import mixins, status, viewsets
-from rest_framework.decorators import action, api_view, authentication_classes, permission_classes
+from rest_framework.decorators import (
+    action, api_view, authentication_classes, permission_classes, throttle_classes,
+)
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.throttling import ScopedRateThrottle
 
 from . import payments, phonepe, services
 from .models import Booking, Departure, Payment
@@ -16,6 +19,10 @@ from .serializers import (
     DepartureSerializer,
     PaymentSerializer,
 )
+from .throttles import WebhookRateThrottle
+
+# Booking actions that mutate state / cost money → rate-limited per user.
+_THROTTLED_ACTIONS = {"create", "accept", "decline", "pay_deposit", "pay_balance", "travellers"}
 
 logger = logging.getLogger(__name__)
 
@@ -60,6 +67,13 @@ class BookingViewSet(
 
     permission_classes = [IsAuthenticated]
     pagination_class = None
+
+    def get_throttles(self):
+        # Throttle only the write/payment actions; reads (list/retrieve) are free.
+        if self.action in _THROTTLED_ACTIONS:
+            self.throttle_scope = "booking"
+            return [ScopedRateThrottle()]
+        return super().get_throttles()
 
     def get_queryset(self):
         return (
@@ -202,6 +216,7 @@ class BookingViewSet(
 @api_view(["POST"])
 @authentication_classes([])
 @permission_classes([AllowAny])
+@throttle_classes([WebhookRateThrottle])
 def phonepe_webhook(request):
     """PhonePe S2S callback. Validates the SHA256(user:pass) Authorization
     header, applies the outcome idempotently, and always acks 2xx fast."""
