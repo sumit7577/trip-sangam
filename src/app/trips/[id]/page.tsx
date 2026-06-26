@@ -5,7 +5,9 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import {
   ArrowLeft, CalendarDays, Users, ShieldCheck, CheckCircle2, Phone, Clock, CreditCard, X,
+  IndianRupee, CalendarClock, UserCheck,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useModal } from "@/lib/modal";
 import { toast } from "@/lib/toast";
@@ -85,6 +87,9 @@ export default function TripDetailPage() {
 
   const dep = b.departure;
   const fillPct = dep ? Math.min(100, Math.round((dep.seatsConfirmed / dep.minCapacity) * 100)) : 0;
+  const mates = b.coTravellers ?? [];
+  const totalInSlot = mates.reduce((n, m) => n + (m.partySize || 0), 0);
+  const remainingToGuarantee = dep ? Math.max(0, dep.minCapacity - dep.seatsConfirmed) : 0;
   const canAct = b.status === "pending";
   const isAccepted = b.status === "accepted";
   const isConfirmed = b.status === "confirmed";
@@ -102,24 +107,35 @@ export default function TripDetailPage() {
         </span>
       </div>
 
-      {/* Slot summary */}
+      {/* Matched slot summary */}
       {dep ? (
         <div className="mt-6 rounded-2xl border border-line bg-white p-5 dark:bg-white/5">
-          <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
-            <span className="inline-flex items-center gap-1.5">
-              <CalendarDays className="h-4 w-4 text-muted" />
-              {new Date(dep.startDate).toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "long", year: "numeric" })}
+          <div className="flex items-center justify-between">
+            <h2 className="font-serif text-lg">Your matched slot</h2>
+            <span className="rounded-full bg-ink/5 px-2.5 py-0.5 text-xs font-semibold text-ink dark:bg-white/10 dark:text-white">
+              Group {dep.groupLabel}
             </span>
-            <span className="inline-flex items-center gap-1.5"><Users className="h-4 w-4 text-muted" /> Group {dep.groupLabel}</span>
-            <span className="inline-flex items-center gap-1.5"><Users className="h-4 w-4 text-muted" /> {b.partySize} in your party</span>
           </div>
 
-          <div className="mt-4">
+          <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-4">
+            <Stat icon={CalendarDays} label="Trip dates" value={fmtRange(dep.startDate, dep.endDate)} />
+            <Stat icon={Users} label="Your party" value={`${b.partySize} traveller${b.partySize > 1 ? "s" : ""}`} />
+            {dep.priceINR > 0 && (
+              <Stat icon={IndianRupee} label="Price / person" value={`₹${dep.priceINR.toLocaleString("en-IN")}`} />
+            )}
+            {dep.cutoffDate && (
+              <Stat icon={CalendarClock} label="Book by" value={fmtDate(dep.cutoffDate)} />
+            )}
+          </div>
+
+          <div className="mt-5">
             <div className="flex items-center justify-between text-xs">
               <span className="font-medium">
-                {dep.isGuaranteed ? "Departure guaranteed 🎉" : `${dep.seatsConfirmed}/${dep.minCapacity} confirmed to guarantee`}
+                {dep.isGuaranteed
+                  ? "Departure guaranteed 🎉"
+                  : `${remainingToGuarantee} more traveller${remainingToGuarantee === 1 ? "" : "s"} to guarantee`}
               </span>
-              <span className="text-muted">{dep.seatsLeft} seats left</span>
+              <span className="text-muted">{dep.seatsConfirmed}/{dep.minCapacity} confirmed · {dep.seatsLeft} seats left</span>
             </div>
             <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-ink/10">
               <div className={`h-full rounded-full ${dep.isGuaranteed ? "bg-jade" : "bg-sunset"}`} style={{ width: `${fillPct}%` }} />
@@ -128,37 +144,51 @@ export default function TripDetailPage() {
         </div>
       ) : (
         <p className="mt-6 rounded-2xl border border-line bg-white p-5 text-sm text-muted dark:bg-white/5">
-          You're on the waitlist — we'll place you in a group as soon as space opens.
+          You're on the waitlist — we'll match you into a group and show your fellow travellers here as soon as space opens.
         </p>
       )}
 
-      {/* Co-travellers */}
-      {b.coTravellers && b.coTravellers.length > 0 && (
+      {/* Who's going — fellow travellers in the same slot */}
+      {dep && mates.length > 0 && (
         <div className="mt-6">
-          <h2 className="font-serif text-xl">Your group ({b.coTravellers.length})</h2>
+          <div className="flex items-end justify-between gap-3">
+            <h2 className="font-serif text-xl">Who&apos;s going</h2>
+            <span className="text-xs text-muted">
+              {totalInSlot} traveller{totalInSlot === 1 ? "" : "s"} · {mates.length} part{mates.length === 1 ? "y" : "ies"}
+            </span>
+          </div>
+
           <div className="mt-3 divide-y divide-line overflow-hidden rounded-2xl border border-line bg-white dark:bg-white/5">
-            {b.coTravellers.map((m, i) => (
-              <div key={i} className="flex items-center justify-between gap-3 p-4">
-                <div className="flex items-center gap-3">
-                  <span className="grid h-9 w-9 place-items-center rounded-full bg-ink/5 text-xs font-semibold text-ink">
-                    {m.name.slice(0, 1).toUpperCase()}
+            {mates.map((m, i) => (
+              <div key={i} className={`flex items-center justify-between gap-3 p-4 ${m.isYou ? "bg-gold/5" : ""}`}>
+                <div className="flex min-w-0 items-center gap-3">
+                  <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-full text-xs font-semibold uppercase ${m.isYou ? "bg-gradient-to-br from-gold to-crimson text-white" : "bg-ink/5 text-ink dark:bg-white/10 dark:text-white"}`}>
+                    {m.name.slice(0, 1)}
                   </span>
-                  <div>
-                    <p className="text-sm font-medium">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">
                       {m.name}{m.isYou && <span className="ml-1.5 text-xs text-muted">(you)</span>}
                     </p>
-                    <p className="flex items-center gap-1 text-xs text-muted">
-                      <Phone className="h-3 w-3" /> {m.phone || "—"}
+                    <p className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted">
+                      <span className="inline-flex items-center gap-1"><Phone className="h-3 w-3" /> {m.phone || "—"}</span>
+                      <span className="inline-flex items-center gap-1"><Users className="h-3 w-3" /> {m.partySize} {m.partySize === 1 ? "person" : "people"}</span>
                     </p>
                   </div>
                 </div>
-                <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-semibold ${statusClasses(m.status)}`}>
+                <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-[10px] font-semibold ${statusClasses(m.status)}`}>
                   {statusLabel(m.status)}
                 </span>
               </div>
             ))}
           </div>
-          <p className="mt-2 text-[11px] text-muted">Phone numbers are partly masked for privacy.</p>
+
+          {mates.length === 1 ? (
+            <p className="mt-2 flex items-center gap-1.5 text-[11px] text-muted">
+              <UserCheck className="h-3.5 w-3.5" /> You&apos;re the first in this group — fellow travellers will appear here as they&apos;re matched in.
+            </p>
+          ) : (
+            <p className="mt-2 text-[11px] text-muted">Phone numbers are partly masked for privacy.</p>
+          )}
         </div>
       )}
 
@@ -221,4 +251,33 @@ function Shell({ children }: { children: React.ReactNode }) {
       <div className="mx-auto max-w-2xl">{children}</div>
     </main>
   );
+}
+
+function Stat({ icon: Icon, label, value }: { icon: LucideIcon; label: string; value: string }) {
+  return (
+    <div className="flex items-start gap-2.5">
+      <Icon className="mt-0.5 h-4 w-4 shrink-0 text-muted" />
+      <div className="min-w-0">
+        <p className="text-[11px] uppercase tracking-wide text-muted">{label}</p>
+        <p className="text-sm font-medium">{value}</p>
+      </div>
+    </div>
+  );
+}
+
+function fmtDate(s?: string): string {
+  if (!s) return "—";
+  return new Date(s).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
+}
+
+/** "30 Jun – 5 Jul 2026" (or a single full date when there's no end date). */
+function fmtRange(start: string, end?: string): string {
+  const s = new Date(start);
+  if (!end) {
+    return s.toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "long", year: "numeric" });
+  }
+  const e = new Date(end);
+  const startFmt = s.toLocaleDateString(undefined, { day: "numeric", month: "short" });
+  const endFmt = e.toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
+  return `${startFmt} – ${endFmt}`;
 }
