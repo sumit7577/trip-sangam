@@ -2,17 +2,22 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, Briefcase, CalendarDays, Users, LogIn } from "lucide-react";
+import { ArrowRight, Briefcase, CalendarDays, Users, LogIn, X } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useModal } from "@/lib/modal";
-import { getMyBookings, type Booking } from "@/lib/bookingApi";
+import { toast } from "@/lib/toast";
+import { getMyBookings, cancelBooking, type Booking } from "@/lib/bookingApi";
 import { statusLabel, statusClasses } from "@/lib/bookingStatus";
+
+// Bookings the user has finished with — hidden from "My Trips".
+const TERMINAL = ["cancelled", "declined", "expired"];
 
 export default function TripsPage() {
   const { user, hydrated } = useAuth();
   const { openSignin } = useModal();
   const [bookings, setBookings] = useState<Booking[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [cancelling, setCancelling] = useState<number | null>(null);
 
   useEffect(() => {
     if (!hydrated || !user) return;
@@ -20,6 +25,22 @@ export default function TripsPage() {
       .then(setBookings)
       .catch((e) => setError(e instanceof Error ? e.message : "Failed to load"));
   }, [hydrated, user]);
+
+  async function onCancel(id: number) {
+    if (!window.confirm("Cancel this trip? This frees your spot and can't be undone.")) return;
+    setCancelling(id);
+    try {
+      await cancelBooking(id);
+      setBookings((prev) => (prev ? prev.map((x) => (x.id === id ? { ...x, status: "cancelled" } : x)) : prev));
+      toast("Trip cancelled.", "success");
+    } catch (e) {
+      toast(e instanceof Error ? e.message : "Could not cancel", "error");
+    } finally {
+      setCancelling(null);
+    }
+  }
+
+  const visible = bookings?.filter((b) => !TERMINAL.includes(b.status)) ?? null;
 
   return (
     <main className="min-h-screen bg-sand px-4 pb-24 pt-28 dark:bg-[#0E0E0D] md:pt-32">
@@ -47,7 +68,7 @@ export default function TripsPage() {
           <p className="mt-10 text-sm text-muted">Loading…</p>
         )}
 
-        {bookings && bookings.length === 0 && (
+        {visible && visible.length === 0 && (
           <div className="mt-10 rounded-2xl border border-line bg-white p-8 text-center dark:bg-white/5">
             <p className="text-muted">No trips yet.</p>
             <Link href="/#packages" className="mt-4 inline-flex h-11 items-center gap-2 rounded-xl bg-ink px-6 text-sm font-semibold text-white hover:bg-ink/90">
@@ -57,37 +78,51 @@ export default function TripsPage() {
         )}
 
         <div className="mt-8 space-y-3">
-          {bookings?.map((b) => (
-            <Link key={b.id} href={`/trips/${b.id}`}
-              className="block rounded-2xl border border-line bg-white p-5 transition-colors hover:border-ink/40 dark:bg-white/5">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <h2 className="font-serif text-xl">{b.packageName}</h2>
-                  <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted">
-                    {b.departure && (
+          {visible?.map((b) => (
+            <div key={b.id}
+              className="relative rounded-2xl border border-line bg-white p-5 transition-colors hover:border-ink/40 dark:bg-white/5">
+              {/* Whole-card link sits behind the content; the Cancel button stays clickable above it. */}
+              <Link href={`/trips/${b.id}`} className="absolute inset-0 z-0" aria-label={`View ${b.packageName}`} />
+              <div className="pointer-events-none relative">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <h2 className="font-serif text-xl">{b.packageName}</h2>
+                    <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted">
+                      {b.departure && (
+                        <span className="inline-flex items-center gap-1">
+                          <CalendarDays className="h-3.5 w-3.5" />
+                          {new Date(b.departure.startDate).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })}
+                          {" "}· Group {b.departure.groupLabel}
+                        </span>
+                      )}
                       <span className="inline-flex items-center gap-1">
-                        <CalendarDays className="h-3.5 w-3.5" />
-                        {new Date(b.departure.startDate).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })}
-                        {" "}· Group {b.departure.groupLabel}
+                        <Users className="h-3.5 w-3.5" /> {b.partySize} traveller{b.partySize > 1 ? "s" : ""}
                       </span>
-                    )}
-                    <span className="inline-flex items-center gap-1">
-                      <Users className="h-3.5 w-3.5" /> {b.partySize} traveller{b.partySize > 1 ? "s" : ""}
-                    </span>
+                    </div>
                   </div>
+                  <span className={`shrink-0 rounded-full px-3 py-1 text-[11px] font-semibold ${statusClasses(b.status)}`}>
+                    {statusLabel(b.status)}
+                  </span>
                 </div>
-                <span className={`shrink-0 rounded-full px-3 py-1 text-[11px] font-semibold ${statusClasses(b.status)}`}>
-                  {statusLabel(b.status)}
-                </span>
+                {b.departure && (
+                  <p className="mt-3 text-xs text-muted">
+                    {b.departure.isGuaranteed
+                      ? "✅ Departure guaranteed"
+                      : `${b.departure.seatsConfirmed}/${b.departure.minCapacity} confirmed — forming`}
+                  </p>
+                )}
               </div>
-              {b.departure && (
-                <p className="mt-3 text-xs text-muted">
-                  {b.departure.isGuaranteed
-                    ? "✅ Departure guaranteed"
-                    : `${b.departure.seatsConfirmed}/${b.departure.minCapacity} confirmed — forming`}
-                </p>
+
+              {b.status !== "confirmed" && (
+                <button
+                  onClick={() => onCancel(b.id)}
+                  disabled={cancelling === b.id}
+                  className="relative z-10 mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-crimson transition-colors hover:underline disabled:opacity-50"
+                >
+                  <X className="h-3.5 w-3.5" /> {cancelling === b.id ? "Cancelling…" : "Cancel trip"}
+                </button>
               )}
-            </Link>
+            </div>
           ))}
         </div>
       </div>

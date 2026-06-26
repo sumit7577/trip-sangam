@@ -22,7 +22,7 @@ from .serializers import (
 from .throttles import WebhookRateThrottle
 
 # Booking actions that mutate state / cost money → rate-limited per user.
-_THROTTLED_ACTIONS = {"create", "accept", "decline", "pay_deposit", "pay_balance", "travellers"}
+_THROTTLED_ACTIONS = {"create", "accept", "decline", "cancel", "pay_deposit", "pay_balance", "travellers"}
 
 logger = logging.getLogger(__name__)
 
@@ -160,6 +160,24 @@ class BookingViewSet(
             return Response({"detail": str(exc), "code": "not_declinable"},
                             status=status.HTTP_409_CONFLICT)
         booking.refresh_from_db()
+        return Response(BookingDetailSerializer(booking, context=self.get_serializer_context()).data)
+
+    @action(detail=True, methods=["post"])
+    def cancel(self, request, pk=None):
+        """Traveller cancels an un-paid booking (pending / accepted / waitlisted).
+        Releases any held seats. Confirmed bookings need the refund path, so they
+        can't be self-cancelled here."""
+        booking = self.get_object()
+        if booking.status == Booking.STATUS_CONFIRMED:
+            return Response(
+                {"detail": "This booking is confirmed — contact us to cancel and arrange a refund.",
+                 "code": "already_confirmed"},
+                status=status.HTTP_409_CONFLICT,
+            )
+        # Already gone → idempotent success.
+        if booking.status not in (Booking.STATUS_CANCELLED, Booking.STATUS_EXPIRED, Booking.STATUS_DECLINED):
+            services.cancel_booking(booking)
+            booking.refresh_from_db()
         return Response(BookingDetailSerializer(booking, context=self.get_serializer_context()).data)
 
     # --- travellers (per-head details for permits) -------------------------

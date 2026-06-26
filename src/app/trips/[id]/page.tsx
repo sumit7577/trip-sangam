@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import {
   ArrowLeft, CalendarDays, Users, ShieldCheck, CheckCircle2, Phone, Clock, CreditCard, X,
   IndianRupee, CalendarClock, UserCheck,
@@ -12,13 +12,14 @@ import { useAuth } from "@/lib/auth";
 import { useModal } from "@/lib/modal";
 import { toast } from "@/lib/toast";
 import {
-  getBooking, acceptBooking, declineBooking, payBalance, type Booking,
+  getBooking, acceptBooking, declineBooking, cancelBooking, payBalance, type Booking,
 } from "@/lib/bookingApi";
 import { statusLabel, statusClasses } from "@/lib/bookingStatus";
 import { TravellersForm } from "@/components/trips/TravellersForm";
 
 export default function TripDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const router = useRouter();
   const { user, hydrated } = useAuth();
   const { openSignin } = useModal();
   const [b, setB] = useState<Booking | null>(null);
@@ -72,6 +73,19 @@ export default function TripDetailPage() {
     }
   }
 
+  async function onCancel() {
+    if (!window.confirm("Cancel this booking? This frees your spot and can't be undone.")) return;
+    setBusy(true);
+    try {
+      await cancelBooking(id);
+      toast("Booking cancelled.", "success");
+      router.push("/trips");
+    } catch (e) {
+      toast(e instanceof Error ? e.message : "Could not cancel", "error");
+      setBusy(false);
+    }
+  }
+
   if (hydrated && !user) {
     return (
       <Shell>
@@ -93,6 +107,7 @@ export default function TripDetailPage() {
   const canAct = b.status === "pending";
   const isAccepted = b.status === "accepted";
   const isConfirmed = b.status === "confirmed";
+  const canCancel = !["confirmed", "cancelled", "declined", "expired"].includes(b.status);
 
   return (
     <Shell>
@@ -240,6 +255,16 @@ export default function TripDetailPage() {
 
       {(isAccepted || isConfirmed) && (
         <TravellersForm bookingId={b.id} partySize={b.partySize} />
+      )}
+
+      {canCancel && (
+        <div className="mt-8 border-t border-line pt-5">
+          <button onClick={onCancel} disabled={busy}
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-crimson transition-colors hover:underline disabled:opacity-50">
+            <X className="h-4 w-4" /> Cancel this booking
+          </button>
+          <p className="mt-1 text-xs text-muted">Frees your spot in the group. This can&apos;t be undone.</p>
+        </div>
       )}
     </Shell>
   );

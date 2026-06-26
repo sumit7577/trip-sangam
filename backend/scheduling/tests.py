@@ -293,6 +293,36 @@ class BookingApiTests(TestCase):
         self.assertEqual(res.status_code, 422)
         self.assertEqual(res.json()["code"], "party_too_large")
 
+    def test_cancel_unpaid_booking_releases_seat(self):
+        bid = self._book(party=2).json()["id"]
+        res = self.client.post(f"/api/bookings/{bid}/cancel/")
+        self.assertEqual(res.status_code, 200, res.content)
+        self.assertEqual(res.json()["status"], "cancelled")
+        self.assertEqual(Departure.objects.get(package=self.pkg, start_date=self.date).seats_held, 0)
+
+    def test_cancel_is_idempotent(self):
+        bid = self._book(party=2).json()["id"]
+        self.client.post(f"/api/bookings/{bid}/cancel/")
+        res = self.client.post(f"/api/bookings/{bid}/cancel/")  # again
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(res.json()["status"], "cancelled")
+
+    def test_cannot_cancel_confirmed_booking(self):
+        bid = self._book(party=2).json()["id"]
+        b = Booking.objects.get(id=bid)
+        services.accept_booking(b)
+        services.confirm_booking(b)
+        res = self.client.post(f"/api/bookings/{bid}/cancel/")
+        self.assertEqual(res.status_code, 409)
+        self.assertEqual(res.json()["code"], "already_confirmed")
+
+    def test_cannot_cancel_someone_elses_booking(self):
+        bid = self._book(party=2).json()["id"]
+        other = make_user(email="mallory@x.com", phone="9000000001")
+        oc = APIClient(); oc.force_authenticate(other)
+        res = oc.post(f"/api/bookings/{bid}/cancel/")
+        self.assertEqual(res.status_code, 404)  # not in their queryset
+
 
 # ---------------------------------------------------------------------------
 # Payments (PhonePe mocked)
