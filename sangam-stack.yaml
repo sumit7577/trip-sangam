@@ -68,12 +68,41 @@ services:
       - EMAIL_USE_TLS=${EMAIL_USE_TLS:-true}
       - DEFAULT_FROM_EMAIL=${DEFAULT_FROM_EMAIL:-Trip Sangam <noreply@tripsangam.com>}
       - SITE_PUBLIC_URL=https://${SITE_DOMAIN}
+
+      # Postgres — when POSTGRES_DB is set in the VM .env the app uses Postgres;
+      # blank ⇒ falls back to the SQLite volume below (clean rollback path).
+      - POSTGRES_DB=${POSTGRES_DB:-}
+      - POSTGRES_USER=${POSTGRES_USER:-sangam}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-}
+      - POSTGRES_HOST=${POSTGRES_HOST:-sangam-db-postgres}
+      - POSTGRES_PORT=${POSTGRES_PORT:-5432}
     volumes:
       - sangam-db:/app/data
       - sangam-static:/app/staticfiles
       - sangam-media:/app/media
+    depends_on:
+      sangam-db-postgres:
+        condition: service_healthy
     networks:
       - proxy
+      - sangam-net
+
+  sangam-db-postgres:
+    image: postgres:16
+    container_name: sangam-postgres
+    restart: always
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB:-sangam}
+      - POSTGRES_USER=${POSTGRES_USER:-sangam}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-sangam}
+    volumes:
+      - sangam-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-sangam} -d ${POSTGRES_DB:-sangam}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    networks:
       - sangam-net
 
   sangam-frontend:
@@ -118,3 +147,4 @@ volumes:
   sangam-db:
   sangam-static:
   sangam-media:
+  sangam-pgdata:
