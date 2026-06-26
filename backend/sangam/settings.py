@@ -364,16 +364,54 @@ JAZZMIN_SETTINGS = {
     },
     "default_icon_parents": "fas fa-chevron-circle-right",
     "default_icon_children": "fas fa-circle",
+    # User (top-right) menu links.
+    "usermenu_links": [
+        {"name": "CMS (Wagtail)", "url": "/admin/", "new_window": True},
+        {"model": "auth.user"},
+    ],
+    "show_sidebar": True,
+    "navigation_expanded": True,
     "related_modal_active": True,
     "changeform_format": "horizontal_tabs",
+    "changeform_format_overrides": {"auth.user": "collapsible"},
+    "language_chooser": False,
+    # Live theme/colour picker in the admin sidebar (superuser convenience).
+    # It writes a JAZZMIN_UI_TWEAKS dict you can paste below. Set False to hide.
+    "show_ui_builder": True,
 }
 
+# Colours & theme. Tweak live via the UI builder (cog on the admin sidebar),
+# then paste the generated dict here to make it permanent. Warm/dark palette
+# chosen to sit closer to Sangam's brand (crimson accent, dark chrome).
 JAZZMIN_UI_TWEAKS = {
-    "theme": "flatly",
-    "dark_mode_theme": "darkly",
-    "navbar": "navbar-dark",
     "navbar_small_text": False,
-    "sidebar": "sidebar-dark-primary",
+    "footer_small_text": False,
+    "body_small_text": False,
+    "brand_small_text": False,
+    "brand_colour": "navbar-dark",
+    "accent": "accent-danger",          # crimson-ish accent on links/highlights
+    "navbar": "navbar-dark",            # dark top bar
+    "no_navbar_border": False,
+    "navbar_fixed": True,
+    "layout_boxed": False,
+    "footer_fixed": False,
+    "sidebar_fixed": True,
+    "sidebar": "sidebar-dark-primary",  # dark sidebar
+    "sidebar_nav_small_text": False,
+    "sidebar_disable_expand": False,
+    "sidebar_nav_child_indent": True,
     "sidebar_nav_compact_style": True,
+    "sidebar_nav_legacy_style": False,
+    "sidebar_nav_flat_style": False,
+    "theme": "litera",                  # clean, neutral base
+    "dark_mode_theme": "darkly",
+    "button_classes": {
+        "primary": "btn-primary",
+        "secondary": "btn-secondary",
+        "info": "btn-info",
+        "warning": "btn-warning",
+        "danger": "btn-danger",
+        "success": "btn-success",
+    },
     "actions_sticky_top": True,
 }
