@@ -71,6 +71,16 @@ class TravellerInline(admin.TabularInline):
     extra = 0
 
 
+@admin.register(BookingTraveller)
+class BookingTravellerAdmin(admin.ModelAdmin):
+    """Standalone list so travellers are searchable across bookings
+    (e.g. find a head by name or id on a manifest)."""
+
+    list_display = ("full_name", "age", "gender", "booking", "created_at")
+    list_filter = ("gender",)
+    search_fields = ("full_name", "id_number", "booking__lead_name", "booking__lead_phone")
+
+
 @admin.register(Booking)
 class BookingAdmin(admin.ModelAdmin):
     inlines = [TravellerInline, PaymentInline]

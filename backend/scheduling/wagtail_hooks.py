@@ -4,7 +4,7 @@ dashboard, so operators don't need to know the separate /django-admin/ URL.
 These link to the Django admin change-lists (which carry the rich inlines and
 actions like "Mark deposit received"). Shown to superusers only.
 """
-from django.urls import reverse
+from django.urls import NoReverseMatch, reverse
 from wagtail import hooks
 from wagtail.admin.menu import Menu, MenuItem, SubmenuMenuItem
 
@@ -14,15 +14,26 @@ class SuperuserMenuItem(MenuItem):
         return request.user.is_superuser
 
 
+# (label, admin url-name, icon, order). Built defensively: any entry whose URL
+# can't be resolved (e.g. the model isn't registered in the Django admin) is
+# skipped rather than raising — a single bad link must never 500 the whole
+# Wagtail sidebar, which renders all menu items in one pass.
+_LINKS = [
+    ("Bookings", "admin:scheduling_booking_changelist", "list-ul", 10),
+    ("Departures", "admin:scheduling_departure_changelist", "date", 20),
+    ("Payments", "admin:scheduling_payment_changelist", "form", 30),
+    ("Travellers", "admin:scheduling_bookingtraveller_changelist", "group", 40),
+    ("Users", "admin:auth_user_changelist", "user", 50),
+]
+
+
 @hooks.register("register_admin_menu_item")
 def register_bookings_menu():
-    menu = Menu(
-        items=[
-            SuperuserMenuItem("Bookings", reverse("admin:scheduling_booking_changelist"), icon_name="list-ul", order=10),
-            SuperuserMenuItem("Departures", reverse("admin:scheduling_departure_changelist"), icon_name="date", order=20),
-            SuperuserMenuItem("Payments", reverse("admin:scheduling_payment_changelist"), icon_name="form", order=30),
-            SuperuserMenuItem("Travellers", reverse("admin:scheduling_bookingtraveller_changelist"), icon_name="group", order=40),
-            SuperuserMenuItem("Users", reverse("admin:auth_user_changelist"), icon_name="user", order=50),
-        ]
-    )
-    return SubmenuMenuItem("Bookings", menu, icon_name="calendar", order=200)
+    items = []
+    for label, url_name, icon, order in _LINKS:
+        try:
+            url = reverse(url_name)
+        except NoReverseMatch:
+            continue
+        items.append(SuperuserMenuItem(label, url, icon_name=icon, order=order))
+    return SubmenuMenuItem("Bookings", Menu(items=items), icon_name="calendar", order=200)
