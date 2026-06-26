@@ -67,6 +67,9 @@ INSTALLED_APPS = [
     "rest_framework",
     "corsheaders",
 
+    # jazzmin must precede django.contrib.admin so it can override the admin
+    # templates. It themes /django-admin/ only — the Wagtail admin is untouched.
+    "jazzmin",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -316,4 +319,61 @@ LOGGING = {
     "disable_existing_loggers": False,
     "handlers": {"console": {"class": "logging.StreamHandler"}},
     "root": {"handlers": ["console"], "level": "INFO"},
+}
+
+# ---------------------------------------------------------------------------
+# Jazzmin — themes the Django admin (/django-admin/) where the booking tables
+# live. The Wagtail CMS admin (/admin/) is a separate app and is unaffected.
+# ---------------------------------------------------------------------------
+JAZZMIN_SETTINGS = {
+    "site_title": "Sangam Admin",
+    "site_header": "Sangam Travel",
+    "site_brand": "Sangam Travel",
+    "site_logo": None,
+    "welcome_sign": "Sangam Travel — operations dashboard",
+    "copyright": "Sangam Travel",
+    "search_model": ["scheduling.Booking", "auth.User"],
+    # Link back to the Wagtail CMS + the live site from the admin top bar.
+    "topmenu_links": [
+        {"name": "Bookings", "model": "scheduling.booking"},
+        {"name": "CMS (Wagtail)", "url": "/admin/", "new_window": True},
+        {"name": "Live site", "url": "https://tripsangam.com", "new_window": True},
+    ],
+    # Operations apps first, CMS/auth plumbing after.
+    "order_with_respect_to": [
+        "scheduling",
+        "scheduling.departure",
+        "scheduling.booking",
+        "scheduling.payment",
+        "scheduling.bookingtraveller",
+        "bookings",
+        "accounts",
+        "auth",
+    ],
+    # FontAwesome 5 free icons per model.
+    "icons": {
+        "auth": "fas fa-users-cog",
+        "auth.user": "fas fa-user",
+        "auth.Group": "fas fa-users",
+        "accounts.Profile": "fas fa-id-card",
+        "scheduling.Departure": "fas fa-calendar-day",
+        "scheduling.Booking": "fas fa-receipt",
+        "scheduling.Payment": "fas fa-money-bill-wave",
+        "scheduling.BookingTraveller": "fas fa-hiking",
+        "bookings.BookingInquiry": "fas fa-envelope-open-text",
+    },
+    "default_icon_parents": "fas fa-chevron-circle-right",
+    "default_icon_children": "fas fa-circle",
+    "related_modal_active": True,
+    "changeform_format": "horizontal_tabs",
+}
+
+JAZZMIN_UI_TWEAKS = {
+    "theme": "flatly",
+    "dark_mode_theme": "darkly",
+    "navbar": "navbar-dark",
+    "navbar_small_text": False,
+    "sidebar": "sidebar-dark-primary",
+    "sidebar_nav_compact_style": True,
+    "actions_sticky_top": True,
 }
