@@ -19,6 +19,7 @@ interface AuthState {
   hydrated: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (input: { email: string; password: string; fullName: string; phone: string }) => Promise<void>;
+  updateProfile: (input: { fullName?: string; phone?: string }) => Promise<void>;
   logout: () => void;
   setHydrated: () => void;
 }
@@ -62,6 +63,16 @@ export const useAuth = create<AuthState>()(
         if (!res.ok) throw new Error(firstError(await res.json().catch(() => ({}))));
         const d = await res.json();
         set({ user: d.user, access: d.access, refresh: d.refresh });
+      },
+
+      async updateProfile(input) {
+        const res = await authFetch("/api/auth/me/", {
+          method: "PATCH",
+          body: JSON.stringify(input),
+        });
+        if (!res.ok) throw new Error(firstError(await res.json().catch(() => ({}))));
+        const user = await res.json();
+        set({ user });
       },
 
       logout() {

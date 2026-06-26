@@ -4,10 +4,11 @@ import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence, useScroll, useMotionValueEvent } from "framer-motion";
-import { Menu, X, ChevronDown, Phone, MessageCircle, Compass, Sparkles, BookOpen, Newspaper, Briefcase, LogOut } from "lucide-react";
+import { Menu, X, ChevronDown, Phone, MessageCircle, Compass, Sparkles, BookOpen, Newspaper, Briefcase, LogOut, UserRound } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
+import { AccountMenu, initials } from "@/components/layout/AccountMenu";
 import { useCurrency, type Currency } from "@/lib/currency";
 import { useModal } from "@/lib/modal";
 import { useAuth } from "@/lib/auth";
@@ -111,28 +112,9 @@ export function Header() {
           <ThemeToggle dark={!scrolled} />
           <CurrencySwitcher dark={!scrolled} />
           {hydrated && user ? (
-            <>
-              <Link
-                href="/trips"
-                className={cn(
-                  "hidden h-10 items-center gap-1.5 rounded-xl px-4 text-sm font-medium transition-colors lg:inline-flex",
-                  scrolled ? "text-ink hover:bg-ink/5" : "text-white hover:bg-white/10"
-                )}
-              >
-                <Briefcase className="h-4 w-4" /> My Trips
-              </Link>
-              <button
-                onClick={logout}
-                aria-label="Log out"
-                title="Log out"
-                className={cn(
-                  "hidden h-10 w-10 place-items-center rounded-xl transition-colors lg:grid",
-                  scrolled ? "text-ink hover:bg-ink/5" : "text-white hover:bg-white/10"
-                )}
-              >
-                <LogOut className="h-4 w-4" />
-              </button>
-            </>
+            <div className="hidden lg:block">
+              <AccountMenu scrolled={scrolled} />
+            </div>
           ) : (
             <button
               onClick={openSignin}
@@ -263,10 +245,46 @@ export function Header() {
                 className="relative border-t border-white/40 bg-white/30 px-4 pt-4 backdrop-blur"
                 style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 16px)" }}
               >
-                <div className="flex flex-col gap-2">
-                  <Button variant="outline" onClick={() => { setOpen(false); openSignin(); }}>Sign In</Button>
-                  <Button onClick={() => { setOpen(false); scrollToPackages(); }}>Book Now</Button>
-                </div>
+                {hydrated && user ? (
+                  <div className="flex flex-col gap-2.5">
+                    <div className="flex items-center gap-3 rounded-2xl border border-ink/8 bg-white/55 px-3 py-3">
+                      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-gradient-to-br from-gold to-crimson text-sm font-semibold uppercase text-white shadow-soft">
+                        {initials(user.fullName, user.email)}
+                      </span>
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-ink">{user.fullName || user.email.split("@")[0]}</p>
+                        <p className="truncate text-xs text-muted">{user.email}</p>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Link
+                        href="/account"
+                        onClick={() => setOpen(false)}
+                        className="inline-flex h-11 items-center justify-center gap-1.5 rounded-xl border border-ink/10 bg-white/60 text-sm font-medium text-ink transition-colors hover:bg-white"
+                      >
+                        <UserRound className="h-4 w-4" /> Profile
+                      </Link>
+                      <Link
+                        href="/trips"
+                        onClick={() => setOpen(false)}
+                        className="inline-flex h-11 items-center justify-center gap-1.5 rounded-xl border border-ink/10 bg-white/60 text-sm font-medium text-ink transition-colors hover:bg-white"
+                      >
+                        <Briefcase className="h-4 w-4" /> My Trips
+                      </Link>
+                    </div>
+                    <button
+                      onClick={() => { setOpen(false); logout(); }}
+                      className="inline-flex h-11 items-center justify-center gap-1.5 rounded-xl text-sm font-medium text-crimson transition-colors hover:bg-crimson/5"
+                    >
+                      <LogOut className="h-4 w-4" /> Log out
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-2">
+                    <Button variant="outline" onClick={() => { setOpen(false); openSignin(); }}>Sign In</Button>
+                    <Button onClick={() => { setOpen(false); scrollToPackages(); }}>Book Now</Button>
+                  </div>
+                )}
                 <div className="mt-4 flex items-center justify-center gap-4 text-[11px] text-muted">
                   <a href="tel:+917678538192" className="inline-flex items-center gap-1.5 transition-colors hover:text-ink">
                     <Phone className="h-3.5 w-3.5" /> Call us
