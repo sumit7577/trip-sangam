@@ -4,6 +4,7 @@ import { Providers } from "./providers";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { ChatBubble } from "@/components/layout/ChatBubble";
+import { BottomNav } from "@/components/layout/BottomNav";
 import "./globals.css";
 
 const fraunces = Fraunces({
@@ -60,7 +61,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <Header />
           <main className="w-full overflow-x-hidden">{children}</main>
           <Footer />
+          {/* Spacer so the fixed mobile bottom bar never covers footer content. */}
+          <div
+            aria-hidden
+            className="h-16 lg:hidden"
+            style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+          />
           <ChatBubble />
+          <BottomNav />
         </Providers>
       </body>
     </html>
