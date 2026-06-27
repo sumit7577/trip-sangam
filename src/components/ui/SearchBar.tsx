@@ -2,15 +2,16 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { MapPin, Calendar, Users, Search, Minus, Plus, ChevronDown } from "lucide-react";
-import { toast } from "@/lib/toast";
 import type { Package } from "@/types";
 import { cn } from "@/lib/utils";
 
 type Popover = "dest" | "trav" | null;
 
 export function SearchBar({ packages }: { packages: Package[] }) {
+  const router = useRouter();
   const [destination, setDestination] = useState("");
   const [date, setDate] = useState("");
   const [adults, setAdults] = useState(2);
@@ -72,14 +73,12 @@ export function SearchBar({ packages }: { packages: Package[] }) {
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setPopover(null);
-    const el = document.getElementById("packages");
-    if (el) {
-      el.scrollIntoView({ behavior: "smooth", block: "start" });
-      const msg = destination
-        ? `Searching "${destination}" for ${totalTravelers} traveler${totalTravelers > 1 ? "s" : ""}…`
-        : "Showing all destinations — refine with the filter pills";
-      toast(msg, "default");
-    }
+    const params = new URLSearchParams();
+    if (destination.trim()) params.set("q", destination.trim());
+    if (totalTravelers) params.set("travellers", String(totalTravelers));
+    if (date) params.set("date", date);
+    const qs = params.toString();
+    router.push(qs ? `/packages?${qs}` : "/packages");
   }
 
   return (
