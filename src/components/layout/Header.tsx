@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/Button";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
 import { AccountMenu, initials } from "@/components/layout/AccountMenu";
+import { LoginMenu } from "@/components/layout/LoginMenu";
 import { useCurrency, type Currency } from "@/lib/currency";
 import { useModal } from "@/lib/modal";
 import { useAuth } from "@/lib/auth";
@@ -139,15 +140,9 @@ export function Header() {
               <AccountMenu scrolled={scrolled} />
             </div>
           ) : (
-            <button
-              onClick={openSignin}
-              className={cn(
-                "hidden h-10 items-center rounded-xl px-4 text-sm font-medium transition-colors lg:inline-flex",
-                scrolled ? "text-ink hover:bg-ink/5" : "text-white hover:bg-white/10"
-              )}
-            >
-              Sign In
-            </button>
+            <div className="hidden lg:block">
+              <LoginMenu scrolled={scrolled} onSignin={openSignin} />
+            </div>
           )}
           <Button size="sm" onClick={scrollToPackages} className="hidden h-10 lg:inline-flex">Book Now</Button>
           <button
