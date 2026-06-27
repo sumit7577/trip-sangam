@@ -20,7 +20,7 @@ import { useModal } from "@/lib/modal";
 import { useAuth } from "@/lib/auth";
 import { useCurrency, formatPrice } from "@/lib/currency";
 import { toast } from "@/lib/toast";
-import { createBooking } from "@/lib/bookingApi";
+import { createBooking, type Booking } from "@/lib/bookingApi";
 import { ModalShell } from "./ModalShell";
 
 export function BookingModal() {
@@ -33,14 +33,14 @@ export function BookingModal() {
   const [travelers, setTravelers] = useState(booking?.initialTravelers ?? 2);
   const [step, setStep] = useState<"form" | "success">("form");
   const [loading, setLoading] = useState(false);
-  const [bookingId, setBookingId] = useState<number | null>(null);
+  const [created, setCreated] = useState<Booking | null>(null);
 
   useEffect(() => {
     if (booking) {
       setDate(booking.initialDate ?? "");
       setTravelers(booking.initialTravelers ?? 2);
       setStep("form");
-      setBookingId(null);
+      setCreated(null);
     }
   }, [booking]);
 
@@ -49,6 +49,14 @@ export function BookingModal() {
 
   const subtotal = pkg.priceINR * travelers;
   const deposit = Math.round(subtotal * 0.5);
+  // A party of 6+ already meets the minimum, so its group forms instantly.
+  const groupFormsInstantly = travelers >= 6;
+
+  // Success-state facts derived from the created booking's departure.
+  const dep = created?.departure ?? null;
+  const seatsTaken = dep ? Math.max(dep.seatsConfirmed, dep.maxCapacity - dep.seatsLeft) : 0;
+  const formed = dep ? seatsTaken >= dep.minCapacity : false;
+  const remainingToForm = dep ? Math.max(0, dep.minCapacity - seatsTaken) : 0;
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -58,12 +66,12 @@ export function BookingModal() {
     }
     setLoading(true);
     try {
-      const created = await createBooking({
+      const newBooking = await createBooking({
         packageSlug: pkg.slug,
         partySize: travelers,
         preferredStartDate: date || undefined,
       });
-      setBookingId(created.id);
+      setCreated(newBooking);
       setStep("success");
     } catch (err) {
       toast(err instanceof Error ? err.message : "Could not book — please try again", "error");
@@ -140,11 +148,19 @@ export function BookingModal() {
                   {/* How grouping works */}
                   <div className="flex items-start gap-2.5 rounded-2xl bg-sand p-4 text-xs text-muted">
                     <Users className="mt-0.5 h-4 w-4 shrink-0 text-ink" />
-                    <p>
-                      We run departures in groups of <span className="font-medium text-ink">6–18</span> travellers.
-                      You'll be placed in a forming group — once it's ready you can see your co-travellers, then
-                      accept and pay a <span className="font-medium text-ink">50% deposit</span> to confirm your seat.
-                    </p>
+                    {groupFormsInstantly ? (
+                      <p>
+                        Your group of <span className="font-medium text-ink">{travelers}</span> already meets the
+                        minimum, so it <span className="font-medium text-ink">forms instantly</span> — you can confirm
+                        your trip with a <span className="font-medium text-ink">50% deposit</span> right after booking.
+                      </p>
+                    ) : (
+                      <p>
+                        We run departures in groups of <span className="font-medium text-ink">6–18</span> travellers.
+                        You'll be placed in a forming group — once it's ready you can see your co-travellers, then
+                        accept and pay a <span className="font-medium text-ink">50% deposit</span> to confirm your seat.
+                      </p>
+                    )}
                   </div>
 
                   {/* Price */}
@@ -177,24 +193,66 @@ export function BookingModal() {
               </motion.div>
             ) : (
               <motion.div key="success" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                className="flex flex-col items-center px-6 py-14 text-center md:px-8 md:py-16">
-                <motion.span initial={{ scale: 0, rotate: -90 }} animate={{ scale: 1, rotate: 0 }}
-                  transition={{ type: "spring", stiffness: 240, damping: 16 }}
-                  className="grid h-20 w-20 place-items-center rounded-full bg-jade/15 text-jade">
-                  <CheckCircle2 className="h-10 w-10" />
-                </motion.span>
-                <h2 className="mt-6 font-serif text-3xl tracking-tight">You're in a group.</h2>
-                <p className="mt-3 max-w-sm text-sm leading-relaxed text-muted">
-                  We've added you to a forming group for{" "}
-                  <span className="font-medium text-ink">{pkg.name}</span>. Track it under{" "}
-                  <span className="font-medium text-ink">My Trips</span> — once it fills you can meet your
-                  co-travellers and confirm with a deposit.
+                className="relative flex flex-col items-center overflow-hidden px-6 py-12 text-center md:px-8 md:py-14">
+                {/* Ambient glow + film grain for a futuristic feel */}
+                <div className={`pointer-events-none absolute -top-12 left-1/2 h-56 w-56 -translate-x-1/2 rounded-full blur-3xl ${formed ? "bg-jade/25" : "bg-gold/20"}`} />
+                <div className="pointer-events-none absolute inset-0 bg-grain opacity-[0.05] mix-blend-overlay" />
+
+                {/* Animated icon with a pulsing ring */}
+                <div className="relative grid place-items-center">
+                  <motion.span
+                    className={`absolute h-20 w-20 rounded-full ${formed ? "bg-jade/25" : "bg-gold/25"}`}
+                    animate={{ scale: [1, 1.7, 1], opacity: [0.55, 0, 0.55] }}
+                    transition={{ duration: 2.4, repeat: Infinity, ease: "easeOut" }}
+                  />
+                  <motion.span initial={{ scale: 0, rotate: -90 }} animate={{ scale: 1, rotate: 0 }}
+                    transition={{ type: "spring", stiffness: 240, damping: 16 }}
+                    className={`relative grid h-20 w-20 place-items-center rounded-full shadow-soft ${formed ? "bg-jade/15 text-jade" : "bg-gold/15 text-gold-600"}`}>
+                    {formed ? <ShieldCheck className="h-10 w-10" /> : <CheckCircle2 className="h-10 w-10" />}
+                  </motion.span>
+                </div>
+
+                <h2 className={`relative mt-6 font-serif text-3xl tracking-tight ${formed ? "text-jade" : ""}`}>
+                  {formed ? "Your trip is confirmed 🎉" : "You're in a group."}
+                </h2>
+                <p className="relative mt-3 max-w-sm text-sm leading-relaxed text-muted">
+                  {formed ? (
+                    <>
+                      Your group for <span className="font-medium text-ink">{pkg.name}</span> is ready. Lock your seat
+                      now with a 50% deposit and meet your co-travellers under{" "}
+                      <span className="font-medium text-ink">My Trips</span>.
+                    </>
+                  ) : (
+                    <>
+                      We've added you to a forming group for{" "}
+                      <span className="font-medium text-ink">{pkg.name}</span>. Track it under{" "}
+                      <span className="font-medium text-ink">My Trips</span> — once it fills you can meet your
+                      co-travellers and confirm with a deposit.
+                    </>
+                  )}
                 </p>
+
+                {/* Status chips */}
+                <div className="relative mt-5 flex flex-wrap items-center justify-center gap-2 text-[11px]">
+                  <span className="inline-flex items-center gap-1 rounded-full border border-line px-2.5 py-1 font-medium text-muted">
+                    <Users className="h-3 w-3" /> {created?.partySize ?? travelers} traveller{(created?.partySize ?? travelers) > 1 ? "s" : ""}
+                  </span>
+                  {dep && (
+                    <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 font-semibold ${formed ? "bg-jade/15 text-jade" : "bg-gold/15 text-gold-600"}`}>
+                      {formed ? (
+                        <><ShieldCheck className="h-3 w-3" /> Group formed</>
+                      ) : (
+                        <><Clock className="h-3 w-3" /> {remainingToForm} more to form</>
+                      )}
+                    </span>
+                  )}
+                </div>
+
                 <button
-                  onClick={() => { closeBooking(); router.push(bookingId ? `/trips/${bookingId}` : "/trips"); }}
-                  className="mt-8 inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-ink text-sm font-semibold text-white hover:bg-ink/90"
+                  onClick={() => { closeBooking(); router.push(created ? `/trips/${created.id}` : "/trips"); }}
+                  className={`relative mt-8 inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl text-sm font-semibold text-white shadow-soft transition ${formed ? "bg-jade hover:brightness-110" : "bg-ink hover:bg-ink/90"}`}
                 >
-                  View my trip <ArrowRight className="h-4 w-4" />
+                  {formed ? "Confirm with deposit" : "View my trip"} <ArrowRight className="h-4 w-4" />
                 </button>
               </motion.div>
             )}
