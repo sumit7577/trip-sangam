@@ -5,11 +5,12 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import {
   UserRound, Mail, Phone, Check, LogIn, Briefcase, LogOut, Camera,
-  MapPin, IdCard, Cake, Users2, ShieldAlert, Loader2, Sparkles,
+  MapPin, IdCard, Cake, Users2, ShieldAlert, Loader2, Sparkles, Calendar,
 } from "lucide-react";
 import { useAuth, type ProfileInput } from "@/lib/auth";
 import { useModal } from "@/lib/modal";
 import { toast } from "@/lib/toast";
+import { cn } from "@/lib/utils";
 import { initials } from "@/components/layout/AccountMenu";
 
 type Form = {
@@ -203,8 +204,8 @@ export default function AccountPage() {
                   onChange={(v) => set("email", v)} placeholder="you@example.com" />
                 <Select icon={<Users2 className="h-4 w-4" />} label="Gender" value={form.gender}
                   onChange={(v) => set("gender", v)} options={["", "Male", "Female", "Other", "Prefer not to say"]} />
-                <Input icon={<Cake className="h-4 w-4" />} label="Date of birth" type="date" value={form.dateOfBirth}
-                  onChange={(v) => set("dateOfBirth", v)} placeholder="" />
+                <DateField icon={<Cake className="h-4 w-4" />} label="Date of birth" value={form.dateOfBirth}
+                  onChange={(v) => set("dateOfBirth", v)} />
                 <Input icon={<MapPin className="h-4 w-4" />} label="City" value={form.city}
                   onChange={(v) => set("city", v)} placeholder="e.g. Raxaul" />
                 <Input icon={<MapPin className="h-4 w-4" />} label="State" value={form.state}
@@ -288,10 +289,47 @@ function Input({
   return (
     <div>
       <Label>{label}</Label>
-      <div className="flex items-center gap-2 rounded-xl border border-ink/10 bg-sand/40 px-3 focus-within:border-ink/30 dark:border-white/10 dark:bg-white/5">
+      <div className="flex items-center gap-2 rounded-xl border border-ink/10 bg-white/55 px-3 transition-all focus-within:border-ink/40 focus-within:bg-white focus-within:shadow-soft focus-within:ring-2 focus-within:ring-ink/[0.06] dark:border-white/10 dark:bg-white/5 dark:focus-within:bg-white/10">
         <span className="shrink-0 text-muted">{icon}</span>
         <input type={type} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder}
           className="h-11 w-full bg-transparent text-sm outline-none" />
+      </div>
+    </div>
+  );
+}
+
+function DateField({
+  icon, label, value, onChange,
+}: {
+  icon: React.ReactNode; label: string; value: string; onChange: (v: string) => void;
+}) {
+  const ref = useRef<HTMLInputElement>(null);
+  const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  let display = "";
+  if (value) {
+    const [y, m, d] = value.split("-");
+    if (y && m && d) display = `${d} ${MONTHS[+m - 1]} ${y}`;
+  }
+  function open() {
+    const el = ref.current;
+    if (!el) return;
+    if (typeof el.showPicker === "function") {
+      try { el.showPicker(); return; } catch { /* fall through */ }
+    }
+    el.focus();
+  }
+  return (
+    <div>
+      <Label>{label}</Label>
+      <div onClick={open}
+        className="relative flex h-11 cursor-pointer items-center gap-2 rounded-xl border border-ink/10 bg-white/55 px-3 transition-all hover:border-ink/30 focus-within:border-ink/40 focus-within:ring-2 focus-within:ring-ink/[0.06] dark:border-white/10 dark:bg-white/5">
+        <span className="shrink-0 text-muted">{icon}</span>
+        <span className={cn("flex-1 text-sm", display ? "text-ink dark:text-white" : "text-muted")}>
+          {display || "Select date"}
+        </span>
+        <Calendar className="h-4 w-4 shrink-0 text-muted" />
+        <input ref={ref} type="date" value={value} onChange={(e) => onChange(e.target.value)} aria-label={label}
+          className="pointer-events-none absolute inset-0 opacity-0 [color-scheme:light] dark:[color-scheme:dark]" />
       </div>
     </div>
   );
@@ -306,7 +344,7 @@ function Select({
   return (
     <div>
       <Label>{label}</Label>
-      <div className="flex items-center gap-2 rounded-xl border border-ink/10 bg-sand/40 px-3 focus-within:border-ink/30 dark:border-white/10 dark:bg-white/5">
+      <div className="flex items-center gap-2 rounded-xl border border-ink/10 bg-white/55 px-3 transition-all focus-within:border-ink/40 focus-within:bg-white focus-within:shadow-soft focus-within:ring-2 focus-within:ring-ink/[0.06] dark:border-white/10 dark:bg-white/5 dark:focus-within:bg-white/10">
         <span className="shrink-0 text-muted">{icon}</span>
         <select value={value} onChange={(e) => onChange(e.target.value)}
           className="h-11 w-full bg-transparent text-sm outline-none dark:bg-[#1A1A18]">
