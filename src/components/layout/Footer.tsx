@@ -51,7 +51,9 @@ export function Footer() {
               />
             </span>
             <span className="flex flex-col leading-none">
-              <span className="font-serif text-xl text-ink notranslate" translate="no">TripSangam Travels</span>
+              <span className="font-serif text-xl font-semibold text-ink notranslate dark:text-white" translate="no">
+                Trip<span className="bg-gradient-to-r from-gold via-crimson to-gold bg-clip-text text-transparent">Sangam</span> Travels
+              </span>
               <span className="mt-1 text-[10px] uppercase tracking-[0.18em] text-muted">Nepal tours from Raxaul</span>
             </span>
           </Link>

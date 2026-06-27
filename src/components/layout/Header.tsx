@@ -73,23 +73,27 @@ export function Header() {
       )}
     >
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4 md:h-[72px] md:px-8">
-        <Link href="/" className="flex items-center gap-2.5">
-          <span className="relative grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-xl bg-[#fff] shadow-soft ring-1 ring-ink/5">
+        <Link href="/" className="group flex items-center gap-2.5">
+          <span className="relative grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-2xl bg-white shadow-glow ring-1 ring-white/40 transition-transform duration-500 group-hover:scale-105">
+            <span className="pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-br from-gold/30 via-transparent to-crimson/30 opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
             <Image
               src="/tripsangam-logo.jpg"
               alt="Trip Sangam"
               width={40}
               height={40}
               priority
-              className="h-full w-full object-cover"
+              className="relative h-full w-full object-cover"
             />
           </span>
           <span className="flex flex-col leading-none">
             <span className={cn(
-              "font-serif text-base font-medium tracking-tight transition-colors notranslate sm:text-lg",
+              "font-serif text-base font-semibold tracking-tight transition-colors notranslate sm:text-lg",
               scrolled ? "text-ink" : "text-white"
             )} translate="no">
-              Trip Sangam
+              Trip{" "}
+              <span className="bg-gradient-to-r from-gold via-crimson to-gold bg-clip-text text-transparent">
+                Sangam
+              </span>
             </span>
             <span className={cn(
               "hidden text-[10px] uppercase tracking-[0.18em] transition-colors sm:inline",
@@ -212,7 +216,10 @@ export function Header() {
                     />
                   </span>
                   <span className="flex flex-col leading-none">
-                    <span className="font-serif text-[17px] font-medium tracking-tight text-ink notranslate" translate="no">Trip Sangam</span>
+                    <span className="font-serif text-[17px] font-semibold tracking-tight text-ink notranslate" translate="no">
+                      Trip{" "}
+                      <span className="bg-gradient-to-r from-gold via-crimson to-gold bg-clip-text text-transparent">Sangam</span>
+                    </span>
                     <span className="mt-1.5 font-mono text-[9px] uppercase tracking-[0.24em] text-ink/55">
                       Journey Beyond Borders
                     </span>
