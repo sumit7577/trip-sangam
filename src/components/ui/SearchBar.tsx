@@ -144,14 +144,17 @@ export function SearchBar({ packages }: { packages: Package[] }) {
             >
               {dateDisplay || "Add dates"}
             </span>
+            {/* Native input covers the whole field and is directly tappable so
+                the picker opens reliably on mobile (showPicker is a fallback). */}
             <input
               ref={dateInputRef}
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
+              onClick={(e) => e.stopPropagation()}
               onFocus={() => setPopover(null)}
               aria-label="Departure date"
-              className="pointer-events-none absolute inset-0 opacity-0"
+              className="absolute -inset-y-3 inset-x-0 cursor-pointer opacity-0"
             />
           </div>
         </Field>

@@ -95,6 +95,11 @@ export default async function PackageDetailPage({ params }: { params: { slug: st
             </div>
           </div>
         </div>
+
+        {/* Full booking card inline on mobile (desktop uses the sticky one above) */}
+        <div className="mt-10 md:hidden">
+          <BookingCard pkg={pkg} />
+        </div>
       </div>
 
       <JourneyMap stops={pkg.journey} />
