@@ -148,8 +148,15 @@ def assign_departure(package, party_size, preferred_date=None, flexible=False):
 
     Must be called inside a transaction. Raises NoCapacity if nothing fits and
     nothing can be opened.
+
+    A party that already meets the minimum group size forms its OWN group: it is
+    never merged into a half-filled shared slot and made to wait on strangers.
+    Such a "solo" party only falls back to an existing group if no new group can
+    be opened (e.g. the date is at its parallel-group cap).
     """
     today = timezone.localdate()
+    min_cap = package.min_group or 6
+    solo_group = party_size >= min_cap
 
     # Determine the search window.
     if preferred_date and preferred_date >= today:
@@ -161,16 +168,27 @@ def assign_departure(package, party_size, preferred_date=None, flexible=False):
     else:
         lo = hi = None  # any upcoming date
 
-    # 1. Best-fit into an existing open group.
-    candidate = _fitting_candidates(package, party_size, today, lo, hi).first()
-    if candidate is not None:
-        return candidate
+    def best_fit():
+        return _fitting_candidates(package, party_size, today, lo, hi).first()
+
+    # 1. Best-fit into an existing open group — skipped for self-sufficient
+    #    parties, which get their own fresh group below.
+    if not solo_group:
+        candidate = best_fit()
+        if candidate is not None:
+            return candidate
 
     # 2. Open a new group / seed a new date.
     if preferred_date and preferred_date >= today:
         dep = _open_group_on_date(package, preferred_date)
         if dep is not None:
             return dep
+        # Preferred date is at its group cap. A solo party would rather join an
+        # existing group here than be sent away.
+        if solo_group:
+            candidate = best_fit()
+            if candidate is not None:
+                return candidate
         if not flexible:
             raise NoCapacity("Preferred date is full.")
         # flexible: fall through to scan nearby/forward dates
@@ -183,6 +201,13 @@ def assign_departure(package, party_size, preferred_date=None, flexible=False):
             return dep
         nxt = scheduled_dates(package, seed + timedelta(days=1), limit=1)
         seed = nxt[0] if nxt else seed + timedelta(days=1)
+
+    # Last resort: a solo party that couldn't open any new group joins an
+    # existing one rather than being waitlisted.
+    if solo_group:
+        candidate = best_fit()
+        if candidate is not None:
+            return candidate
     raise NoCapacity("No date with available capacity.")
 
 

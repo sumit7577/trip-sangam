@@ -102,13 +102,42 @@ class BestFitAssignmentTests(TestCase):
             self._book(19)
 
     def test_fills_exactly_to_max_then_new_group(self):
-        for _ in range(3):
-            self._book(6)
+        # Sub-minimum parties best-fit together and fill a group to its max.
+        for _ in range(6):
+            self._book(3)
         dep_a = Departure.objects.get(package=self.pkg, start_date=self.date, group_label="A")
         self.assertEqual(dep_a.seats_held, 18)
         self.assertEqual(dep_a.status, Departure.STATUS_FULL)
-        b4 = self._book(6)
-        self.assertEqual(b4.departure.group_label, "B")
+        b7 = self._book(3)
+        self.assertEqual(b7.departure.group_label, "B")
+
+    def test_min_party_gets_its_own_group(self):
+        # A half-filled group exists, but a party that already meets the minimum
+        # must NOT be merged into it — it forms its own fresh group.
+        a = make_departure(self.pkg, label="A", confirmed=4)  # room for 14 more
+        booking = self._book(6)
+        self.assertNotEqual(booking.departure_id, a.id)
+        self.assertEqual(booking.departure.group_label, "B")
+        self.assertEqual(booking.departure.seats_held, 6)
+        a.refresh_from_db()
+        self.assertEqual(a.seats_held, 0)  # existing group left untouched
+
+    def test_two_min_parties_get_separate_groups(self):
+        # Each self-sufficient party gets its own group rather than sharing one.
+        b1 = self._book(6)
+        b2 = self._book(6)
+        self.assertNotEqual(b1.departure_id, b2.departure_id)
+        self.assertEqual({b1.departure.group_label, b2.departure.group_label}, {"A", "B"})
+
+    def test_min_party_falls_back_to_existing_when_date_capped(self):
+        # When the date is already at its parallel-group cap, a minimum party
+        # joins an existing open group rather than being waitlisted.
+        self.pkg.max_groups_per_date = 1
+        self.pkg.save()
+        a = make_departure(self.pkg, label="A", confirmed=2)  # room for 16
+        booking = self._book(6, flexible=False)
+        self.assertEqual(booking.departure_id, a.id)
+        self.assertEqual(booking.status, Booking.STATUS_PENDING)
 
 
 class LifecycleTests(TestCase):
