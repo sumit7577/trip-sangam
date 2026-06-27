@@ -256,15 +256,17 @@ SIMPLE_JWT = {
 }
 
 # ---------------------------------------------------------------------------
-# Email (booking notifications). Console backend in dev; set EMAIL_HOST etc.
-# in prod for real SMTP. See scheduling/notifications.py.
+# Email (booking notifications + password resets). Console backend in dev
+# (links print to the runserver console); real SMTP in prod. Defaults target
+# Gmail SMTP — set EMAIL_HOST_USER + EMAIL_HOST_PASSWORD (a Google App Password,
+# NOT your normal password) and you're done. See scheduling/notifications.py.
 # ---------------------------------------------------------------------------
 EMAIL_BACKEND = os.environ.get(
     "EMAIL_BACKEND",
     "django.core.mail.backends.console.EmailBackend" if DEBUG
     else "django.core.mail.backends.smtp.EmailBackend",
 )
-EMAIL_HOST = os.environ.get("EMAIL_HOST", "")
+EMAIL_HOST = os.environ.get("EMAIL_HOST", "smtp.gmail.com")
 EMAIL_PORT = int(os.environ.get("EMAIL_PORT", "587"))
 EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
 EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")

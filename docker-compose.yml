@@ -47,6 +47,12 @@ services:
       # PhonePe — leave blank for dev; pay endpoints return 503 until set.
       PHONEPE_ENV: sandbox
       PHONEPE_REDIRECT_BASE: http://localhost:3000/trips
+      # Email (Gmail SMTP). Blank in dev → console backend prints reset links.
+      # Supply these in your prod env/secrets to send real password-reset mail.
+      EMAIL_HOST_USER: ${EMAIL_HOST_USER:-}
+      EMAIL_HOST_PASSWORD: ${EMAIL_HOST_PASSWORD:-}
+      DEFAULT_FROM_EMAIL: ${DEFAULT_FROM_EMAIL:-Trip Sangam <noreply@tripsangam.com>}
+      SITE_PUBLIC_URL: ${SITE_PUBLIC_URL:-http://localhost:3000}
     ports:
       - "8000:8000"
     volumes:

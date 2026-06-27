@@ -91,6 +91,34 @@ export const useAuth = create<AuthState>()(
   )
 );
 
+/** Ask the backend to email a password-reset link. Always resolves on 2xx. */
+export async function requestPasswordReset(email: string): Promise<string> {
+  const res = await fetch(`${BASE}/api/auth/password-reset/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(firstError(body));
+  return (body as { detail?: string }).detail || "Check your email for a reset link.";
+}
+
+/** Confirm a reset using the uid + token from the emailed link. */
+export async function confirmPasswordReset(
+  uid: string,
+  token: string,
+  password: string
+): Promise<string> {
+  const res = await fetch(`${BASE}/api/auth/password-reset/confirm/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ uid, token, password }),
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(firstError(body));
+  return (body as { detail?: string }).detail || "Your password has been reset.";
+}
+
 /**
  * fetch() wrapper that attaches the JWT and transparently refreshes once on a
  * 401. Use for all authenticated API calls.

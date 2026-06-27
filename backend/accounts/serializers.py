@@ -47,6 +47,19 @@ class RegisterSerializer(serializers.Serializer):
         return user
 
 
+class PasswordResetRequestSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+    def validate_email(self, value):
+        return value.lower().strip()
+
+
+class PasswordResetConfirmSerializer(serializers.Serializer):
+    uid = serializers.CharField()
+    token = serializers.CharField()
+    password = serializers.CharField(write_only=True, validators=[validate_password])
+
+
 class ProfileUpdateSerializer(serializers.Serializer):
     fullName = serializers.CharField(max_length=200, required=False)
     phone = serializers.CharField(max_length=40, required=False, allow_blank=True)
