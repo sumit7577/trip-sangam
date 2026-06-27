@@ -12,7 +12,8 @@ import { FinalCTA } from "@/components/detail/FinalCTA";
 import { MobileBookingBar } from "@/components/detail/MobileBookingBar";
 import { CarStrip } from "@/components/ui/CarStrip";
 import { Breadcrumbs } from "@/components/seo/Breadcrumbs";
-import { pageMeta } from "@/lib/seo";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { pageMeta, packageJsonLd } from "@/lib/seo";
 
 const FALLBACK_BODY_SLUG = "annapurna-circuit";
 
@@ -68,6 +69,7 @@ export default async function PackageDetailPage({ params }: { params: { slug: st
 
   return (
     <>
+      <JsonLd data={packageJsonLd(pkg, `/packages/${pkg.slug}/`)} />
       <div className="h-[var(--header-h)]" />
       <HeroSlider
         images={[pkg.heroImage, ...pkg.galleryImages].filter(Boolean).slice(0, 6)}

@@ -7,6 +7,7 @@
  * social profiles unless they are confirmed.
  */
 import type { Metadata } from "next";
+import type { PackageDetail } from "@/types";
 
 export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://tripsangam.com").replace(/\/$/, "");
 
@@ -119,6 +120,44 @@ export function websiteJsonLd() {
     url: `${SITE_URL}/`,
     name: BUSINESS.name,
     publisher: { "@id": `${SITE_URL}/#organization` },
+    // Sitelinks search box — lets Google show a search box under our result.
+    // Targets the /packages listing which reads ?q= as a text filter.
+    potentialAction: {
+      "@type": "SearchAction",
+      target: {
+        "@type": "EntryPoint",
+        urlTemplate: `${SITE_URL}/packages/?q={search_term_string}`,
+      },
+      "query-input": "required name=search_term_string",
+    },
+  };
+}
+
+/**
+ * Product + Offer for a tour package detail page. Price is real (shown on the
+ * page) so it's safe to expose; this is what makes the result eligible for the
+ * price / "booking options" rich card. Intentionally NO aggregateRating —
+ * only add that once we have genuine, on-page customer reviews (Google policy).
+ */
+export function packageJsonLd(pkg: PackageDetail, path: string) {
+  const url = canonical(path);
+  return {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    "@id": `${url}#product`,
+    name: pkg.name,
+    description: pkg.shortDescription,
+    image: pkg.heroImage ? [pkg.heroImage] : undefined,
+    brand: { "@type": "Brand", name: BUSINESS.name },
+    url,
+    offers: {
+      "@type": "Offer",
+      price: pkg.priceINR,
+      priceCurrency: "INR",
+      availability: "https://schema.org/InStock",
+      url,
+      seller: { "@id": `${SITE_URL}/#organization` },
+    },
   };
 }
 
