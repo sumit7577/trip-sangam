@@ -58,12 +58,12 @@ export default async function HomePage() {
         imageUrl={home.heroImage}
       />
       <CategoryStrip />
-      <HomeIntro />
       <CategoryNav packages={packages} />
       <CarStrip />
       <FeaturedPackages packages={home.featuredPackages.length > 0 ? home.featuredPackages : packages} />
       <DealsStrip packages={packages} />
       <WhyChooseUs />
+      <HomeIntro />
       <FaqSection faqs={homeFaqs} heading="Nepal tours from Raxaul — your questions" />
       <Newsletter />
     </>
