@@ -3,8 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDown, UserRound, ArrowRight, Gift } from "lucide-react";
+import { ChevronDown, UserRound, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { PromoBanner } from "@/components/layout/PromoBanner";
 
 /**
  * Logged-out account control: a goibibo-style hover/click popup with a big
@@ -100,14 +101,7 @@ export function LoginMenu({ scrolled, onSignin }: { scrolled: boolean; onSignin:
                   <ArrowRight className="h-4 w-4" />
                 </motion.button>
 
-                {/* Welcome banner — swap copy for a real offer (e.g. a code/%) when you run one. */}
-                <div className="mt-3 flex items-center gap-2.5 rounded-2xl border border-jade/20 bg-jade/8 px-3 py-2.5">
-                  <Gift className="h-5 w-5 shrink-0 text-jade" strokeWidth={1.6} />
-                  <p className="text-[12px] leading-snug text-ink/80 dark:text-white/80">
-                    <span className="font-semibold text-jade">Free to join.</span> Save trips you love and get
-                    early word when a departure fills.
-                  </p>
-                </div>
+                <PromoBanner className="mt-3" />
 
                 <button
                   onClick={startSignin}

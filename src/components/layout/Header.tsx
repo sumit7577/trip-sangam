@@ -11,6 +11,7 @@ import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
 import { AccountMenu, initials } from "@/components/layout/AccountMenu";
 import { LoginMenu } from "@/components/layout/LoginMenu";
+import { PromoBanner } from "@/components/layout/PromoBanner";
 import { useCurrency, type Currency } from "@/lib/currency";
 import { useModal } from "@/lib/modal";
 import { useAuth } from "@/lib/auth";
@@ -299,6 +300,7 @@ export function Header() {
                   </div>
                 ) : (
                   <div className="flex flex-col gap-2">
+                    <PromoBanner className="mb-1" />
                     <Button variant="outline" onClick={() => { setOpen(false); openSignin(); }}>Sign In</Button>
                     <Button onClick={() => { setOpen(false); scrollToPackages(); }}>Book Now</Button>
                   </div>
