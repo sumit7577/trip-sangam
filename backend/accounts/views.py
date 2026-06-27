@@ -178,6 +178,25 @@ class FirebasePhoneLoginView(APIView):
         return Response({"user": UserSerializer(user).data, **_tokens_for(user)})
 
 
+class AvatarUploadView(APIView):
+    """Upload/replace the traveller's profile photo (multipart 'avatar')."""
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        f = request.FILES.get("avatar")
+        if not f:
+            return Response({"detail": "No image provided."}, status=status.HTTP_400_BAD_REQUEST)
+        if f.size > 5 * 1024 * 1024:
+            return Response({"detail": "Image too large (max 5 MB)."}, status=status.HTTP_400_BAD_REQUEST)
+        if not (f.content_type or "").startswith("image/"):
+            return Response({"detail": "Please upload an image file."}, status=status.HTTP_400_BAD_REQUEST)
+        profile, _ = Profile.objects.get_or_create(user=request.user)
+        profile.avatar = f
+        profile.save()
+        return Response(UserSerializer(request.user).data)
+
+
 class MeView(APIView):
     permission_classes = [IsAuthenticated]
 

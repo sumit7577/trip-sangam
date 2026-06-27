@@ -10,7 +10,25 @@ export interface AuthUser {
   email: string;
   fullName: string;
   phone: string;
+  avatarUrl: string;
+  gender: string;
+  dateOfBirth: string;
+  city: string;
+  state: string;
+  documentType: string;
+  documentNumber: string;
+  emergencyName: string;
+  emergencyPhone: string;
 }
+
+/** Fields the profile page can patch. */
+export type ProfileInput = Partial<
+  Pick<
+    AuthUser,
+    | "fullName" | "phone" | "email" | "gender" | "dateOfBirth" | "city" | "state"
+    | "documentType" | "documentNumber" | "emergencyName" | "emergencyPhone"
+  >
+>;
 
 interface AuthState {
   user: AuthUser | null;
@@ -19,7 +37,8 @@ interface AuthState {
   hydrated: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (input: { email: string; password: string; fullName: string; phone: string }) => Promise<void>;
-  updateProfile: (input: { fullName?: string; phone?: string; email?: string }) => Promise<void>;
+  updateProfile: (input: ProfileInput) => Promise<void>;
+  uploadAvatar: (file: File) => Promise<void>;
   logout: () => void;
   setHydrated: () => void;
 }
@@ -70,6 +89,15 @@ export const useAuth = create<AuthState>()(
           method: "PATCH",
           body: JSON.stringify(input),
         });
+        if (!res.ok) throw new Error(firstError(await res.json().catch(() => ({}))));
+        const user = await res.json();
+        set({ user });
+      },
+
+      async uploadAvatar(file) {
+        const fd = new FormData();
+        fd.append("avatar", file);
+        const res = await authFetch("/api/auth/me/avatar/", { method: "POST", body: fd });
         if (!res.ok) throw new Error(firstError(await res.json().catch(() => ({}))));
         const user = await res.json();
         set({ user });
@@ -137,11 +165,13 @@ export async function confirmPasswordReset(
  * 401. Use for all authenticated API calls.
  */
 export async function authFetch(path: string, options: RequestInit = {}): Promise<Response> {
+  const isForm = options.body instanceof FormData;
   const doFetch = (token: string | null) =>
     fetch(`${BASE}${path}`, {
       ...options,
       headers: {
-        "Content-Type": "application/json",
+        // Let the browser set multipart boundaries for FormData uploads.
+        ...(isForm ? {} : { "Content-Type": "application/json" }),
         ...(options.headers || {}),
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
