@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ChevronLeft, Clock, ArrowUpRight } from "lucide-react";
+import { ChevronLeft, Clock, ArrowUpRight, MountainSnow } from "lucide-react";
 import { getBlogPost, getBlogPosts, getTeamBySlug } from "@/lib/api";
 import { pageMeta } from "@/lib/seo";
 
@@ -39,14 +39,20 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
       {/* Cover */}
       <header className="relative isolate w-full overflow-hidden">
         <div className="relative h-[58vh] w-full md:h-[68vh]">
-          <Image
-            src={post.coverImage}
-            alt={post.title}
-            fill
-            priority
-            sizes="100vw"
-            className="object-cover"
-          />
+          {post.coverImage ? (
+            <Image
+              src={post.coverImage}
+              alt={post.title}
+              fill
+              priority
+              sizes="100vw"
+              className="object-cover"
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-ink/80 to-ink">
+              <MountainSnow className="h-16 w-16 text-white/15" strokeWidth={1} />
+            </div>
+          )}
           <div className="absolute inset-0 bg-ink/50" />
         </div>
 
@@ -160,13 +166,19 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
                   className="group flex min-w-0 flex-col overflow-hidden rounded-3xl border border-line/70 bg-sand shadow-soft transition-shadow hover:shadow-lift"
                 >
                   <div className="relative aspect-[4/3] overflow-hidden">
-                    <Image
-                      src={p.coverImage}
-                      alt={p.title}
-                      fill
-                      sizes="(max-width:768px) 100vw, 33vw"
-                      className="object-cover transition-transform duration-1000 group-hover:scale-105"
-                    />
+                    {p.coverImage ? (
+                      <Image
+                        src={p.coverImage}
+                        alt={p.title}
+                        fill
+                        sizes="(max-width:768px) 100vw, 33vw"
+                        className="object-cover transition-transform duration-1000 group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-sand via-white to-line/40">
+                        <MountainSnow className="h-9 w-9 text-ink/15" strokeWidth={1.2} />
+                      </div>
+                    )}
                   </div>
                   <div className="flex flex-1 flex-col gap-3 p-5">
                     <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted">

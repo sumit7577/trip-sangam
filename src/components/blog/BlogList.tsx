@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowUpRight, Clock } from "lucide-react";
+import { ArrowUpRight, Clock, MountainSnow } from "lucide-react";
 import type { BlogCategory, BlogPost, TeamMember } from "@/types";
 import { BlogCard } from "./BlogCard";
 import { cn } from "@/lib/utils";
@@ -54,13 +54,19 @@ export function BlogList({
           className="grid grid-cols-1 gap-6 overflow-hidden rounded-3xl border border-line/70 bg-white shadow-soft transition-shadow duration-500 hover:shadow-lift md:grid-cols-2 md:gap-0"
         >
           <div className="relative aspect-[4/3] w-full overflow-hidden md:aspect-auto md:min-h-[420px]">
-            <Image
-              src={featured.coverImage}
-              alt={featured.title}
-              fill
-              sizes="(max-width:768px) 100vw, 50vw"
-              className="object-cover transition-transform duration-1000 group-hover:scale-105"
-            />
+            {featured.coverImage ? (
+              <Image
+                src={featured.coverImage}
+                alt={featured.title}
+                fill
+                sizes="(max-width:768px) 100vw, 50vw"
+                className="object-cover transition-transform duration-1000 group-hover:scale-105"
+              />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-sand via-white to-line/40 dark:from-white/10 dark:via-white/5 dark:to-white/[0.03]">
+                <MountainSnow className="h-14 w-14 text-ink/15 dark:text-white/15" strokeWidth={1.1} />
+              </div>
+            )}
             <span className="absolute left-4 top-4 inline-flex items-center gap-2 rounded-full bg-ink px-3.5 py-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-white">
               <span className="h-1.5 w-1.5 rounded-full bg-gold" />
               Featured · {featured.category}

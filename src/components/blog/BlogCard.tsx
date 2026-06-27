@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowUpRight, Clock } from "lucide-react";
+import { ArrowUpRight, Clock, MountainSnow } from "lucide-react";
 import type { BlogPost, TeamMember } from "@/types";
 
 export function BlogCard({
@@ -31,13 +31,19 @@ export function BlogCard({
           className="flex h-full flex-col overflow-hidden rounded-3xl border border-line/70 bg-white shadow-soft transition-shadow duration-500 group-hover:shadow-lift"
         >
           <div className="relative aspect-[4/3] overflow-hidden">
-            <Image
-              src={post.coverImage}
-              alt={post.title}
-              fill
-              sizes="(max-width:640px) 100vw, (max-width:1024px) 50vw, 33vw"
-              className="object-cover transition-transform duration-1000 group-hover:scale-105"
-            />
+            {post.coverImage ? (
+              <Image
+                src={post.coverImage}
+                alt={post.title}
+                fill
+                sizes="(max-width:640px) 100vw, (max-width:1024px) 50vw, 33vw"
+                className="object-cover transition-transform duration-1000 group-hover:scale-105"
+              />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-sand via-white to-line/40 dark:from-white/10 dark:via-white/5 dark:to-white/[0.03]">
+                <MountainSnow className="h-10 w-10 text-ink/15 dark:text-white/15" strokeWidth={1.2} />
+              </div>
+            )}
             <span className="absolute left-4 top-4 inline-flex items-center rounded-full bg-white/95 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-ink shadow-soft backdrop-blur">
               {post.category}
             </span>
