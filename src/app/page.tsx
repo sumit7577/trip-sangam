@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Hero } from "@/components/home/Hero";
 import { HomeIntro } from "@/components/home/HomeIntro";
 import { CategoryNav } from "@/components/home/CategoryNav";
+import { CategoryStrip } from "@/components/home/CategoryStrip";
 import { FeaturedPackages } from "@/components/home/FeaturedPackages";
 import { DealsStrip } from "@/components/home/DealsStrip";
 import { WhyChooseUs } from "@/components/home/WhyChooseUs";
@@ -56,6 +57,7 @@ export default async function HomePage() {
         subtitle={home.heroSubtitle}
         imageUrl={home.heroImage}
       />
+      <CategoryStrip />
       <HomeIntro />
       <CategoryNav packages={packages} />
       <CarStrip />

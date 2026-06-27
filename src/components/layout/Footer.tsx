@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Instagram, Facebook, MessageCircle, Phone, MapPin, ShieldCheck } from "lucide-react";
 import { BUSINESS } from "@/lib/seo";
+import { FooterBadges } from "@/components/layout/FooterBadges";
 
 const cols = [
   {
@@ -106,6 +107,8 @@ export function Footer() {
           </ul>
         </div>
       </div>
+
+      <FooterBadges />
 
       <div className="border-t border-ink/8 dark:border-white/10">
         <div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-3 px-5 py-6 text-xs text-muted md:flex-row md:items-center md:px-8">
