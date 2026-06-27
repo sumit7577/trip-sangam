@@ -3,9 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDown, UserRound, ArrowRight } from "lucide-react";
+import { ChevronDown, UserRound, ArrowRight, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { PromoBanner } from "@/components/layout/PromoBanner";
+import { PromoBanner, WELCOME_OFFER } from "@/components/layout/PromoBanner";
 
 /**
  * Logged-out account control: a goibibo-style hover/click popup with a big
@@ -84,11 +84,16 @@ export function LoginMenu({ scrolled, onSignin }: { scrolled: boolean; onSignin:
             className="absolute right-0 top-full z-50 pt-2"
           >
             <div className="w-[300px] overflow-hidden rounded-3xl border border-ink/8 bg-white shadow-lift dark:border-white/10 dark:bg-[#1A1A18]">
-              <div className="p-4">
-                <p className="text-[10px] font-medium uppercase tracking-[0.16em] text-crimson/80">
-                  Welcome to Trip Sangam
+              {/* Festive offer header */}
+              <div className="relative overflow-hidden bg-gradient-to-br from-gold via-crimson to-ink px-4 py-3 text-white">
+                <div className="pointer-events-none absolute -right-6 -top-9 h-20 w-20 rounded-full bg-white/15 blur-2xl" />
+                <p className="relative inline-flex items-center gap-1.5 font-mono text-[10px] font-medium uppercase tracking-[0.2em]">
+                  <Sparkles className="h-3 w-3" /> Welcome offer · {WELCOME_OFFER.percent}% off
                 </p>
-                <p className="mt-1.5 text-sm leading-snug text-ink dark:text-white">
+              </div>
+
+              <div className="p-4">
+                <p className="text-sm leading-snug text-ink dark:text-white">
                   Sign in to book trips, join departure groups and track your bookings & slots.
                 </p>
 

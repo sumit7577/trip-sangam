@@ -3,6 +3,7 @@
 import { LazyMotion, domAnimation, MotionConfig } from "framer-motion";
 import { BookingModal } from "@/components/modals/BookingModal";
 import { SignInModal } from "@/components/modals/SignInModal";
+import { WelcomePopup } from "@/components/modals/WelcomePopup";
 import { Toaster } from "@/components/ui/Toaster";
 import { ThemeProvider } from "@/lib/theme";
 
@@ -14,6 +15,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
           {children}
           <BookingModal />
           <SignInModal />
+          <WelcomePopup />
           <Toaster />
         </MotionConfig>
       </LazyMotion>
