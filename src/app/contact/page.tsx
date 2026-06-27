@@ -75,6 +75,30 @@ export default function ContactPage() {
             </div>
           </div>
         </div>
+
+        {/* Service area + map. Shows Raxaul (verified locality), not a precise
+            office pin — exact hours/address can be added once confirmed. */}
+        <section className="mt-12">
+          <h2 className="font-serif text-2xl tracking-tight">Where we are &amp; how to reach us</h2>
+          <p className="mt-2 max-w-2xl text-sm text-muted">
+            We are based in Raxaul, on the India–Nepal border in Bihar, and arrange tours from the
+            Raxaul–Birgunj crossing across Nepal. The quickest way to reach us is on call or WhatsApp —
+            message any time with your travel dates and we will reply with a plan and quotation.
+          </p>
+          <div className="mt-6 overflow-hidden rounded-3xl border border-line">
+            <iframe
+              title="Raxaul, Bihar — TripSangam Travels service area"
+              src="https://www.google.com/maps?q=Raxaul%2C%20Bihar%2C%20India&output=embed"
+              className="h-[320px] w-full"
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+            />
+          </div>
+          <p className="mt-2 text-xs text-muted">
+            Map shows Raxaul, Bihar. Tell us your arrival train or time and we will arrange to meet you at
+            Raxaul railway station or the Raxaul–Birgunj border.
+          </p>
+        </section>
       </div>
     </main>
   );
