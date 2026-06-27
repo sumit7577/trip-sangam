@@ -87,6 +87,7 @@ export default function TripsPage() {
             // People already in the group (held + confirmed); formed at minimum.
             const seatsTaken = dep ? Math.max(dep.seatsConfirmed, dep.maxCapacity - dep.seatsLeft) : 0;
             const formed = dep ? seatsTaken >= dep.minCapacity : false;
+            const groupConfirmed = formed && b.status === "pending";
             return (
             <div key={b.id}
               className="relative rounded-2xl border border-line bg-white p-5 transition-colors hover:border-ink/40 dark:bg-white/5">
@@ -109,14 +110,14 @@ export default function TripsPage() {
                       </span>
                     </div>
                   </div>
-                  <span className={`shrink-0 rounded-full px-3 py-1 text-[11px] font-semibold ${statusClasses(b.status)}`}>
-                    {statusLabel(b.status)}
+                  <span className={`shrink-0 rounded-full px-3 py-1 text-[11px] font-semibold ${groupConfirmed ? "bg-jade/15 text-jade" : statusClasses(b.status)}`}>
+                    {groupConfirmed ? "Confirmed" : statusLabel(b.status)}
                   </span>
                 </div>
                 {dep && (
                   formed ? (
                     <p className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-jade">
-                      <ShieldCheck className="h-3.5 w-3.5" /> Group formed
+                      <ShieldCheck className="h-3.5 w-3.5" /> Your trip is confirmed
                     </p>
                   ) : (
                     <div className="mt-3 max-w-xs">

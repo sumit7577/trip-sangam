@@ -114,6 +114,11 @@ export default function TripDetailPage() {
   const isAccepted = b.status === "accepted";
   const isConfirmed = b.status === "confirmed";
   const canCancel = !["confirmed", "cancelled", "declined", "expired"].includes(b.status);
+  // Group filled (≥ min) but this traveller hasn't paid the deposit yet — show
+  // it as "Confirmed" rather than "Forming group".
+  const groupConfirmed = formed && b.status === "pending";
+  const chipLabel = groupConfirmed ? "Confirmed" : statusLabel(b.status);
+  const chipClass = groupConfirmed ? "bg-jade/15 text-jade" : statusClasses(b.status);
 
   return (
     <Shell>
@@ -123,8 +128,8 @@ export default function TripDetailPage() {
 
       <div className="mt-4 flex items-start justify-between gap-4">
         <h1 className="font-serif text-3xl tracking-tight md:text-4xl">{b.packageName}</h1>
-        <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${statusClasses(b.status)}`}>
-          {statusLabel(b.status)}
+        <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${chipClass}`}>
+          {chipLabel}
         </span>
       </div>
 
@@ -151,15 +156,15 @@ export default function TripDetailPage() {
             <div className="min-w-0 flex-1 text-left">
               <p className={`font-serif text-lg sm:text-xl ${formed ? "text-jade" : ""}`}>
                 {formed
-                  ? "Group formed 🎉"
-                  : `${remainingToForm} more traveller${remainingToForm === 1 ? "" : "s"} to form`}
+                  ? "Your trip is confirmed 🎉"
+                  : `${remainingToForm} more traveller${remainingToForm === 1 ? "" : "s"} to confirm`}
               </p>
               <p className="mt-1 text-xs text-muted">
                 {formed
                   ? (dep.isGuaranteed
-                      ? "Deposits are in — this departure is confirmed and going ahead."
-                      : "Your group is complete. Pay your deposit to lock in your seats.")
-                  : `Forms at ${dep.minCapacity} travellers · ${dep.seatsLeft} seat${dep.seatsLeft === 1 ? "" : "s"} left in this group.`}
+                      ? "Deposits are in — this departure is going ahead."
+                      : "Your group is complete. Confirm your trip now with the deposit to lock your seat.")
+                  : `Confirms at ${dep.minCapacity} travellers · ${dep.seatsLeft} seat${dep.seatsLeft === 1 ? "" : "s"} left in this group.`}
               </p>
 
               <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3">
@@ -242,15 +247,26 @@ export default function TripDetailPage() {
 
       {/* Actions */}
       <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-        {canAct && (
+        {canAct && formed && (
           <>
             <button onClick={onAccept} disabled={busy}
               className="inline-flex flex-1 items-center justify-center gap-2 rounded-2xl bg-ink px-6 py-4 text-sm font-semibold text-white hover:bg-ink/90 disabled:opacity-60">
-              <CheckCircle2 className="h-4 w-4" /> Accept & pay deposit
+              <CheckCircle2 className="h-4 w-4" /> Confirm your trip now · ₹{b.depositAmount.toLocaleString("en-IN")}
             </button>
             <button onClick={onDecline} disabled={busy}
               className="inline-flex items-center justify-center gap-2 rounded-2xl border border-line px-6 py-4 text-sm font-semibold text-ink hover:border-ink/40 disabled:opacity-60">
               <X className="h-4 w-4" /> Decline
+            </button>
+          </>
+        )}
+        {canAct && !formed && (
+          <>
+            <div className="inline-flex flex-1 items-center justify-center gap-2 rounded-2xl border border-line bg-white px-6 py-4 text-center text-sm font-medium text-muted dark:bg-white/5">
+              <Clock className="h-4 w-4 shrink-0" /> Group still forming — {remainingToForm} more to confirm
+            </div>
+            <button onClick={onDecline} disabled={busy}
+              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-line px-6 py-4 text-sm font-semibold text-ink hover:border-ink/40 disabled:opacity-60">
+              <X className="h-4 w-4" /> Leave group
             </button>
           </>
         )}

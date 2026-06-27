@@ -125,12 +125,9 @@ export function BookingCard({ pkg }: { pkg: PackageDetail }) {
         Book This Journey
         <ArrowRight className="h-4 w-4" />
       </motion.button>
-      <button
-        onClick={() => openBooking({ pkg, initialDate: date, initialTravelers: travelers })}
-        className="mt-2 inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl border border-line bg-white text-sm font-medium text-ink transition-colors hover:border-ink/40"
-      >
-        Reserve with {formatPrice(5000, currency)}
-      </button>
+      <p className="mt-2 text-center text-xs text-muted">
+        No charge now — you join a forming group and only pay the deposit once it fills.
+      </p>
 
       {/* Trust */}
       <ul className="mt-5 space-y-2.5 text-xs text-muted">

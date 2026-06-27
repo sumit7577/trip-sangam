@@ -176,13 +176,13 @@ class LifecycleTests(TestCase):
         self.assertEqual(dep.seats_held, 0)
 
     def test_accept_expiry_reverts_to_pending(self):
-        b = self._book(4)
+        b = self._book(6)  # group must be formed before a deposit can be accepted
         services.accept_booking(b)
         reverted = services.expire_holds(now=timezone.now() + timedelta(minutes=45))
         self.assertEqual(reverted, 1)
         b.refresh_from_db()
         self.assertEqual(b.status, Booking.STATUS_PENDING)  # still interested, seat kept
-        self.assertEqual(b.departure.seats_held, 4)
+        self.assertEqual(b.departure.seats_held, 6)
 
     def test_cancel_releases_confirmed(self):
         b = self._book(6)
@@ -305,7 +305,7 @@ class BookingApiTests(TestCase):
         self.assertFalse(by_name["Bina"]["isYou"])
 
     def test_accept_then_decline(self):
-        bid = self._book(party=2).json()["id"]
+        bid = self._book(party=6).json()["id"]  # formed group → deposit acceptable
         acc = self.client.post(f"/api/bookings/{bid}/accept/")
         self.assertEqual(acc.status_code, 200, acc.content)
         self.assertEqual(acc.json()["booking"]["status"], "accepted")
@@ -337,7 +337,7 @@ class BookingApiTests(TestCase):
         self.assertEqual(res.json()["status"], "cancelled")
 
     def test_cannot_cancel_confirmed_booking(self):
-        bid = self._book(party=2).json()["id"]
+        bid = self._book(party=6).json()["id"]  # formed group → can accept + confirm
         b = Booking.objects.get(id=bid)
         services.accept_booking(b)
         services.confirm_booking(b)
@@ -431,7 +431,7 @@ class PaymentFlowTests(TestCase):
 
     @patch("scheduling.phonepe.create_order", return_value=_FAKE_ORDER)
     def test_failed_webhook_keeps_accepted(self, _m):
-        b = self._accepted(4)
+        b = self._accepted(6)
         p = payments.initiate_payment(b, Payment.KIND_DEPOSIT)
         self._post_webhook(p, "FAILED")
         b.refresh_from_db(); p.refresh_from_db()
@@ -446,7 +446,7 @@ class PaymentFlowTests(TestCase):
     @patch("scheduling.phonepe.create_order", return_value=_FAKE_ORDER)
     def test_accept_endpoint_returns_payment_redirect(self, _m):
         b = services.create_booking(
-            package=self.pkg, party_size=4, lead_name="A", lead_email="a@b.c",
+            package=self.pkg, party_size=6, lead_name="A", lead_email="a@b.c",
             preferred_date=self.date, user=self.user,
         )
         res = self.client.post(f"/api/bookings/{b.id}/accept/")

@@ -338,6 +338,11 @@ def accept_booking(booking):
             return booking
         if booking.status != Booking.STATUS_PENDING or booking.departure_id is None:
             raise ValueError("Only pending bookings in a slot can be accepted.")
+        # Deposit is only collected once the group has formed (>= min_capacity
+        # travellers have booked). Until then the trip just "forms" — no payment.
+        dep = Departure.objects.get(pk=booking.departure_id)
+        if dep.seats_taken < dep.min_capacity:
+            raise ValueError("Your group is still forming — you can confirm once it fills.")
         booking.status = Booking.STATUS_ACCEPTED
         booking.hold_expires_at = timezone.now() + timedelta(minutes=ACCEPT_TTL_MINUTES)
         booking.save(update_fields=["status", "hold_expires_at", "updated_at"])
