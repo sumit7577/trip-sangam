@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence, useScroll, useMotionValueEvent } from "framer-motion";
 import { Menu, X, ChevronDown, Phone, MessageCircle, Compass, Sparkles, BookOpen, Newspaper, Briefcase, LogOut, UserRound } from "lucide-react";
@@ -16,11 +17,17 @@ import { useTheme } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 
 const nav = [
-  { label: "All Trips", href: "/packages" },
-  { label: "Destinations", href: "/#packages" },
-  { label: "About", href: "/about" },
-  { label: "Blog", href: "/blog" },
+  { label: "All Trips", href: "/packages", icon: Compass },
+  { label: "Destinations", href: "/#packages", icon: Sparkles },
+  { label: "About", href: "/about", icon: BookOpen },
+  { label: "Blog", href: "/blog", icon: Newspaper },
 ];
+
+/** Active when the current route is (under) the nav target. Anchor links never match. */
+function navActive(pathname: string, href: string) {
+  if (href.startsWith("/#") || href === "/") return false;
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
 
 const drawerNav = [
   { label: "All Trips", href: "/packages", icon: Compass, hint: "Browse & filter every departure" },
@@ -32,6 +39,7 @@ const drawerNav = [
 export function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+  const pathname = usePathname();
   const { scrollY } = useScroll();
   useMotionValueEvent(scrollY, "change", (y) => setScrolled(y > 32));
   const { openSignin } = useModal();
@@ -91,20 +99,35 @@ export function Header() {
         </Link>
 
         <nav className="hidden items-center gap-1 lg:flex">
-          {nav.map((item) => (
-            <Link
-              key={item.label}
-              href={item.href}
-              className={cn(
-                "rounded-xl px-4 py-2 text-sm font-medium transition-colors",
-                scrolled
-                  ? "text-ink/70 hover:bg-ink/5 hover:text-ink"
-                  : "text-white/80 hover:bg-white/10 hover:text-white"
-              )}
-            >
-              {item.label}
-            </Link>
-          ))}
+          {nav.map((item) => {
+            const Icon = item.icon;
+            const active = navActive(pathname, item.href);
+            return (
+              <Link
+                key={item.label}
+                href={item.href}
+                className={cn(
+                  "group relative flex flex-col items-center gap-1 rounded-xl px-4 py-1.5 transition-colors",
+                  scrolled
+                    ? active ? "text-ink" : "text-ink/60 hover:text-ink"
+                    : active ? "text-white" : "text-white/75 hover:text-white"
+                )}
+              >
+                <Icon className="h-[19px] w-[19px] transition-transform group-hover:-translate-y-0.5" strokeWidth={1.6} />
+                <span className="text-[11px] font-medium tracking-wide">{item.label}</span>
+                {active && (
+                  <motion.span
+                    layoutId="nav-active"
+                    transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                    className={cn(
+                      "absolute -bottom-0.5 h-0.5 w-5 rounded-full",
+                      scrolled ? "bg-crimson" : "bg-white"
+                    )}
+                  />
+                )}
+              </Link>
+            );
+          })}
         </nav>
 
         <div className="flex items-center gap-1.5 md:gap-2">

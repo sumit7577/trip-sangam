@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Instagram, Facebook, MessageCircle, Phone, MapPin, ShieldCheck } from "lucide-react";
+import { MessageCircle, Phone, MapPin, ShieldCheck } from "lucide-react";
 import { BUSINESS } from "@/lib/seo";
 import { FooterBadges } from "@/components/layout/FooterBadges";
 
@@ -35,13 +35,6 @@ const cols = [
   },
 ];
 
-const socials = [
-  { Icon: Instagram, href: BUSINESS.instagram, label: "Instagram" },
-  { Icon: Facebook, href: BUSINESS.facebook, label: "Facebook" },
-  { Icon: MessageCircle, href: `https://wa.me/${BUSINESS.whatsapp}`, label: "WhatsApp" },
-  { Icon: Phone, href: `tel:${BUSINESS.phone}`, label: "Call" },
-];
-
 export function Footer() {
   return (
     <footer className="mt-24 border-t border-ink/8 bg-white dark:border-white/10 dark:bg-[#0E0E0D]">
@@ -66,20 +59,6 @@ export function Footer() {
             Nepal tour packages that start from Raxaul — Kathmandu, Pokhara, Muktinath and Chitwan, with
             Raxaul–Birgunj border assistance for families, groups and pilgrims.
           </p>
-          <div className="mt-6 flex items-center gap-3">
-            {socials.map(({ Icon, href, label }) => (
-              <a
-                key={label}
-                href={href}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label={label}
-                className="grid h-10 w-10 place-items-center rounded-xl border border-ink/10 text-ink/60 transition-all hover:border-crimson hover:text-crimson"
-              >
-                <Icon className="h-4 w-4" />
-              </a>
-            ))}
-          </div>
         </div>
 
         {cols.map((col) => (
