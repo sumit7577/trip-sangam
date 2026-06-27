@@ -514,7 +514,7 @@ class Command(BaseCommand):
             hero_eyebrow="Nepal · Curated Journeys",
             hero_title="Where the Sky Begins",
             hero_subtitle="Curated journeys across Nepal's most sacred landscapes. Trekking, cultural and spiritual experiences led by lifelong local guides.",
-            hero_image_url="https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?auto=format&fit=crop&w=2400&q=80",
+            hero_image="https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?auto=format&fit=crop&w=2400&q=80",
         )
         root.add_child(instance=home)
         home.save_revision().publish()
@@ -570,7 +570,7 @@ class Command(BaseCommand):
             original_price_inr=data["original_price_inr"],
             discount_pct=data["discount_pct"],
             best_season=data["best_season"],
-            hero_image_url=data["hero_image_url"],
+            hero_image=data["hero_image_url"],
             short_description=data["short_description"],
         )
         parent.add_child(instance=page)
@@ -597,7 +597,7 @@ class Command(BaseCommand):
 
         page.gallery_images.all().delete()
         for url in detail["gallery_images"]:
-            GalleryImage.objects.create(page=page, image_url=url)
+            GalleryImage.objects.create(page=page, image=url)
 
         page.journey_stops.all().delete()
         for j in detail["journey"]:
@@ -605,6 +605,7 @@ class Command(BaseCommand):
 
         page.reviews.all().delete()
         for r in detail["reviews"]:
+            r = {("avatar" if k == "avatar_url" else k): v for k, v in r.items()}
             PackageReview.objects.create(page=page, **r)
 
         page.ratings_breakdown.all().delete()
@@ -628,7 +629,7 @@ class Command(BaseCommand):
                     "region": t["region"],
                     "years_experience": t["years_experience"],
                     "languages": t["languages"],
-                    "photo_url": t["photo_url"],
+                    "photo": t["photo_url"],
                     "bio": t["bio"],
                     "sort_order": i,
                 },
@@ -647,7 +648,7 @@ class Command(BaseCommand):
             author=team.get(data["author_slug"]),
             publish_date=data["publish_date"],
             reading_time=data["reading_time"],
-            cover_image_url=data["cover_image_url"],
+            cover_image=data["cover_image_url"],
             excerpt=data["excerpt"],
             pull_quote=data["pull_quote"],
             featured=data["featured"],
@@ -664,7 +665,7 @@ class Command(BaseCommand):
             Testimonial.objects.create(
                 name=t["name"],
                 location=t["location"],
-                avatar_url=t["avatar_url"],
+                avatar=t["avatar_url"],
                 rating=t["rating"],
                 quote=t["quote"],
                 trip=t["trip"],
