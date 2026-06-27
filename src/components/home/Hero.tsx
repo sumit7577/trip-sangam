@@ -42,7 +42,7 @@ export function Hero({ packages, eyebrow, title, subtitle, imageUrl }: HeroProps
         <div className="absolute inset-0 animate-ken-burns">
           <Image
             src={heroImage}
-            alt={heroTitle}
+            alt="Himalayan landscape in Nepal — TripSangam tours starting from Raxaul"
             fill
             priority
             sizes="100vw"

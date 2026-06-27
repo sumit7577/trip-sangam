@@ -18,4 +18,14 @@ export const GUIDES = [
     title: "Best Time to Visit Nepal",
     excerpt: "A season-by-season guide to weather, mountain views and what each season suits.",
   },
+  {
+    slug: "places-to-visit-in-kathmandu",
+    title: "Top Places to Visit in Kathmandu",
+    excerpt: "The temples, stupas and old squares worth seeing on a Kathmandu trip.",
+  },
+  {
+    slug: "places-to-visit-in-pokhara",
+    title: "Top Places to Visit in Pokhara",
+    excerpt: "Lakes, sunrise viewpoints and easy sights for a relaxed Pokhara visit.",
+  },
 ] as const;

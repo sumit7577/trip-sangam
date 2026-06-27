@@ -63,6 +63,12 @@ export const metadata: Metadata = {
       "Nepal tours from Raxaul — Kathmandu, Pokhara, Muktinath, Chitwan. Border pickup assistance.",
     images: [BUSINESS.ogImage],
   },
+  // Optional HTML-tag verification for a Search Console URL-prefix property.
+  // Set NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION to the token to emit the tag.
+  // (A Domain property — sc-domain:tripsangam.com — verifies via DNS instead.)
+  verification: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION
+    ? { google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION }
+    : undefined,
 };
 
 // Default: LIGHT. Dark mode only activates when the user explicitly toggled it before.
@@ -76,6 +82,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={`${fraunces.variable} ${inter.variable} ${jetbrains.variable}`} suppressHydrationWarning>
       <head>
+        {/* Speed up image loading from the CDNs we use most (perf / LCP). */}
+        <link rel="preconnect" href="https://images.unsplash.com" crossOrigin="" />
+        <link rel="preconnect" href="https://tripsangam.b-cdn.net" crossOrigin="" />
+        <link rel="dns-prefetch" href="https://images.unsplash.com" />
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
         <script dangerouslySetInnerHTML={{ __html: translateInitScript }} />
         <script src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit" async />
