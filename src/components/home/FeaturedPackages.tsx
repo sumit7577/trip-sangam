@@ -1,7 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
+import { ArrowRight } from "lucide-react";
 import type { Package } from "@/types";
 import { PackageCard } from "./PackageCard";
 import { cn } from "@/lib/utils";
@@ -68,6 +70,16 @@ export function FeaturedPackages({ packages }: { packages: Package[] }) {
           ))}
         </AnimatePresence>
       </motion.div>
+
+      <div className="mt-12 flex justify-center">
+        <Link
+          href="/packages"
+          className="group inline-flex h-12 items-center gap-2 rounded-full border border-ink/15 bg-white px-7 text-sm font-semibold text-ink transition-all hover:border-ink hover:shadow-soft dark:border-white/15 dark:bg-white/5 dark:text-white"
+        >
+          View all {packages.length} trips
+          <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+        </Link>
+      </div>
     </section>
   );
 }

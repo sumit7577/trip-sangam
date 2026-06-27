@@ -31,7 +31,7 @@ export function BottomNav() {
     >
       <div className="relative mx-auto flex h-16 max-w-md items-stretch justify-around border-t border-ink/8 bg-sand/92 px-1 shadow-[0_-8px_24px_-12px_rgba(28,28,26,0.25)] backdrop-blur-xl dark:border-white/10 dark:bg-[#0E0E0D]/92">
         <Tab href="/" icon={Home} label="Home" active={pathname === "/"} />
-        <Tab onClick={scrollToPackages} icon={Compass} label="Explore" />
+        <Tab href="/packages" icon={Compass} label="Explore" active={pathname.startsWith("/packages")} />
 
         {/* Raised center CTA */}
         <button

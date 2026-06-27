@@ -16,15 +16,15 @@ import { useTheme } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 
 const nav = [
+  { label: "All Trips", href: "/packages" },
   { label: "Destinations", href: "/#packages" },
-  { label: "Experiences", href: "/#packages" },
   { label: "About", href: "/about" },
   { label: "Blog", href: "/blog" },
 ];
 
 const drawerNav = [
-  { label: "Destinations", href: "/#packages", icon: Compass, hint: "Trails, peaks & valleys" },
-  { label: "Experiences", href: "/#packages", icon: Sparkles, hint: "Curated departures" },
+  { label: "All Trips", href: "/packages", icon: Compass, hint: "Browse & filter every departure" },
+  { label: "Destinations", href: "/#packages", icon: Sparkles, hint: "Trails, peaks & valleys" },
   { label: "About", href: "/about", icon: BookOpen, hint: "Our story" },
   { label: "Blog", href: "/blog", icon: Newspaper, hint: "Field notes" },
 ];
