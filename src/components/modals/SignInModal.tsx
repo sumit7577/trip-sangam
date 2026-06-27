@@ -15,7 +15,7 @@ import { sendPhoneOtp, confirmPhoneOtp } from "@/lib/phoneAuth";
 import { WELCOME_OFFER } from "@/components/layout/PromoBanner";
 import { ModalShell } from "./ModalShell";
 
-type View = "phone" | "otp" | "email";
+type View = "phone" | "otp" | "profile" | "email";
 type EmailMode = "signin" | "signup" | "forgot";
 
 const RECAPTCHA_ID = "sangam-recaptcha";
@@ -23,7 +23,7 @@ const phoneEnabled = firebaseReady();
 
 export function SignInModal() {
   const { signin, closeSignin } = useModal();
-  const { login, register } = useAuth();
+  const { login, register, updateProfile } = useAuth();
 
   // Phone-OTP is primary when Firebase is configured; otherwise start on email.
   const [view, setView] = useState<View>(phoneEnabled ? "phone" : "email");
@@ -33,6 +33,10 @@ export function SignInModal() {
   const [phone, setPhone] = useState("");
   const [otp, setOtp] = useState("");
   const [confirmation, setConfirmation] = useState<ConfirmationResult | null>(null);
+
+  // First-time profile capture
+  const [profileName, setProfileName] = useState("");
+  const [profileEmail, setProfileEmail] = useState("");
 
   // Email state
   const [mode, setMode] = useState<EmailMode>("signin");
@@ -48,6 +52,7 @@ export function SignInModal() {
   function resetAll() {
     setView(phoneEnabled ? "phone" : "email");
     setDial("+91"); setPhone(""); setOtp(""); setConfirmation(null);
+    setProfileName(""); setProfileEmail("");
     setMode("signin"); setFullName(""); setEmailPhone(""); setEmail(""); setPassword("");
     setSubmitted(false); setSentEmail(false);
   }
@@ -85,9 +90,31 @@ export function SignInModal() {
     try {
       const idToken = await confirmPhoneOtp(confirmation, otp.replace(/\D/g, ""));
       await loginWithFirebase(idToken);
-      finishSignedIn("Signed in");
+      const u = useAuth.getState().user;
+      if (u && !u.fullName.trim()) {
+        // First time on this number — collect their details before finishing.
+        setProfileName(u.fullName || "");
+        setProfileEmail(u.email || "");
+        setView("profile");
+      } else {
+        finishSignedIn(`Welcome back${u?.fullName ? `, ${u.fullName.split(" ")[0]}` : ""}`);
+      }
     } catch (err) {
       toast(err instanceof Error ? err.message : "Invalid or expired code.", "error");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function onSaveProfile(e: React.FormEvent) {
+    e.preventDefault();
+    if (!profileName.trim()) return toast("Please enter your name.", "error");
+    setLoading(true);
+    try {
+      await updateProfile({ fullName: profileName.trim(), email: profileEmail.trim() || undefined });
+      finishSignedIn("Welcome to Trip Sangam!");
+    } catch (err) {
+      toast(err instanceof Error ? err.message : "Couldn't save your details.", "error");
     } finally {
       setLoading(false);
     }
@@ -221,6 +248,25 @@ export function SignInModal() {
                       className="mt-4 block w-full text-center text-xs text-muted hover:text-ink dark:hover:text-white">
                       Didn&apos;t get it? <span className="font-medium text-ink dark:text-white">Resend code</span>
                     </button>
+                  </motion.div>
+                ) : view === "profile" ? (
+                  <motion.div key="profile" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-jade/12 px-3 py-1 text-[11px] font-medium text-jade">
+                      <CheckCircle2 className="h-3.5 w-3.5" /> Number verified
+                    </span>
+                    <h2 className="mt-4 font-serif text-3xl tracking-tight md:text-4xl">Tell us about you</h2>
+                    <p className="mt-2 text-sm text-muted">
+                      Just once — so we can personalise your bookings for{" "}
+                      <span className="font-medium text-ink dark:text-white">{dial} {phone}</span>.
+                    </p>
+
+                    <form onSubmit={onSaveProfile} className="mt-7 space-y-3">
+                      <Field icon={<User className="h-4 w-4" />} label="Full name" type="text"
+                        value={profileName} onChange={setProfileName} placeholder="Your name" autoFocus />
+                      <Field icon={<Mail className="h-4 w-4" />} label="Email (optional)" type="email"
+                        value={profileEmail} onChange={setProfileEmail} placeholder="you@example.com" optional />
+                      <SubmitButton loading={loading} label="Continue" />
+                    </form>
                   </motion.div>
                 ) : (
                   <motion.div key="email" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
@@ -369,17 +415,17 @@ function SentEmail({ email, onBack }: { email: string; onBack: () => void }) {
 }
 
 function Field({
-  icon, label, type, value, onChange, placeholder, autoFocus,
+  icon, label, type, value, onChange, placeholder, autoFocus, optional,
 }: {
   icon: React.ReactNode; label: string; type: string; value: string;
-  onChange: (v: string) => void; placeholder: string; autoFocus?: boolean;
+  onChange: (v: string) => void; placeholder: string; autoFocus?: boolean; optional?: boolean;
 }) {
   return (
     <label className="block">
       <span className="text-[10px] font-medium uppercase tracking-[0.18em] text-muted">{label}</span>
       <div className="mt-1.5 flex h-12 items-center gap-2 rounded-2xl border border-line bg-white px-4 transition-colors focus-within:border-ink dark:bg-white/5">
         <span className="shrink-0 text-muted">{icon}</span>
-        <input required autoFocus={autoFocus} type={type} value={value}
+        <input required={!optional} autoFocus={autoFocus} type={type} value={value}
           onChange={(e) => onChange(e.target.value)} placeholder={placeholder}
           className="flex-1 border-none bg-transparent text-sm text-ink focus:outline-none dark:text-white" />
       </div>

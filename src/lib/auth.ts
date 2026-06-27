@@ -19,7 +19,7 @@ interface AuthState {
   hydrated: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (input: { email: string; password: string; fullName: string; phone: string }) => Promise<void>;
-  updateProfile: (input: { fullName?: string; phone?: string }) => Promise<void>;
+  updateProfile: (input: { fullName?: string; phone?: string; email?: string }) => Promise<void>;
   logout: () => void;
   setHydrated: () => void;
 }

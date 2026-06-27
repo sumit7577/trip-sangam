@@ -63,14 +63,21 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
 class ProfileUpdateSerializer(serializers.Serializer):
     fullName = serializers.CharField(max_length=200, required=False)
     phone = serializers.CharField(max_length=40, required=False, allow_blank=True)
+    email = serializers.EmailField(required=False, allow_blank=True)
 
     def update(self, user, data):
+        email = (data.get("email") or "").lower().strip()
+        if email and User.objects.filter(email__iexact=email).exclude(pk=user.pk).exists():
+            raise serializers.ValidationError({"email": "This email is already linked to another account."})
+
         profile, _ = Profile.objects.get_or_create(user=user)
         if "fullName" in data:
             profile.full_name = data["fullName"]
             user.first_name = data["fullName"][:150]
-            user.save(update_fields=["first_name"])
         if "phone" in data:
             profile.phone = data["phone"]
+        if email:
+            user.email = email
+        user.save()
         profile.save()
         return user
