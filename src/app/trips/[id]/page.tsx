@@ -16,6 +16,7 @@ import {
 } from "@/lib/bookingApi";
 import { statusLabel, statusClasses } from "@/lib/bookingStatus";
 import { TravellersForm } from "@/components/trips/TravellersForm";
+import { SlotMeter } from "@/components/trips/SlotMeter";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 
 export default function TripDetailPage() {
@@ -102,7 +103,6 @@ export default function TripDetailPage() {
   if (!b) return <Shell><p className="text-muted">Loading…</p></Shell>;
 
   const dep = b.departure;
-  const fillPct = dep ? Math.min(100, Math.round((dep.seatsConfirmed / dep.minCapacity) * 100)) : 0;
   const mates = b.coTravellers ?? [];
   const totalInSlot = mates.reduce((n, m) => n + (m.partySize || 0), 0);
   const remainingToGuarantee = dep ? Math.max(0, dep.minCapacity - dep.seatsConfirmed) : 0;
@@ -124,43 +124,53 @@ export default function TripDetailPage() {
         </span>
       </div>
 
-      {/* Matched slot summary */}
+      {/* Matched slot — futuristic seat-meter panel */}
       {dep ? (
-        <div className="mt-6 rounded-2xl border border-line bg-white p-5 dark:bg-white/5">
-          <div className="flex items-center justify-between">
-            <h2 className="font-serif text-lg">Your matched slot</h2>
-            <span className="rounded-full bg-ink/5 px-2.5 py-0.5 text-xs font-semibold text-ink dark:bg-white/10 dark:text-white">
+        <div className="relative mt-6 overflow-hidden rounded-3xl border border-line bg-gradient-to-br from-white to-sand/50 p-6 shadow-soft dark:border-white/10 dark:from-white/[0.07] dark:to-transparent">
+          {/* Ambient glow + film grain for depth */}
+          <div className={`pointer-events-none absolute -right-20 -top-20 h-52 w-52 rounded-full blur-3xl ${dep.isGuaranteed ? "bg-jade/20" : "bg-gold/20"}`} />
+          <div className="pointer-events-none absolute inset-0 bg-grain opacity-[0.05] mix-blend-overlay" />
+
+          <div className="relative flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className={`inline-flex h-2 w-2 rounded-full ${dep.isGuaranteed ? "bg-jade" : "bg-gold"} animate-pulse`} />
+              <h2 className="font-serif text-lg">Your matched slot</h2>
+            </div>
+            <span className="rounded-full border border-line bg-white/70 px-2.5 py-0.5 text-xs font-semibold text-ink dark:border-white/15 dark:bg-white/10 dark:text-white">
               Group {dep.groupLabel}
             </span>
           </div>
 
-          <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-4">
-            <Stat icon={CalendarDays} label="Trip dates" value={fmtRange(dep.startDate, dep.endDate)} />
-            <Stat icon={Users} label="Your party" value={`${b.partySize} traveller${b.partySize > 1 ? "s" : ""}`} />
-            {dep.priceINR > 0 && (
-              <Stat icon={IndianRupee} label="Price / person" value={`₹${dep.priceINR.toLocaleString("en-IN")}`} />
-            )}
-            {dep.cutoffDate && (
-              <Stat icon={CalendarClock} label="Book by" value={fmtDate(dep.cutoffDate)} />
-            )}
-          </div>
+          <div className="relative mt-5 flex flex-col items-center gap-6 sm:flex-row sm:gap-7">
+            <SlotMeter seatsConfirmed={dep.seatsConfirmed} minCapacity={dep.minCapacity} isGuaranteed={dep.isGuaranteed} />
 
-          <div className="mt-5">
-            <div className="flex items-center justify-between text-xs">
-              <span className="font-medium">
+            <div className="min-w-0 flex-1 text-center sm:text-left">
+              <p className={`font-serif text-xl ${dep.isGuaranteed ? "text-jade" : ""}`}>
                 {dep.isGuaranteed
-                  ? "Departure guaranteed 🎉"
-                  : `${remainingToGuarantee} more traveller${remainingToGuarantee === 1 ? "" : "s"} to guarantee`}
-              </span>
-              <span className="text-muted">{dep.seatsConfirmed}/{dep.minCapacity} confirmed · {dep.seatsLeft} seats left</span>
-            </div>
-            <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-ink/10">
-              <div className={`h-full rounded-full ${dep.isGuaranteed ? "bg-jade" : "bg-sunset"}`} style={{ width: `${fillPct}%` }} />
+                  ? "Departure confirmed 🎉"
+                  : `${remainingToGuarantee} more traveller${remainingToGuarantee === 1 ? "" : "s"} to confirm`}
+              </p>
+              <p className="mt-1 text-xs text-muted">
+                {dep.isGuaranteed
+                  ? "Your group has reached the minimum — this trip is going ahead."
+                  : `Confirms automatically at ${dep.minCapacity} travellers · ${dep.seatsLeft} seat${dep.seatsLeft === 1 ? "" : "s"} left in this group.`}
+              </p>
+
+              <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 text-left">
+                <Stat icon={CalendarDays} label="Trip dates" value={fmtRange(dep.startDate, dep.endDate)} />
+                <Stat icon={Users} label="Your party" value={`${b.partySize} traveller${b.partySize > 1 ? "s" : ""}`} />
+                {dep.priceINR > 0 && (
+                  <Stat icon={IndianRupee} label="Price / person" value={`₹${dep.priceINR.toLocaleString("en-IN")}`} />
+                )}
+                {dep.cutoffDate && (
+                  <Stat icon={CalendarClock} label="Book by" value={fmtDate(dep.cutoffDate)} />
+                )}
+              </div>
             </div>
           </div>
         </div>
       ) : (
-        <p className="mt-6 rounded-2xl border border-line bg-white p-5 text-sm text-muted dark:bg-white/5">
+        <p className="mt-6 rounded-3xl border border-line bg-white p-5 text-sm text-muted dark:border-white/10 dark:bg-white/5">
           You're on the waitlist — we'll match you into a group and show your fellow travellers here as soon as space opens.
         </p>
       )}
@@ -175,26 +185,34 @@ export default function TripDetailPage() {
             </span>
           </div>
 
-          <div className="mt-3 divide-y divide-line overflow-hidden rounded-2xl border border-line bg-white dark:bg-white/5">
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
             {mates.map((m, i) => (
-              <div key={i} className={`flex items-center justify-between gap-3 p-4 ${m.isYou ? "bg-gold/5" : ""}`}>
-                <div className="flex min-w-0 items-center gap-3">
-                  <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-full text-xs font-semibold uppercase ${m.isYou ? "bg-gradient-to-br from-gold to-crimson text-white" : "bg-ink/5 text-ink dark:bg-white/10 dark:text-white"}`}>
+              <div
+                key={i}
+                className={`relative overflow-hidden rounded-2xl border p-4 ${
+                  m.isYou
+                    ? "border-gold/50 bg-gradient-to-br from-gold/10 to-transparent"
+                    : "border-line bg-white dark:border-white/10 dark:bg-white/5"
+                }`}
+              >
+                {m.isYou && <div className="pointer-events-none absolute -right-8 -top-8 h-20 w-20 rounded-full bg-gold/20 blur-2xl" />}
+                <div className="relative flex items-center gap-3">
+                  <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-full text-sm font-semibold uppercase ${m.isYou ? "bg-gradient-to-br from-gold to-jade text-white shadow-soft" : "bg-ink/5 text-ink dark:bg-white/10 dark:text-white"}`}>
                     {m.name.slice(0, 1)}
                   </span>
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium">
-                      {m.name}{m.isYou && <span className="ml-1.5 text-xs text-muted">(you)</span>}
+                      {m.name}{m.isYou && <span className="ml-1.5 text-xs text-gold-600">(you)</span>}
                     </p>
-                    <p className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted">
+                    <p className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted">
                       <span className="inline-flex items-center gap-1"><Phone className="h-3 w-3" /> {m.phone || "—"}</span>
                       <span className="inline-flex items-center gap-1"><Users className="h-3 w-3" /> {m.partySize} {m.partySize === 1 ? "person" : "people"}</span>
                     </p>
                   </div>
+                  <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-[10px] font-semibold ${statusClasses(m.status)}`}>
+                    {statusLabel(m.status)}
+                  </span>
                 </div>
-                <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-[10px] font-semibold ${statusClasses(m.status)}`}>
-                  {statusLabel(m.status)}
-                </span>
               </div>
             ))}
           </div>

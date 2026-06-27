@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, Briefcase, CalendarDays, Users, LogIn, X } from "lucide-react";
+import { ArrowRight, Briefcase, CalendarDays, Users, LogIn, X, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useModal } from "@/lib/modal";
 import { toast } from "@/lib/toast";
@@ -109,11 +109,27 @@ export default function TripsPage() {
                   </span>
                 </div>
                 {b.departure && (
-                  <p className="mt-3 text-xs text-muted">
-                    {b.departure.isGuaranteed
-                      ? "✅ Departure guaranteed"
-                      : `${b.departure.seatsConfirmed}/${b.departure.minCapacity} confirmed — forming`}
-                  </p>
+                  b.departure.isGuaranteed ? (
+                    <p className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-jade">
+                      <ShieldCheck className="h-3.5 w-3.5" /> Departure confirmed
+                    </p>
+                  ) : (
+                    <div className="mt-3 max-w-xs">
+                      <div className="flex items-center gap-1">
+                        {Array.from({ length: b.departure.minCapacity }).map((_, i) => (
+                          <span
+                            key={i}
+                            className={`h-1.5 flex-1 rounded-full transition-colors ${
+                              i < b.departure!.seatsConfirmed ? "bg-gold" : "bg-ink/10 dark:bg-white/10"
+                            }`}
+                          />
+                        ))}
+                      </div>
+                      <p className="mt-1.5 text-[11px] text-muted">
+                        {b.departure.seatsConfirmed}/{b.departure.minCapacity} confirmed · {Math.max(0, b.departure.minCapacity - b.departure.seatsConfirmed)} to go
+                      </p>
+                    </div>
+                  )
                 )}
               </div>
 
