@@ -16,3 +16,6 @@ pem/
 .vscode/
 .claude/
 tsconfig.tsbuildinfo
+
+# Firebase service-account key (never commit)
+firebase-sa.json

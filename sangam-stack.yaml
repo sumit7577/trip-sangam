@@ -69,8 +69,10 @@ services:
       - DEFAULT_FROM_EMAIL=${DEFAULT_FROM_EMAIL:-Trip Sangam <noreply@tripsangam.com>}
       - SITE_PUBLIC_URL=https://${SITE_DOMAIN}
 
-      # Firebase phone-auth — paste the service-account JSON to enable phone login.
+      # Firebase phone-auth. Prefer the mounted file (FIREBASE_CREDENTIALS_FILE)
+      # — a long JSON string doesn't survive .env parsing reliably.
       - FIREBASE_CREDENTIALS_JSON=${FIREBASE_CREDENTIALS_JSON:-}
+      - FIREBASE_CREDENTIALS_FILE=${FIREBASE_CREDENTIALS_FILE:-}
 
       # Postgres — when POSTGRES_DB is set in the VM .env the app uses Postgres;
       # blank ⇒ falls back to the SQLite volume below (clean rollback path).
@@ -83,6 +85,8 @@ services:
       - sangam-db:/app/data
       - sangam-static:/app/staticfiles
       - sangam-media:/app/media
+      # Firebase service-account key (gitignored; placed on the VM out-of-band).
+      - ./firebase-sa.json:/app/firebase-sa.json:ro
     depends_on:
       sangam-db-postgres:
         condition: service_healthy
