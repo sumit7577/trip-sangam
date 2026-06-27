@@ -8,10 +8,12 @@ export function ModalShell({
   onClose,
   children,
   ariaLabel,
+  wide = false,
 }: {
   onClose: () => void;
   children: React.ReactNode;
   ariaLabel: string;
+  wide?: boolean;
 }) {
   useEffect(() => {
     document.body.style.overflow = "hidden";
@@ -42,7 +44,7 @@ export function ModalShell({
         exit={{ y: 40, opacity: 0, scale: 0.98 }}
         transition={{ type: "spring", stiffness: 300, damping: 28 }}
         onClick={(e) => e.stopPropagation()}
-        className="relative max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-3xl bg-white pb-[env(safe-area-inset-bottom)] shadow-lift md:rounded-3xl"
+        className={`relative max-h-[92vh] w-full overflow-y-auto rounded-t-3xl bg-white pb-[env(safe-area-inset-bottom)] shadow-lift md:rounded-3xl ${wide ? "max-w-3xl" : "max-w-lg"}`}
       >
         <button
           onClick={onClose}

@@ -13,6 +13,8 @@ from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from .firebase_auth import firebase_configured, verify_phone_token
+from .models import Profile
 from .serializers import (
     PasswordResetConfirmSerializer,
     PasswordResetRequestSerializer,
@@ -23,6 +25,21 @@ from .serializers import (
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
+
+
+def _user_for_phone(phone):
+    """Find or create the account tied to a verified phone number."""
+    phone = (phone or "").strip()
+    prof = Profile.objects.filter(phone=phone).select_related("user").first()
+    if prof:
+        return prof.user
+    user = User.objects.filter(username=phone).first()
+    if user:
+        Profile.objects.get_or_create(user=user, defaults={"phone": phone})
+        return user
+    user = User.objects.create_user(username=phone)  # OTP-only account, no password
+    Profile.objects.create(user=user, phone=phone, full_name="")
+    return user
 
 
 def _tokens_for(user):
@@ -135,6 +152,30 @@ class PasswordResetConfirmView(APIView):
         user.set_password(data["password"])
         user.save(update_fields=["password"])
         return Response({"detail": "Your password has been reset. You can now sign in."})
+
+
+class FirebasePhoneLoginView(APIView):
+    """Exchange a Firebase phone-auth ID token for our JWT + user."""
+
+    permission_classes = [AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "auth"
+
+    def post(self, request):
+        if not firebase_configured():
+            return Response(
+                {"detail": "Phone login isn't set up yet. Please use email."},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+        id_token = request.data.get("idToken") or ""
+        phone = verify_phone_token(id_token)
+        if not phone:
+            return Response(
+                {"detail": "Couldn't verify that phone number. Please try again."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        user = _user_for_phone(phone)
+        return Response({"user": UserSerializer(user).data, **_tokens_for(user)})
 
 
 class MeView(APIView):

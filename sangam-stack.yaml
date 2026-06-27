@@ -69,6 +69,9 @@ services:
       - DEFAULT_FROM_EMAIL=${DEFAULT_FROM_EMAIL:-Trip Sangam <noreply@tripsangam.com>}
       - SITE_PUBLIC_URL=https://${SITE_DOMAIN}
 
+      # Firebase phone-auth — paste the service-account JSON to enable phone login.
+      - FIREBASE_CREDENTIALS_JSON=${FIREBASE_CREDENTIALS_JSON:-}
+
       # Postgres — when POSTGRES_DB is set in the VM .env the app uses Postgres;
       # blank ⇒ falls back to the SQLite volume below (clean rollback path).
       - POSTGRES_DB=${POSTGRES_DB:-}
@@ -115,6 +118,11 @@ services:
         # API_INTERNAL_URL (set at runtime below) to stay in-cluster.
         NEXT_PUBLIC_API_URL: https://${CMS_DOMAIN}
         NEXT_PUBLIC_SITE_URL: https://${SITE_DOMAIN}
+        # Firebase phone-auth (client). Blank ⇒ phone login hidden, email used.
+        NEXT_PUBLIC_FIREBASE_API_KEY: ${NEXT_PUBLIC_FIREBASE_API_KEY:-}
+        NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ${NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN:-}
+        NEXT_PUBLIC_FIREBASE_PROJECT_ID: ${NEXT_PUBLIC_FIREBASE_PROJECT_ID:-}
+        NEXT_PUBLIC_FIREBASE_APP_ID: ${NEXT_PUBLIC_FIREBASE_APP_ID:-}
     image: sangam-frontend:latest
     container_name: sangam-frontend
     restart: always

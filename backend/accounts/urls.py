@@ -2,6 +2,7 @@ from django.urls import path
 from rest_framework_simplejwt.views import TokenRefreshView
 
 from .views import (
+    FirebasePhoneLoginView,
     LoginView,
     MeView,
     PasswordResetConfirmView,
@@ -20,4 +21,5 @@ urlpatterns = [
         PasswordResetConfirmView.as_view(),
         name="auth-password-reset-confirm",
     ),
+    path("auth/phone/firebase/", FirebasePhoneLoginView.as_view(), name="auth-phone-firebase"),
 ]

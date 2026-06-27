@@ -91,6 +91,19 @@ export const useAuth = create<AuthState>()(
   )
 );
 
+/** Exchange a verified Firebase phone ID token for our JWT + user, and sign in. */
+export async function loginWithFirebase(idToken: string): Promise<void> {
+  const res = await fetch(`${BASE}/api/auth/phone/firebase/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ idToken }),
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(firstError(body));
+  const d = body as { user: AuthUser; access: string; refresh: string };
+  useAuth.setState({ user: d.user, access: d.access, refresh: d.refresh });
+}
+
 /** Ask the backend to email a password-reset link. Always resolves on 2xx. */
 export async function requestPasswordReset(email: string): Promise<string> {
   const res = await fetch(`${BASE}/api/auth/password-reset/`, {
