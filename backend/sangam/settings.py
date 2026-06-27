@@ -266,7 +266,9 @@ EMAIL_BACKEND = os.environ.get(
     "django.core.mail.backends.console.EmailBackend" if DEBUG
     else "django.core.mail.backends.smtp.EmailBackend",
 )
-EMAIL_HOST = os.environ.get("EMAIL_HOST", "smtp.gmail.com")
+# `or` (not a default arg) so an empty EMAIL_HOST="" from the prod stack still
+# falls back to Gmail — set EMAIL_HOST_USER/PASSWORD and it just works.
+EMAIL_HOST = os.environ.get("EMAIL_HOST") or "smtp.gmail.com"
 EMAIL_PORT = int(os.environ.get("EMAIL_PORT", "587"))
 EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
 EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
