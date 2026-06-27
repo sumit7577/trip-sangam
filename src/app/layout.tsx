@@ -78,6 +78,14 @@ const themeInitScript = `(function(){try{if(localStorage.getItem('theme')==='dar
 // (set by LanguageSwitcher) and translates the page on load.
 const translateInitScript = `function googleTranslateElementInit(){new google.translate.TranslateElement({pageLanguage:'en',includedLanguages:'en,ne,hi,bn,mr,ta,te,gu,pa,kn,ml,or',autoDisplay:false},'google_translate_element');}`;
 
+// Google Translate rewrites text nodes into <font> wrappers. When React later
+// re-renders or the user navigates, it tries to remove/insert nodes that the
+// translator moved and throws NotFoundError ("Failed to execute 'removeChild'"),
+// white-screening the app. Make removeChild/insertBefore no-op safely when the
+// node isn't actually a child, so React + Google Translate can coexist. Runs in
+// <head> before hydration so it's in place before any reconciliation.
+const translateGuardScript = `(function(){if(typeof Node!=='function'||!Node.prototype)return;var r=Node.prototype.removeChild;Node.prototype.removeChild=function(c){if(c&&c.parentNode!==this){return c;}return r.apply(this,arguments);};var i=Node.prototype.insertBefore;Node.prototype.insertBefore=function(n,ref){if(ref&&ref.parentNode!==this){return n;}return i.apply(this,arguments);};})();`;
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${fraunces.variable} ${inter.variable} ${jetbrains.variable}`} suppressHydrationWarning>
@@ -86,6 +94,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="preconnect" href="https://images.unsplash.com" crossOrigin="" />
         <link rel="preconnect" href="https://tripsangam.b-cdn.net" crossOrigin="" />
         <link rel="dns-prefetch" href="https://images.unsplash.com" />
+        <script dangerouslySetInnerHTML={{ __html: translateGuardScript }} />
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
         <script dangerouslySetInnerHTML={{ __html: translateInitScript }} />
         <script src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit" async />

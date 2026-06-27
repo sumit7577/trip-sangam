@@ -160,15 +160,29 @@ input, select, textarea { font-size: 16px; }
 }
 
 /* ──────────────────────────────────────────────────────────────
-   Google Translate widget — hide its UI; we drive it from our own dropdown.
+   Google Translate widget — hide ALL of its chrome; we drive it from
+   our own LanguageSwitcher dropdown. The widget injects a top banner
+   iframe and shoves <body> down by 40px, which overlaps our fixed
+   header — pin the body and hide every variant of the banner.
    ────────────────────────────────────────────────────────────── */
-#google_translate_element { display: none !important; }
-.goog-te-banner-frame.skiptranslate { display: none !important; }
-.goog-te-gadget { display: none !important; }
+#google_translate_element,
+.goog-te-gadget,
+.goog-te-banner-frame,
+iframe.goog-te-banner-frame,
+.goog-te-banner-frame.skiptranslate,
+.skiptranslate iframe,
+#goog-gt-tt,
+.goog-te-balloon-frame { display: none !important; visibility: hidden !important; }
+
+/* The widget sets body { top: 40px } inline — keep the page pinned. */
 body { top: 0 !important; }
+.translated-ltr body,
+.translated-rtl body { top: 0 !important; }
+
+/* Don't let translated text runs get the yellow highlight/tooltip box. */
+.goog-text-highlight { background: none !important; box-shadow: none !important; }
 .goog-tooltip,
-.goog-tooltip:hover,
-.goog-text-highlight { background: transparent !important; box-shadow: none !important; }
+.goog-tooltip:hover { display: none !important; }
 
 /* Shimmer for skeletons — quiet bone tones, no warmth flicker */
 .shimmer {
