@@ -27,7 +27,7 @@ export function AboutHero() {
           className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3.5 py-1 text-[10px] font-medium uppercase tracking-[0.22em] backdrop-blur"
         >
           <span className="h-1.5 w-1.5 rounded-full bg-gold" />
-          About Trip Sangam
+          About TripSangam Travels
         </motion.span>
 
         <motion.h1
@@ -36,7 +36,7 @@ export function AboutHero() {
           transition={{ duration: 0.9, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
           className="balance mt-6 max-w-3xl font-serif text-[clamp(2.5rem,7vw,5.5rem)] font-light leading-[0.95] tracking-tight"
         >
-          We grew up in these <em className="italic text-champagne">mountains.</em>
+          Nepal tours that start <em className="italic text-champagne">from Raxaul.</em>
         </motion.h1>
 
         <motion.p
@@ -45,8 +45,8 @@ export function AboutHero() {
           transition={{ duration: 0.8, delay: 0.35, ease: [0.16, 1, 0.3, 1] }}
           className="pretty mt-5 max-w-xl text-base text-white/80 md:text-lg"
         >
-          A Nepali-owned operator of small-group journeys across the Himalayan belt. Forty-seven guides on
-          monthly salaries, group caps of eight, and a 12-week prep plan emailed on the day you book.
+          TripSangam Travels is a Raxaul-based travel agency arranging Nepal tours from the Raxaul–Birgunj
+          border — pilgrimage, family and holiday trips to Kathmandu, Pokhara, Muktinath, Chitwan and beyond.
         </motion.p>
       </div>
     </section>

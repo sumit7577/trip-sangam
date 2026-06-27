@@ -6,11 +6,10 @@ import type { PackageDetail } from "@/types";
 import { Itinerary } from "./Itinerary";
 import { Inclusions } from "./Inclusions";
 import { Gallery } from "./Gallery";
-import { Reviews } from "./Reviews";
 import { FAQ } from "./FAQ";
 import { cn } from "@/lib/utils";
 
-const tabs = ["Overview", "Itinerary", "Inclusions", "Gallery", "Reviews", "FAQ"] as const;
+const tabs = ["Overview", "Itinerary", "Inclusions", "Gallery", "FAQ"] as const;
 type Tab = (typeof tabs)[number];
 
 export function TabsSection({ pkg }: { pkg: PackageDetail }) {
@@ -41,12 +40,7 @@ export function TabsSection({ pkg }: { pkg: PackageDetail }) {
           {tabs.map((t) => (
             <button
               key={t}
-              onClick={() => {
-                setActive(t);
-                if (t === "Reviews") {
-                  setTimeout(() => document.getElementById("reviews")?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
-                }
-              }}
+              onClick={() => setActive(t)}
               className={cn(
                 "relative whitespace-nowrap px-5 py-4 text-sm font-medium transition-colors",
                 active === t ? "text-ink" : "text-muted hover:text-ink"
@@ -77,7 +71,6 @@ export function TabsSection({ pkg }: { pkg: PackageDetail }) {
           {active === "Itinerary" && <Itinerary days={pkg.itinerary} />}
           {active === "Inclusions" && <Inclusions inclusions={pkg.inclusions} exclusions={pkg.exclusions} />}
           {active === "Gallery" && <Gallery images={pkg.galleryImages} />}
-          {active === "Reviews" && <Reviews pkg={pkg} />}
           {active === "FAQ" && <FAQ items={pkg.faqs} />}
         </motion.div>
       </AnimatePresence>

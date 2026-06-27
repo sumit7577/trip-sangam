@@ -24,8 +24,8 @@ export function DealsStrip({ packages }: { packages: Package[] }) {
             <p className="inline-flex items-center gap-2 text-xs font-medium uppercase tracking-[0.18em] text-gold">
               <Tag className="h-3.5 w-3.5" /> Deals &amp; offers
             </p>
-            <h2 className="mt-3 font-serif text-3xl tracking-tight md:text-4xl">Limited-time departures</h2>
-            <p className="mt-2 max-w-md text-sm text-white/60">Lock these in before the group fills — savings drop as seats sell.</p>
+            <h2 className="mt-3 font-serif text-3xl tracking-tight md:text-4xl">Current offers</h2>
+            <p className="mt-2 max-w-md text-sm text-white/60">Selected departures with a discount on the listed price. Contact us to confirm dates and availability.</p>
           </div>
           <Link href="/packages?sort=price_asc" className="hidden shrink-0 items-center gap-1.5 text-sm font-semibold text-white/90 underline-offset-4 hover:underline sm:inline-flex">
             See all <ArrowRight className="h-4 w-4" />

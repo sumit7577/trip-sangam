@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ChevronRight, Clock, Mountain, Users, CalendarDays, Star } from "lucide-react";
+import { ChevronRight, Clock, Mountain, Users, CalendarDays } from "lucide-react";
 import type { PackageDetail } from "@/types";
 
 export function PackageHeader({ pkg }: { pkg: PackageDetail }) {
@@ -49,17 +49,6 @@ export function PackageHeader({ pkg }: { pkg: PackageDetail }) {
           <Stat icon={<Mountain className="h-4 w-4" />} label="Difficulty" value={pkg.difficulty} />
           <Stat icon={<Users className="h-4 w-4" />} label="Group" value={pkg.groupSize} />
           <Stat icon={<CalendarDays className="h-4 w-4" />} label="Best season" value={pkg.bestSeason} />
-          <div className="col-span-2 mt-1 flex items-center gap-2 border-t border-ink/8 pt-4 sm:col-span-4 md:ml-auto md:mt-0 md:border-0 md:pt-0">
-            <div className="flex">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <Star key={i} className="h-4 w-4 fill-gold text-gold" />
-              ))}
-            </div>
-            <span className="font-medium">{pkg.rating}</span>
-            <a href="#reviews" className="text-muted underline-offset-4 hover:underline">
-              {pkg.reviewCount} reviews
-            </a>
-          </div>
         </div>
       </motion.div>
     </section>

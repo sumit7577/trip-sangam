@@ -7,7 +7,6 @@ import { JourneyMap } from "@/components/detail/JourneyMap";
 import { PackageHeader } from "@/components/detail/PackageHeader";
 import { BookingCard } from "@/components/detail/BookingCard";
 import { TabsSection } from "@/components/detail/TabsSection";
-import { OfferBanner } from "@/components/detail/OfferBanner";
 import { SimilarPackages } from "@/components/detail/SimilarPackages";
 import { FinalCTA } from "@/components/detail/FinalCTA";
 import { MobileBookingBar } from "@/components/detail/MobileBookingBar";
@@ -99,7 +98,6 @@ export default async function PackageDetailPage({ params }: { params: { slug: st
       </div>
 
       <JourneyMap stops={pkg.journey} />
-      <OfferBanner />
       <CarStrip />
       <SimilarPackages currentSlug={pkg.slug} packages={packages} />
       <FinalCTA pkg={pkg} />

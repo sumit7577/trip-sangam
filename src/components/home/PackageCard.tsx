@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Heart, MapPin, Clock, Users, Star, ArrowUpRight } from "lucide-react";
+import { Heart, MapPin, Clock, Users, ArrowUpRight } from "lucide-react";
 import type { Package } from "@/types";
 import { Badge } from "@/components/ui/Badge";
 import { useWishlist } from "@/lib/wishlist";
@@ -121,11 +121,6 @@ export function PackageCard({ pkg, index }: { pkg: Package; index: number }) {
               <span className="inline-flex items-center gap-1.5">
                 <Users className="h-3 w-3" />
                 <span className="font-mono">{pkg.groupSize}</span>
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <Star className="h-3 w-3 fill-gold text-gold" />
-                <span className="font-mono font-medium text-ink">{pkg.rating}</span>
-                <span>({pkg.reviewCount})</span>
               </span>
             </div>
 

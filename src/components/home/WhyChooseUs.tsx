@@ -1,28 +1,28 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Users, BadgeIndianRupee, Headphones, Leaf } from "lucide-react";
+import { MapPin, ShieldCheck, Users, MessageCircle } from "lucide-react";
 
 const items = [
   {
+    icon: MapPin,
+    title: "Starts from Raxaul",
+    body: "We pick you up at Raxaul railway station or the Birgunj border and handle the journey onward into Nepal.",
+  },
+  {
+    icon: ShieldCheck,
+    title: "Border assistance",
+    body: "We help you through the Raxaul–Birgunj crossing so the start of your trip is smooth and stress-free.",
+  },
+  {
     icon: Users,
-    title: "Local guides",
-    body: "Every guide is born and raised in Nepal — and certified by the Nepal Mountaineering Association.",
+    title: "Private or group tours",
+    body: "Travel privately at your own pace, or join a group departure — for families, pilgrims and holidaymakers alike.",
   },
   {
-    icon: BadgeIndianRupee,
-    title: "Best price, period",
-    body: "Find a cheaper itinerary like-for-like and we'll beat it by 10%. No fine print, no upsells.",
-  },
-  {
-    icon: Headphones,
-    title: "24/7 on-trail support",
-    body: "Sat-phones with every group leader and a Kathmandu ops desk that never closes.",
-  },
-  {
-    icon: Leaf,
-    title: "Carbon-light by design",
-    body: "We offset 120% of every trip, employ porters at fair-wage rates, and pack out what we pack in.",
+    icon: MessageCircle,
+    title: "Direct, friendly support",
+    body: "Plan over a call or on WhatsApp and get straight answers about your trip, before and during travel.",
   },
 ];
 
@@ -35,8 +35,8 @@ export function WhyChooseUs() {
             <span className="h-px w-8 bg-crimson" /> Why us
           </p>
           <h2 className="balance mt-3 font-serif text-4xl tracking-tight md:text-5xl">
-            Built for travelers who want it<br />
-            <span className="italic text-crimson">done properly.</span>
+            Your Nepal trip,<br />
+            <span className="italic text-crimson">handled from Raxaul.</span>
           </h2>
         </div>
 

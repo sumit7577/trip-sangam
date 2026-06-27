@@ -1,12 +1,10 @@
 import type { Metadata } from "next";
 import { Hero } from "@/components/home/Hero";
-import { StatsStrip } from "@/components/home/StatsStrip";
 import { HomeIntro } from "@/components/home/HomeIntro";
 import { CategoryNav } from "@/components/home/CategoryNav";
 import { FeaturedPackages } from "@/components/home/FeaturedPackages";
 import { DealsStrip } from "@/components/home/DealsStrip";
 import { WhyChooseUs } from "@/components/home/WhyChooseUs";
-import { Testimonials } from "@/components/home/Testimonials";
 import { Newsletter } from "@/components/home/Newsletter";
 import { CarStrip } from "@/components/ui/CarStrip";
 import { FaqSection, type Faq } from "@/components/seo/FaqSection";
@@ -58,14 +56,12 @@ export default async function HomePage() {
         subtitle={home.heroSubtitle}
         imageUrl={home.heroImage}
       />
-      <StatsStrip />
       <HomeIntro />
       <CategoryNav packages={packages} />
       <CarStrip />
       <FeaturedPackages packages={home.featuredPackages.length > 0 ? home.featuredPackages : packages} />
       <DealsStrip packages={packages} />
       <WhyChooseUs />
-      <Testimonials testimonials={home.testimonials} />
       <FaqSection faqs={homeFaqs} heading="Nepal tours from Raxaul — your questions" />
       <Newsletter />
     </>

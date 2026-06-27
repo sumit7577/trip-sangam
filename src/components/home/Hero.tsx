@@ -17,10 +17,10 @@ const fadeUp = {
 
 const DEFAULT_IMAGE =
   "https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?auto=format&fit=crop&w=2400&q=85";
-const DEFAULT_EYEBROW = "Spring '26 departures open";
+const DEFAULT_EYEBROW = "Nepal tours from Raxaul";
 const DEFAULT_TITLE = "Where the Sky Begins";
 const DEFAULT_SUBTITLE =
-  "Curated journeys across Nepal's most sacred landscapes — led by local guides who grew up in the shadow of these mountains.";
+  "Curated Nepal tours that begin at Raxaul — Kathmandu, Pokhara, Muktinath and more, with Raxaul–Birgunj border assistance every step of the way.";
 
 interface HeroProps {
   packages: Package[];
