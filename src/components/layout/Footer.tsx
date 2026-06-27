@@ -1,8 +1,8 @@
 import Link from "next/link";
-import Image from "next/image";
 import { MessageCircle, Phone, MapPin, ShieldCheck } from "lucide-react";
 import { BUSINESS } from "@/lib/seo";
 import { FooterBadges } from "@/components/layout/FooterBadges";
+import { Wordmark } from "@/components/layout/Wordmark";
 
 const cols = [
   {
@@ -40,22 +40,12 @@ export function Footer() {
     <footer className="mt-24 border-t border-ink/8 bg-white dark:border-white/10 dark:bg-[#0E0E0D]">
       <div className="mx-auto grid max-w-7xl grid-cols-1 gap-10 px-5 py-14 md:grid-cols-12 md:gap-12 md:px-8 md:py-16">
         <div className="min-w-0 md:col-span-4">
-          <Link href="/" className="flex items-center gap-2.5">
-            <span className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-xl bg-[#fff] shadow-soft ring-1 ring-ink/5">
-              <Image
-                src="/tripsangam-logo.jpg"
-                alt="TripSangam Travels logo"
-                width={44}
-                height={44}
-                className="h-full w-full object-cover"
-              />
+          <Link href="/" className="flex flex-col leading-none">
+            <span className="leading-none">
+              <Wordmark className="text-2xl" />
+              <span className="font-serif text-2xl font-bold text-ink notranslate dark:text-white" translate="no"> Travels</span>
             </span>
-            <span className="flex flex-col leading-none">
-              <span className="font-serif text-xl font-semibold text-ink notranslate dark:text-white" translate="no">
-                Trip<span className="bg-gradient-to-r from-gold via-crimson to-gold bg-clip-text text-transparent">Sangam</span> Travels
-              </span>
-              <span className="mt-1 text-[10px] uppercase tracking-[0.18em] text-muted">Nepal tours from Raxaul</span>
-            </span>
+            <span className="mt-1.5 text-[10px] uppercase tracking-[0.18em] text-muted">Nepal tours from Raxaul</span>
           </Link>
           <p className="pretty mt-4 max-w-sm text-sm leading-relaxed text-muted">
             Nepal tour packages that start from Raxaul — Kathmandu, Pokhara, Muktinath and Chitwan, with

@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence, useScroll, useMotionValueEvent } from "framer-motion";
@@ -12,6 +11,7 @@ import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
 import { AccountMenu, initials } from "@/components/layout/AccountMenu";
 import { LoginMenu } from "@/components/layout/LoginMenu";
 import { PromoBanner } from "@/components/layout/PromoBanner";
+import { Wordmark } from "@/components/layout/Wordmark";
 import { useCurrency, type Currency } from "@/lib/currency";
 import { useModal } from "@/lib/modal";
 import { useAuth } from "@/lib/auth";
@@ -73,34 +73,16 @@ export function Header() {
       )}
     >
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4 md:h-[72px] md:px-8">
-        <Link href="/" className="group flex items-center gap-2.5">
-          <span className="relative grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-2xl bg-white shadow-glow ring-1 ring-white/40 transition-transform duration-500 group-hover:scale-105">
-            <span className="pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-br from-gold/30 via-transparent to-crimson/30 opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
-            <Image
-              src="/tripsangam-logo.jpg"
-              alt="Trip Sangam"
-              width={40}
-              height={40}
-              priority
-              className="relative h-full w-full object-cover"
-            />
-          </span>
-          <span className="flex flex-col leading-none">
-            <span className={cn(
-              "font-serif text-base font-semibold tracking-tight transition-colors notranslate sm:text-lg",
-              scrolled ? "text-ink" : "text-white"
-            )} translate="no">
-              Trip{" "}
-              <span className="bg-gradient-to-r from-gold via-crimson to-gold bg-clip-text text-transparent">
-                Sangam
-              </span>
-            </span>
-            <span className={cn(
-              "hidden text-[10px] uppercase tracking-[0.18em] transition-colors sm:inline",
-              scrolled ? "text-muted" : "text-white/70"
-            )}>
-              Journey Beyond Borders
-            </span>
+        <Link href="/" className="group flex flex-col leading-none">
+          <Wordmark
+            light={!scrolled}
+            className="text-[22px] transition-transform duration-500 group-hover:scale-[1.03] sm:text-[26px]"
+          />
+          <span className={cn(
+            "mt-1 hidden text-[10px] uppercase tracking-[0.2em] transition-colors sm:inline",
+            scrolled ? "text-muted" : "text-white/70"
+          )}>
+            Journey Beyond Borders
           </span>
         </Link>
 
@@ -204,25 +186,11 @@ export function Header() {
                 <Link
                   href="/"
                   onClick={() => setOpen(false)}
-                  className="flex items-center gap-3"
+                  className="flex flex-col leading-none"
                 >
-                  <span className="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-2xl bg-[#fff] shadow-glow ring-1 ring-ink/5">
-                    <Image
-                      src="/tripsangam-logo.jpg"
-                      alt="Trip Sangam"
-                      width={48}
-                      height={48}
-                      className="h-full w-full object-cover"
-                    />
-                  </span>
-                  <span className="flex flex-col leading-none">
-                    <span className="font-serif text-[17px] font-semibold tracking-tight text-ink notranslate" translate="no">
-                      Trip{" "}
-                      <span className="bg-gradient-to-r from-gold via-crimson to-gold bg-clip-text text-transparent">Sangam</span>
-                    </span>
-                    <span className="mt-1.5 font-mono text-[9px] uppercase tracking-[0.24em] text-ink/55">
-                      Journey Beyond Borders
-                    </span>
+                  <Wordmark className="text-[26px]" />
+                  <span className="mt-1.5 font-mono text-[9px] uppercase tracking-[0.24em] text-ink/55">
+                    Journey Beyond Borders
                   </span>
                 </Link>
                 <button
