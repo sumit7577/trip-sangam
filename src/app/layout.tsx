@@ -5,6 +5,7 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { ChatBubble } from "@/components/layout/ChatBubble";
 import { BottomNav } from "@/components/layout/BottomNav";
+import { SITE_URL, BUSINESS } from "@/lib/seo";
 import "./globals.css";
 
 const fraunces = Fraunces({
@@ -26,14 +27,41 @@ const jetbrains = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Trip Sangam — Where the Sky Begins",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: "Nepal Tour Packages from Raxaul | TripSangam Travels",
+    template: "%s | TripSangam Travels",
+  },
   description:
-    "Curated journeys across Nepal's most sacred landscapes. Trekking, cultural & spiritual experiences led by local guides.",
-  keywords: ["Nepal", "trekking", "Everest", "Annapurna", "Himalayan tours"],
+    "Book Nepal tour packages from Raxaul with TripSangam Travels. Explore Kathmandu, Pokhara, Muktinath, Chitwan and more, with pickup assistance from the Raxaul–Birgunj border.",
+  keywords: [
+    "Nepal tour package from Raxaul",
+    "Raxaul to Kathmandu travel",
+    "Raxaul Nepal travel agency",
+    "Pokhara tour package from Raxaul",
+    "Muktinath tour package",
+    "Nepal pilgrimage tour from India",
+  ],
+  icons: {
+    icon: "/tripsangam-logo.jpg",
+    shortcut: "/tripsangam-logo.jpg",
+    apple: "/tripsangam-logo.jpg",
+  },
   openGraph: {
-    title: "Trip Sangam",
-    description: "Curated journeys across Nepal's most sacred landscapes.",
     type: "website",
+    siteName: BUSINESS.name,
+    url: `${SITE_URL}/`,
+    title: "Nepal Tour Packages from Raxaul | TripSangam Travels",
+    description:
+      "Book Nepal tour packages from Raxaul with TripSangam Travels. Kathmandu, Pokhara, Muktinath, Chitwan and more — with Raxaul–Birgunj border assistance.",
+    images: [{ url: BUSINESS.ogImage }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Nepal Tour Packages from Raxaul | TripSangam Travels",
+    description:
+      "Nepal tours from Raxaul — Kathmandu, Pokhara, Muktinath, Chitwan. Border pickup assistance.",
+    images: [BUSINESS.ogImage],
   },
 };
 

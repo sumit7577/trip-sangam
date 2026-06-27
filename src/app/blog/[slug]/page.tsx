@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ChevronLeft, Clock, ArrowUpRight } from "lucide-react";
 import { getBlogPost, getBlogPosts, getTeamBySlug } from "@/lib/api";
+import { pageMeta } from "@/lib/seo";
 
 export async function generateStaticParams() {
   const posts = await getBlogPosts();
@@ -12,11 +13,13 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
   const post = await getBlogPost(params.slug);
-  if (!post) return { title: "Not found" };
-  return {
-    title: `${post.title} · Trip Sangam`,
+  if (!post) return { title: "Not found", robots: { index: false, follow: false } };
+  return pageMeta({
+    title: post.title,
     description: post.excerpt,
-  };
+    path: `/blog/${post.slug}/`,
+    image: post.coverImage,
+  });
 }
 
 export default async function BlogPostPage({ params }: { params: { slug: string } }) {

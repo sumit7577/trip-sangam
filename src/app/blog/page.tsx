@@ -3,12 +3,14 @@ import Image from "next/image";
 import { BlogList } from "@/components/blog/BlogList";
 import { Newsletter } from "@/components/home/Newsletter";
 import { getBlogPosts, getTeamBySlug } from "@/lib/api";
+import { pageMeta } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Field Notes · Trip Sangam",
+export const metadata: Metadata = pageMeta({
+  title: "Nepal Travel Guides & Tips",
   description:
-    "Editorial dispatches from our guides — trekking essays, cultural notes, practical tips, and stories from the trail.",
-};
+    "Practical Nepal travel guides from TripSangam — trip planning, the Raxaul–Birgunj border, documents for Indian travellers, and the best time to visit.",
+  path: "/blog/",
+});
 
 export default async function BlogPage() {
   const [posts, authorsBySlug] = await Promise.all([

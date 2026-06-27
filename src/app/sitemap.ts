@@ -1,30 +1,37 @@
 import type { MetadataRoute } from "next";
 import { getBlogPosts, getPackages } from "@/lib/api";
+import { SITE_URL } from "@/lib/seo";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://tripsangam.com";
+// trailingSlash: true → every canonical URL ends with "/".
+const u = (path: string) => `${SITE_URL}${path.endsWith("/") ? path : `${path}/`}`;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [packages, blogPosts] = await Promise.all([getPackages(), getBlogPosts()]);
   const now = new Date();
 
   const staticRoutes: MetadataRoute.Sitemap = [
-    { url: `${SITE_URL}/`, lastModified: now, changeFrequency: "weekly", priority: 1 },
-    { url: `${SITE_URL}/about`, lastModified: now, changeFrequency: "monthly", priority: 0.8 },
-    { url: `${SITE_URL}/blog`, lastModified: now, changeFrequency: "weekly", priority: 0.8 },
+    { url: u("/"), lastModified: now, changeFrequency: "weekly", priority: 1 },
+    { url: u("/nepal-tour-packages"), lastModified: now, changeFrequency: "weekly", priority: 0.95 },
+    { url: u("/nepal-tour-package-from-raxaul"), lastModified: now, changeFrequency: "weekly", priority: 0.95 },
+    { url: u("/raxaul-to-kathmandu-travel"), lastModified: now, changeFrequency: "weekly", priority: 0.9 },
+    { url: u("/packages"), lastModified: now, changeFrequency: "weekly", priority: 0.8 },
+    { url: u("/about"), lastModified: now, changeFrequency: "monthly", priority: 0.6 },
+    { url: u("/contact"), lastModified: now, changeFrequency: "monthly", priority: 0.7 },
+    { url: u("/blog"), lastModified: now, changeFrequency: "weekly", priority: 0.6 },
   ];
 
   const packageRoutes: MetadataRoute.Sitemap = packages.map((p) => ({
-    url: `${SITE_URL}/packages/${p.slug}`,
+    url: u(`/packages/${p.slug}`),
     lastModified: now,
     changeFrequency: "weekly",
     priority: 0.9,
   }));
 
   const blogRoutes: MetadataRoute.Sitemap = blogPosts.map((p) => ({
-    url: `${SITE_URL}/blog/${p.slug}`,
+    url: u(`/blog/${p.slug}`),
     lastModified: new Date(p.isoDate),
     changeFrequency: "monthly",
-    priority: 0.7,
+    priority: 0.6,
   }));
 
   return [...staticRoutes, ...packageRoutes, ...blogRoutes];

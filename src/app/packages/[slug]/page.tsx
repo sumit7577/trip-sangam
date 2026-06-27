@@ -12,6 +12,8 @@ import { SimilarPackages } from "@/components/detail/SimilarPackages";
 import { FinalCTA } from "@/components/detail/FinalCTA";
 import { MobileBookingBar } from "@/components/detail/MobileBookingBar";
 import { CarStrip } from "@/components/ui/CarStrip";
+import { Breadcrumbs } from "@/components/seo/Breadcrumbs";
+import { pageMeta } from "@/lib/seo";
 
 const FALLBACK_BODY_SLUG = "annapurna-circuit";
 
@@ -22,23 +24,13 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
   const base = await getPackage(params.slug);
-  if (!base) return { title: "Not found" };
-  return {
-    title: `${base.name} · ${base.durationDays} days · Trip Sangam`,
+  if (!base) return { title: "Not found", robots: { index: false, follow: false } };
+  return pageMeta({
+    title: `${base.name} — ${base.durationDays}-Day Nepal Tour`,
     description: base.shortDescription,
-    openGraph: {
-      title: base.name,
-      description: base.shortDescription,
-      images: [{ url: base.heroImage, width: 1600, height: 1000, alt: base.name }],
-      type: "website",
-    },
-    twitter: {
-      card: "summary_large_image",
-      title: base.name,
-      description: base.shortDescription,
-      images: [base.heroImage],
-    },
-  };
+    path: `/packages/${base.slug}/`,
+    image: base.heroImage,
+  });
 }
 
 /** Use the slug's own body if filled in; otherwise reuse annapurna-circuit's body. */
@@ -86,6 +78,14 @@ export default async function PackageDetailPage({ params }: { params: { slug: st
       <PackageHeader pkg={pkg} />
 
       <div className="mx-auto max-w-7xl px-5 md:px-8">
+        <Breadcrumbs
+          className="mb-6"
+          items={[
+            { name: "Home", path: "/" },
+            { name: "Nepal Tour Packages", path: "/nepal-tour-packages/" },
+            { name: pkg.name, path: `/packages/${pkg.slug}/` },
+          ]}
+        />
         <div className="grid grid-cols-1 gap-10 md:grid-cols-12">
           <div className="min-w-0 md:col-span-8">
             <TabsSection pkg={pkg} />

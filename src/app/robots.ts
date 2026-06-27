@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { SITE_URL } from "@/lib/seo";
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -6,12 +7,11 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: "/",
-        disallow: ["/api/"],
+        // Private / utility routes — not useful in search.
+        disallow: ["/api/", "/account/", "/trips/", "/preview/"],
       },
     ],
     sitemap: `${SITE_URL}/sitemap.xml`,
     host: SITE_URL,
   };
 }
-
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://himalayan-trails.example.com";

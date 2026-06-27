@@ -1,0 +1,144 @@
+/**
+ * Central SEO config + helpers. All canonical URLs are absolute and use a
+ * trailing slash to match next.config.js `trailingSlash: true`.
+ *
+ * Business facts here are the owner-verified NAP (name/address/phone) for
+ * TripSangam Travels. Do NOT add prices, ratings, hours, a street address or
+ * social profiles unless they are confirmed.
+ */
+import type { Metadata } from "next";
+
+export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://tripsangam.com").replace(/\/$/, "");
+
+export const BUSINESS = {
+  name: "TripSangam Travels",
+  brand: "Trip Sangam",
+  phone: "+917678538192",
+  phoneDisplay: "+91 76785 38192",
+  whatsapp: "917678538192",
+  email: "allcoachingss@gmail.com",
+  addressLocality: "Raxaul",
+  addressArea: "East Champaran",
+  addressRegion: "Bihar",
+  postalCode: "845305",
+  addressCountry: "IN",
+  logo: `${SITE_URL}/tripsangam-logo.jpg`,
+  ogImage: `${SITE_URL}/tripsangam-brand.jpg`,
+} as const;
+
+/** Build an absolute, trailing-slashed canonical URL from a path. */
+export function canonical(path = "/"): string {
+  if (!path.startsWith("/")) path = `/${path}`;
+  if (path !== "/" && !path.endsWith("/")) path = `${path}/`;
+  return `${SITE_URL}${path}`;
+}
+
+/**
+ * Reusable page-metadata builder so titles/descriptions/canonicals/OG are never
+ * hand-duplicated. Pass a path to set the canonical + OG url.
+ */
+export function pageMeta({
+  title,
+  description,
+  path = "/",
+  image = BUSINESS.ogImage,
+  noindex = false,
+}: {
+  title: string;
+  description: string;
+  path?: string;
+  image?: string;
+  noindex?: boolean;
+}): Metadata {
+  const url = canonical(path);
+  return {
+    title,
+    description,
+    alternates: { canonical: url },
+    robots: noindex ? { index: false, follow: false } : undefined,
+    openGraph: {
+      title,
+      description,
+      url,
+      siteName: BUSINESS.name,
+      type: "website",
+      images: [{ url: image }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [image],
+    },
+  };
+}
+
+/* ----------------------------- JSON-LD builders ---------------------------- */
+
+const postalAddress = {
+  "@type": "PostalAddress",
+  addressLocality: BUSINESS.addressLocality,
+  addressRegion: BUSINESS.addressRegion,
+  postalCode: BUSINESS.postalCode,
+  addressCountry: BUSINESS.addressCountry,
+};
+
+/** Organisation + TravelAgency/LocalBusiness for the homepage. Verified NAP only. */
+export function travelAgencyJsonLd() {
+  return {
+    "@context": "https://schema.org",
+    "@type": ["TravelAgency", "LocalBusiness"],
+    "@id": `${SITE_URL}/#organization`,
+    name: BUSINESS.name,
+    url: `${SITE_URL}/`,
+    logo: BUSINESS.logo,
+    image: BUSINESS.ogImage,
+    telephone: BUSINESS.phone,
+    address: postalAddress,
+    areaServed: [
+      { "@type": "Country", name: "Nepal" },
+      { "@type": "City", name: "Kathmandu" },
+      { "@type": "City", name: "Pokhara" },
+      { "@type": "Place", name: "Muktinath" },
+      { "@type": "Place", name: "Chitwan" },
+      { "@type": "City", name: "Raxaul" },
+    ],
+    knowsLanguage: ["en", "hi", "ne"],
+  };
+}
+
+export function websiteJsonLd() {
+  return {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "@id": `${SITE_URL}/#website`,
+    url: `${SITE_URL}/`,
+    name: BUSINESS.name,
+    publisher: { "@id": `${SITE_URL}/#organization` },
+  };
+}
+
+export function breadcrumbJsonLd(items: { name: string; path: string }[]) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: items.map((it, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      name: it.name,
+      item: canonical(it.path),
+    })),
+  };
+}
+
+export function faqJsonLd(faqs: { q: string; a: string }[]) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: faqs.map((f) => ({
+      "@type": "Question",
+      name: f.q,
+      acceptedAnswer: { "@type": "Answer", text: f.a },
+    })),
+  };
+}

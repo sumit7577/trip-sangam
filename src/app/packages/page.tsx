@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
 import { getPackages } from "@/lib/api";
 import { PackagesBrowser } from "@/components/packages/PackagesBrowser";
+import { pageMeta } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "All Trips · Trip Sangam",
+export const metadata: Metadata = pageMeta({
+  title: "Browse All Nepal Trips & Tour Packages",
   description:
-    "Browse every Sangam departure — trekking, cultural, spiritual and wildlife journeys across Nepal. Filter by category, duration and price.",
-};
+    "Browse and filter every Nepal tour package from TripSangam — trekking, cultural, spiritual and wildlife journeys. Filter by category, duration and price.",
+  path: "/packages/",
+});
 
 export default async function PackagesPage({
   searchParams,

@@ -6,12 +6,14 @@ import { AboutHero } from "@/components/about/AboutHero";
 import { ValuesGrid } from "@/components/about/ValuesGrid";
 import { CountUp } from "@/components/ui/CountUp";
 import { Newsletter } from "@/components/home/Newsletter";
+import { pageMeta } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "About · Trip Sangam",
+export const metadata: Metadata = pageMeta({
+  title: "About TripSangam Travels",
   description:
-    "A small team of Nepali guides and itinerary designers building considered journeys across the Himalayan belt since 2018.",
-};
+    "TripSangam Travels is a Nepal tour operator based in Raxaul, Bihar, arranging Kathmandu, Pokhara, Muktinath and Chitwan trips with Raxaul–Birgunj border assistance.",
+  path: "/about/",
+});
 
 const stats = [
   { value: 8, suffix: "yrs", label: "Quietly building" },

@@ -66,15 +66,19 @@ export function Hero({ packages, eyebrow, title, subtitle, imageUrl }: HeroProps
           {heroEyebrow}
         </motion.span>
 
-        <motion.h1
+        {/* Editorial hero wordmark. The page's semantic <h1> lives in HomeIntro
+            ("Nepal Tour Packages from Raxaul") so there is exactly one H1. */}
+        <motion.p
           custom={1}
           variants={fadeUp}
           initial="hidden"
           animate="show"
+          role="heading"
+          aria-level={2}
           className="balance mt-8 font-serif text-[clamp(2.5rem,7vw,6.5rem)] font-light leading-[0.95] tracking-tight text-white"
         >
           {heroTitle}
-        </motion.h1>
+        </motion.p>
 
         <motion.p
           custom={2}
