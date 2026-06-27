@@ -105,7 +105,11 @@ export default function TripDetailPage() {
   const dep = b.departure;
   const mates = b.coTravellers ?? [];
   const totalInSlot = mates.reduce((n, m) => n + (m.partySize || 0), 0);
-  const remainingToGuarantee = dep ? Math.max(0, dep.minCapacity - dep.seatsConfirmed) : 0;
+  // People already in the group = held + confirmed seats. The group is "formed"
+  // the moment that reaches the minimum — it no longer waits on deposits.
+  const seatsTaken = dep ? Math.max(dep.seatsConfirmed, dep.maxCapacity - dep.seatsLeft) : 0;
+  const formed = dep ? seatsTaken >= dep.minCapacity : false;
+  const remainingToForm = dep ? Math.max(0, dep.minCapacity - seatsTaken) : 0;
   const canAct = b.status === "pending";
   const isAccepted = b.status === "accepted";
   const isConfirmed = b.status === "confirmed";
@@ -126,37 +130,39 @@ export default function TripDetailPage() {
 
       {/* Matched slot — futuristic seat-meter panel */}
       {dep ? (
-        <div className="relative mt-6 overflow-hidden rounded-3xl border border-line bg-gradient-to-br from-white to-sand/50 p-6 shadow-soft dark:border-white/10 dark:from-white/[0.07] dark:to-transparent">
+        <div className="relative mt-6 overflow-hidden rounded-3xl border border-line bg-gradient-to-br from-white to-sand/50 p-4 shadow-soft dark:border-white/10 dark:from-white/[0.07] dark:to-transparent sm:p-6">
           {/* Ambient glow + film grain for depth */}
-          <div className={`pointer-events-none absolute -right-20 -top-20 h-52 w-52 rounded-full blur-3xl ${dep.isGuaranteed ? "bg-jade/20" : "bg-gold/20"}`} />
+          <div className={`pointer-events-none absolute -right-20 -top-20 h-52 w-52 rounded-full blur-3xl ${formed ? "bg-jade/20" : "bg-gold/20"}`} />
           <div className="pointer-events-none absolute inset-0 bg-grain opacity-[0.05] mix-blend-overlay" />
 
           <div className="relative flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className={`inline-flex h-2 w-2 rounded-full ${dep.isGuaranteed ? "bg-jade" : "bg-gold"} animate-pulse`} />
-              <h2 className="font-serif text-lg">Your matched slot</h2>
+              <span className={`inline-flex h-2 w-2 rounded-full ${formed ? "bg-jade" : "bg-gold"} animate-pulse`} />
+              <h2 className="font-serif text-base sm:text-lg">Your matched slot</h2>
             </div>
             <span className="rounded-full border border-line bg-white/70 px-2.5 py-0.5 text-xs font-semibold text-ink dark:border-white/15 dark:bg-white/10 dark:text-white">
               Group {dep.groupLabel}
             </span>
           </div>
 
-          <div className="relative mt-5 flex flex-col items-center gap-6 sm:flex-row sm:gap-7">
-            <SlotMeter seatsConfirmed={dep.seatsConfirmed} minCapacity={dep.minCapacity} isGuaranteed={dep.isGuaranteed} />
+          <div className="relative mt-5 flex items-center gap-4 sm:gap-7">
+            <SlotMeter filled={seatsTaken} target={dep.minCapacity} complete={formed} />
 
-            <div className="min-w-0 flex-1 text-center sm:text-left">
-              <p className={`font-serif text-xl ${dep.isGuaranteed ? "text-jade" : ""}`}>
-                {dep.isGuaranteed
-                  ? "Departure confirmed 🎉"
-                  : `${remainingToGuarantee} more traveller${remainingToGuarantee === 1 ? "" : "s"} to confirm`}
+            <div className="min-w-0 flex-1 text-left">
+              <p className={`font-serif text-lg sm:text-xl ${formed ? "text-jade" : ""}`}>
+                {formed
+                  ? "Group formed 🎉"
+                  : `${remainingToForm} more traveller${remainingToForm === 1 ? "" : "s"} to form`}
               </p>
               <p className="mt-1 text-xs text-muted">
-                {dep.isGuaranteed
-                  ? "Your group has reached the minimum — this trip is going ahead."
-                  : `Confirms automatically at ${dep.minCapacity} travellers · ${dep.seatsLeft} seat${dep.seatsLeft === 1 ? "" : "s"} left in this group.`}
+                {formed
+                  ? (dep.isGuaranteed
+                      ? "Deposits are in — this departure is confirmed and going ahead."
+                      : "Your group is complete. Pay your deposit to lock in your seats.")
+                  : `Forms at ${dep.minCapacity} travellers · ${dep.seatsLeft} seat${dep.seatsLeft === 1 ? "" : "s"} left in this group.`}
               </p>
 
-              <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 text-left">
+              <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3">
                 <Stat icon={CalendarDays} label="Trip dates" value={fmtRange(dep.startDate, dep.endDate)} />
                 <Stat icon={Users} label="Your party" value={`${b.partySize} traveller${b.partySize > 1 ? "s" : ""}`} />
                 {dep.priceINR > 0 && (

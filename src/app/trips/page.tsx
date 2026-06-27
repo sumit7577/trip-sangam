@@ -82,7 +82,12 @@ export default function TripsPage() {
         )}
 
         <div className="mt-8 space-y-3">
-          {visible?.map((b) => (
+          {visible?.map((b) => {
+            const dep = b.departure;
+            // People already in the group (held + confirmed); formed at minimum.
+            const seatsTaken = dep ? Math.max(dep.seatsConfirmed, dep.maxCapacity - dep.seatsLeft) : 0;
+            const formed = dep ? seatsTaken >= dep.minCapacity : false;
+            return (
             <div key={b.id}
               className="relative rounded-2xl border border-line bg-white p-5 transition-colors hover:border-ink/40 dark:bg-white/5">
               {/* Whole-card link sits behind the content; the Cancel button stays clickable above it. */}
@@ -92,11 +97,11 @@ export default function TripsPage() {
                   <div>
                     <h2 className="font-serif text-xl">{b.packageName}</h2>
                     <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted">
-                      {b.departure && (
+                      {dep && (
                         <span className="inline-flex items-center gap-1">
                           <CalendarDays className="h-3.5 w-3.5" />
-                          {new Date(b.departure.startDate).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })}
-                          {" "}· Group {b.departure.groupLabel}
+                          {new Date(dep.startDate).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })}
+                          {" "}· Group {dep.groupLabel}
                         </span>
                       )}
                       <span className="inline-flex items-center gap-1">
@@ -108,25 +113,25 @@ export default function TripsPage() {
                     {statusLabel(b.status)}
                   </span>
                 </div>
-                {b.departure && (
-                  b.departure.isGuaranteed ? (
+                {dep && (
+                  formed ? (
                     <p className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-jade">
-                      <ShieldCheck className="h-3.5 w-3.5" /> Departure confirmed
+                      <ShieldCheck className="h-3.5 w-3.5" /> Group formed
                     </p>
                   ) : (
                     <div className="mt-3 max-w-xs">
                       <div className="flex items-center gap-1">
-                        {Array.from({ length: b.departure.minCapacity }).map((_, i) => (
+                        {Array.from({ length: dep.minCapacity }).map((_, i) => (
                           <span
                             key={i}
                             className={`h-1.5 flex-1 rounded-full transition-colors ${
-                              i < b.departure!.seatsConfirmed ? "bg-gold" : "bg-ink/10 dark:bg-white/10"
+                              i < seatsTaken ? "bg-gold" : "bg-ink/10 dark:bg-white/10"
                             }`}
                           />
                         ))}
                       </div>
                       <p className="mt-1.5 text-[11px] text-muted">
-                        {b.departure.seatsConfirmed}/{b.departure.minCapacity} confirmed · {Math.max(0, b.departure.minCapacity - b.departure.seatsConfirmed)} to go
+                        {seatsTaken}/{dep.minCapacity} joined · {Math.max(0, dep.minCapacity - seatsTaken)} to go
                       </p>
                     </div>
                   )
@@ -142,7 +147,8 @@ export default function TripsPage() {
                 </button>
               )}
             </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
