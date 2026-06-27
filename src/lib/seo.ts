@@ -24,6 +24,9 @@ export const BUSINESS = {
   addressCountry: "IN",
   logo: `${SITE_URL}/tripsangam-logo.jpg`,
   ogImage: `${SITE_URL}/tripsangam-brand.jpg`,
+  // Verified social profiles already linked from the site footer.
+  instagram: "https://www.instagram.com/trip_sangam_",
+  facebook: "https://www.facebook.com/share/1BTLAVtUaM/",
 } as const;
 
 /** Build an absolute, trailing-slashed canonical URL from a path. */
@@ -104,6 +107,7 @@ export function travelAgencyJsonLd() {
       { "@type": "City", name: "Raxaul" },
     ],
     knowsLanguage: ["en", "hi", "ne"],
+    sameAs: [BUSINESS.instagram, BUSINESS.facebook],
   };
 }
 
@@ -128,6 +132,39 @@ export function breadcrumbJsonLd(items: { name: string; path: string }[]) {
       name: it.name,
       item: canonical(it.path),
     })),
+  };
+}
+
+export function articleJsonLd({
+  title,
+  description,
+  path,
+  image,
+  datePublished,
+  dateModified,
+}: {
+  title: string;
+  description: string;
+  path: string;
+  image?: string;
+  datePublished: string;
+  dateModified?: string;
+}) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: title,
+    description,
+    image: image ? [image] : undefined,
+    mainEntityOfPage: canonical(path),
+    datePublished,
+    dateModified: dateModified ?? datePublished,
+    author: { "@type": "Organization", name: BUSINESS.name, url: `${SITE_URL}/` },
+    publisher: {
+      "@type": "Organization",
+      name: BUSINESS.name,
+      logo: { "@type": "ImageObject", url: BUSINESS.logo },
+    },
   };
 }
 

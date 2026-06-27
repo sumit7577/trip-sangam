@@ -1,46 +1,45 @@
-"use client";
-
 import Link from "next/link";
 import Image from "next/image";
-import { Instagram, Facebook, MessageCircle, Phone, ShieldCheck, Award } from "lucide-react";
-import { toast } from "@/lib/toast";
+import { Instagram, Facebook, MessageCircle, Phone, MapPin, ShieldCheck } from "lucide-react";
+import { BUSINESS } from "@/lib/seo";
 
 const cols = [
   {
-    title: "Journeys",
-    links: ["Trekking", "Cultural", "Adventure", "Spiritual", "Wildlife", "Family"],
+    title: "Tours from Raxaul",
+    links: [
+      { label: "Nepal tour packages", href: "/nepal-tour-packages/" },
+      { label: "Nepal tour from Raxaul", href: "/nepal-tour-package-from-raxaul/" },
+      { label: "Raxaul to Kathmandu", href: "/raxaul-to-kathmandu-travel/" },
+      { label: "Pokhara from Raxaul", href: "/pokhara-tour-package-from-raxaul/" },
+      { label: "Muktinath from Raxaul", href: "/muktinath-tour-package-from-raxaul/" },
+    ],
   },
   {
     title: "Company",
-    links: ["About us", "Our guides", "Sustainability", "Careers", "Press", "Contact"],
+    links: [
+      { label: "About us", href: "/about/" },
+      { label: "Contact", href: "/contact/" },
+      { label: "Browse all trips", href: "/packages/" },
+      { label: "Blog", href: "/blog/" },
+    ],
   },
   {
-    title: "Resources",
-    links: ["Travel guide", "Visa info", "Packing list", "Travel insurance", "FAQs", "Blog"],
+    title: "Travel guides",
+    links: [
+      { label: "Nepal guide for Indians", href: "/guides/nepal-travel-guide-for-indians/" },
+      { label: "Raxaul–Birgunj border", href: "/guides/raxaul-birgunj-border-guide/" },
+      { label: "Best time to visit", href: "/guides/best-time-to-visit-nepal/" },
+      { label: "All guides", href: "/guides/" },
+    ],
   },
 ];
 
-const socials: { Icon: typeof Instagram; href: string; label: string }[] = [
-  { Icon: Instagram, href: "https://www.instagram.com/trip_sangam_?igsh=cjhmN3RjZ3gyMmYx&utm_source=qr", label: "Instagram" },
-  { Icon: Facebook, href: "https://www.facebook.com/share/1BTLAVtUaM/?mibextid=wwXIfr", label: "Facebook" },
-  { Icon: MessageCircle, href: "https://wa.me/917678538192", label: "WhatsApp" },
-  { Icon: Phone, href: "tel:+917678538192", label: "Call" },
+const socials = [
+  { Icon: Instagram, href: BUSINESS.instagram, label: "Instagram" },
+  { Icon: Facebook, href: BUSINESS.facebook, label: "Facebook" },
+  { Icon: MessageCircle, href: `https://wa.me/${BUSINESS.whatsapp}`, label: "WhatsApp" },
+  { Icon: Phone, href: `tel:${BUSINESS.phone}`, label: "Call" },
 ];
-
-function scrollOrToast(target: string, label: string) {
-  // Journey categories: scroll to packages on homepage
-  if (target === "Journeys") {
-    const el = document.getElementById("packages");
-    if (el) {
-      el.scrollIntoView({ behavior: "smooth" });
-      toast(`Filter to "${label}" using the pills above`, "default");
-    } else {
-      window.location.href = "/#packages";
-    }
-    return;
-  }
-  toast(`"${label}" — prototype, link not wired`, "default");
-}
 
 export function Footer() {
   return (
@@ -51,20 +50,20 @@ export function Footer() {
             <span className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-xl bg-[#fff] shadow-soft ring-1 ring-ink/5">
               <Image
                 src="/tripsangam-logo.jpg"
-                alt="Trip Sangam"
+                alt="TripSangam Travels logo"
                 width={44}
                 height={44}
                 className="h-full w-full object-cover"
               />
             </span>
             <span className="flex flex-col leading-none">
-              <span className="font-serif text-xl text-ink notranslate" translate="no">Trip Sangam</span>
-              <span className="mt-1 text-[10px] uppercase tracking-[0.18em] text-muted">Journey Beyond Borders</span>
+              <span className="font-serif text-xl text-ink notranslate" translate="no">TripSangam Travels</span>
+              <span className="mt-1 text-[10px] uppercase tracking-[0.18em] text-muted">Nepal tours from Raxaul</span>
             </span>
           </Link>
           <p className="pretty mt-4 max-w-sm text-sm leading-relaxed text-muted">
-            A small team of Nepali guides and itinerary designers building considered journeys across the
-            Himalayan belt since 2018.
+            Nepal tour packages that start from Raxaul — Kathmandu, Pokhara, Muktinath and Chitwan, with
+            Raxaul–Birgunj border assistance for families, groups and pilgrims.
           </p>
           <div className="mt-6 flex items-center gap-3">
             {socials.map(({ Icon, href, label }) => (
@@ -84,16 +83,13 @@ export function Footer() {
 
         {cols.map((col) => (
           <div key={col.title} className="min-w-0 md:col-span-2">
-            <h4 className="text-xs font-medium uppercase tracking-[0.18em] text-ink">{col.title}</h4>
+            <h4 className="text-xs font-medium uppercase tracking-[0.18em] text-ink dark:text-white">{col.title}</h4>
             <ul className="mt-4 space-y-3">
               {col.links.map((l) => (
-                <li key={l}>
-                  <button
-                    onClick={() => scrollOrToast(col.title, l)}
-                    className="text-left text-sm text-muted transition-colors hover:text-ink"
-                  >
-                    {l}
-                  </button>
+                <li key={l.label}>
+                  <Link href={l.href} className="text-sm text-muted transition-colors hover:text-ink dark:hover:text-white">
+                    {l.label}
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -101,23 +97,23 @@ export function Footer() {
         ))}
 
         <div className="min-w-0 md:col-span-2">
-          <h4 className="text-xs font-medium uppercase tracking-[0.18em] text-ink">Trust</h4>
+          <h4 className="text-xs font-medium uppercase tracking-[0.18em] text-ink dark:text-white">Contact</h4>
           <ul className="mt-4 space-y-3 text-sm text-muted">
-            <li className="flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-jade" /> Secure payments</li>
-            <li className="flex items-center gap-2"><Award className="h-4 w-4 text-gold" /> TripAdvisor 4.9★</li>
-            <li className="text-xs">Govt. Reg. #98214 · ATTA Member</li>
+            <li className="flex items-start gap-2"><MapPin className="mt-0.5 h-4 w-4 shrink-0" /> Raxaul, East Champaran, Bihar – 845305, India</li>
+            <li><a href={`tel:${BUSINESS.phone}`} className="flex items-center gap-2 hover:text-ink dark:hover:text-white"><Phone className="h-4 w-4" /> {BUSINESS.phoneDisplay}</a></li>
+            <li><a href={`https://wa.me/${BUSINESS.whatsapp}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-ink dark:hover:text-white"><MessageCircle className="h-4 w-4" /> WhatsApp us</a></li>
+            <li className="flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-jade" /> Border pickup &amp; assistance</li>
           </ul>
         </div>
       </div>
 
-      <div className="border-t border-ink/8">
+      <div className="border-t border-ink/8 dark:border-white/10">
         <div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-3 px-5 py-6 text-xs text-muted md:flex-row md:items-center md:px-8">
-          <p>© {new Date().getFullYear()} Trip Sangam Pvt. Ltd. · Kathmandu, Nepal</p>
+          <p>© {new Date().getFullYear()} TripSangam Travels · Raxaul, Bihar, India</p>
           <div className="flex items-center gap-4">
-            <button onClick={() => toast("Privacy policy — prototype", "default")} className="hover:text-ink">Privacy</button>
-            <button onClick={() => toast("Terms of service — prototype", "default")} className="hover:text-ink">Terms</button>
-            <button onClick={() => toast("Cookie preferences — prototype", "default")} className="hover:text-ink">Cookies</button>
-            <span className="font-mono">VISA · MC · AMEX · UPI</span>
+            <Link href="/contact/" className="hover:text-ink dark:hover:text-white">Contact</Link>
+            <Link href="/about/" className="hover:text-ink dark:hover:text-white">About</Link>
+            <span className="font-mono">UPI · Cards</span>
           </div>
         </div>
       </div>
