@@ -4,13 +4,14 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import {
-  ArrowLeft, CalendarDays, Users, ShieldCheck, CheckCircle2, Phone, Clock, CreditCard, X,
-  IndianRupee, CalendarClock, UserCheck,
+  ArrowLeft, CalendarDays, Users, ShieldCheck, Phone, Clock, X,
+  IndianRupee, CalendarClock, UserCheck, Lock,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useModal } from "@/lib/modal";
 import { toast } from "@/lib/toast";
+import { CheckoutCard } from "@/components/trips/CheckoutCard";
 import {
   getBooking, acceptBooking, declineBooking, cancelBooking, payBalance, type Booking,
 } from "@/lib/bookingApi";
@@ -238,20 +239,16 @@ export default function TripDetailPage() {
         </div>
       )}
 
-      {/* Payment summary */}
-      <div className="mt-6 space-y-1.5 rounded-2xl border border-line bg-white p-5 text-sm dark:bg-white/5">
-        <div className="flex justify-between"><span className="text-muted">Total</span><span className="font-mono">₹{b.totalAmount.toLocaleString("en-IN")}</span></div>
-        <div className="flex justify-between"><span className="text-muted">Deposit (50%)</span><span className="font-mono">₹{b.depositAmount.toLocaleString("en-IN")}</span></div>
-        <div className="flex justify-between"><span className="text-muted">Balance</span><span className="font-mono">₹{b.balanceAmount.toLocaleString("en-IN")}</span></div>
-      </div>
+      {/* Secure checkout summary */}
+      <CheckoutCard total={b.totalAmount} deposit={b.depositAmount} balance={b.balanceAmount} paymentStatus={b.paymentStatus} />
 
       {/* Actions */}
       <div className="mt-6 flex flex-col gap-3 sm:flex-row">
         {canAct && formed && (
           <>
             <button onClick={onAccept} disabled={busy}
-              className="inline-flex flex-1 items-center justify-center gap-2 rounded-2xl bg-ink px-6 py-4 text-sm font-semibold text-white hover:bg-ink/90 disabled:opacity-60">
-              <CheckCircle2 className="h-4 w-4" /> Confirm your trip now · ₹{b.depositAmount.toLocaleString("en-IN")}
+              className="inline-flex flex-1 items-center justify-center gap-2 rounded-2xl bg-ink px-6 py-4 text-sm font-semibold text-white shadow-glow transition-shadow hover:shadow-lift disabled:opacity-60">
+              <Lock className="h-4 w-4" /> Pay ₹{b.depositAmount.toLocaleString("en-IN")} securely
             </button>
             <button onClick={onDecline} disabled={busy}
               className="inline-flex items-center justify-center gap-2 rounded-2xl border border-line px-6 py-4 text-sm font-semibold text-ink hover:border-ink/40 disabled:opacity-60">
@@ -272,14 +269,14 @@ export default function TripDetailPage() {
         )}
         {isAccepted && (
           <button onClick={onAccept} disabled={busy}
-            className="inline-flex flex-1 items-center justify-center gap-2 rounded-2xl bg-sunset px-6 py-4 text-sm font-semibold text-white shadow-soft hover:shadow-glow disabled:opacity-60">
-            <CreditCard className="h-4 w-4" /> Pay 50% deposit
+            className="inline-flex flex-1 items-center justify-center gap-2 rounded-2xl bg-ink px-6 py-4 text-sm font-semibold text-white shadow-glow transition-shadow hover:shadow-lift disabled:opacity-60">
+            <Lock className="h-4 w-4" /> Pay ₹{b.depositAmount.toLocaleString("en-IN")} securely
           </button>
         )}
         {isConfirmed && b.paymentStatus === "deposit_paid" && b.balanceAmount > 0 && (
           <button onClick={onPayBalance} disabled={busy}
-            className="inline-flex flex-1 items-center justify-center gap-2 rounded-2xl bg-ink px-6 py-4 text-sm font-semibold text-white hover:bg-ink/90 disabled:opacity-60">
-            <CreditCard className="h-4 w-4" /> Pay balance ₹{b.balanceAmount.toLocaleString("en-IN")}
+            className="inline-flex flex-1 items-center justify-center gap-2 rounded-2xl bg-ink px-6 py-4 text-sm font-semibold text-white shadow-glow transition-shadow hover:shadow-lift disabled:opacity-60">
+            <Lock className="h-4 w-4" /> Pay balance ₹{b.balanceAmount.toLocaleString("en-IN")} securely
           </button>
         )}
         {isConfirmed && (
