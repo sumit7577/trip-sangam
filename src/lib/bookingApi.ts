@@ -49,10 +49,14 @@ export interface PaymentInit {
   id: number;
   bookingId: number;
   kind: string;
-  merchantOrderId: string;
-  amountPaise: number;
+  razorpayOrderId: string;
+  amount: number; // paise
+  currency: string;
+  keyId: string;
   status: string;
-  redirectUrl: string;
+  prefillName: string;
+  prefillEmail: string;
+  prefillContact: string;
 }
 
 async function unwrap<T>(res: Response): Promise<T> {
@@ -106,6 +110,16 @@ export async function cancelBooking(id: number | string): Promise<Booking> {
 
 export async function payBalance(id: number | string): Promise<PaymentInit> {
   return unwrap<PaymentInit>(await authFetch(`/api/bookings/${id}/pay-balance/`, { method: "POST" }));
+}
+
+/** Verify a Razorpay Checkout success on the backend (returns the updated booking). */
+export async function verifyPayment(
+  id: number | string,
+  payload: { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string }
+): Promise<Booking> {
+  return unwrap<Booking>(
+    await authFetch(`/api/bookings/${id}/verify-payment/`, { method: "POST", body: JSON.stringify(payload) })
+  );
 }
 
 export interface Traveller {

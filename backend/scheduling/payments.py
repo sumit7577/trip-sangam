@@ -74,26 +74,30 @@ def initiate_payment(booking, kind):
         status=Payment.STATUS_CREATED,
     )
 
-    callback_url = f"{settings.PAYMENT_REDIRECT_BASE}/{booking.id}"
-    result = gw.create_payment_link(
-        reference_id=moid,
+    result = gw.create_order(
         amount_paise=amount_paise,
-        callback_url=callback_url,
-        customer={
-            "name": booking.lead_name or "",
-            "email": booking.lead_email or "",
-            "contact": booking.lead_phone or "",
-        },
-        description=f"{kind.title()} · {booking.package.title}"[:255] if booking.package_id else kind.title(),
+        receipt=moid,
         notes={"booking_id": booking.id, "kind": kind},
     )
 
-    payment.phonepe_order_id = result["id"]  # reused column: Razorpay payment-link id
-    payment.redirect_url = result["short_url"]
+    payment.phonepe_order_id = result["id"]  # reused column: Razorpay order id
     payment.status = Payment.STATUS_PENDING
     payment.raw_response = result["raw"]
-    payment.save(update_fields=["phonepe_order_id", "redirect_url", "status", "raw_response", "updated_at"])
+    payment.save(update_fields=["phonepe_order_id", "status", "raw_response", "updated_at"])
     return payment
+
+
+def verify_and_apply(payment, order_id, payment_id, signature):
+    """Verify a Checkout success signature and mark the payment paid. Returns
+    True on a valid signature (booking confirmed), False otherwise."""
+    if payment.phonepe_order_id != order_id:
+        return False
+    if not gw.verify_payment_signature(order_id, payment_id, signature):
+        return False
+    raw = dict(payment.raw_response or {})
+    raw["razorpay_payment_id"] = payment_id
+    _apply_state(payment, STATE_COMPLETED, raw=raw)
+    return True
 
 
 def _apply_state(payment, state, raw=None):
@@ -137,42 +141,51 @@ def _on_success(payment):
         booking.save(update_fields=["payment_status", "updated_at"])
 
 
-def _normalise(status_str, event=""):
-    s = (status_str or "").lower()
-    if s == "paid" or event == "payment_link.paid":
-        return STATE_COMPLETED
-    if s in ("cancelled", "expired"):
-        return STATE_FAILED
-    return ""  # still pending
-
-
 def handle_webhook(event, body):
-    """Process a Razorpay webhook body. Idempotent. Returns the Payment or None."""
+    """Process a Razorpay webhook (payment.captured / order.paid / payment.failed).
+    Idempotent. Returns the Payment or None."""
     payload = (body or {}).get("payload") or {}
-    link = (payload.get("payment_link") or {}).get("entity") or {}
-    reference_id = link.get("reference_id")
-    if not reference_id:
-        logger.warning("Razorpay webhook %s missing payment_link.reference_id", event)
+    pay_entity = (payload.get("payment") or {}).get("entity") or {}
+    order_entity = (payload.get("order") or {}).get("entity") or {}
+    order_id = pay_entity.get("order_id") or order_entity.get("id")
+    if not order_id:
+        logger.warning("Razorpay webhook %s missing order id", event)
         return None
-    payment = Payment.objects.filter(merchant_order_id=reference_id).first()
+    payment = Payment.objects.filter(phonepe_order_id=order_id).first()
     if payment is None:
-        logger.warning("Razorpay webhook for unknown reference_id=%s", reference_id)
+        logger.warning("Razorpay webhook for unknown order=%s", order_id)
         return None
-    return _apply_state(payment, _normalise(link.get("status"), event), raw=body)
+
+    if event in ("payment.captured", "order.paid") or pay_entity.get("status") == "captured":
+        state = STATE_COMPLETED
+    elif event == "payment.failed":
+        state = STATE_FAILED
+    else:
+        state = ""
+    return _apply_state(payment, state, raw=body)
 
 
 def reconcile_payment(payment):
     """Pull authoritative status from Razorpay and apply it (fallback for missed
     webhooks). Returns the refreshed Payment."""
-    result = gw.fetch_payment_link(payment.phonepe_order_id)
-    return _apply_state(payment, _normalise(result.get("status")), raw=result["raw"])
+    result = gw.fetch_order(payment.phonepe_order_id)
+    state = STATE_COMPLETED if (result.get("status") or "").lower() == "paid" else ""
+    return _apply_state(payment, state, raw=result["raw"])
 
 
 def _captured_payment_id(payment):
-    """Extract the Razorpay payment id (pay_...) from a paid payment's webhook body."""
+    """Get the Razorpay payment id (pay_...) for a paid payment — from the stored
+    signature-verify field, the webhook body, or a live lookup."""
     raw = payment.raw_response or {}
+    if raw.get("razorpay_payment_id"):
+        return raw["razorpay_payment_id"]
     entity = ((raw.get("payload") or {}).get("payment") or {}).get("entity") or {}
-    return entity.get("id")
+    if entity.get("id"):
+        return entity["id"]
+    try:
+        return gw.captured_payment_id(payment.phonepe_order_id)
+    except gw.GatewayError:
+        return None
 
 
 def refund_deposit(booking):

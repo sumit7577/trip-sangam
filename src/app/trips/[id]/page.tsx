@@ -13,8 +13,9 @@ import { useModal } from "@/lib/modal";
 import { toast } from "@/lib/toast";
 import { CheckoutCard } from "@/components/trips/CheckoutCard";
 import {
-  getBooking, acceptBooking, declineBooking, cancelBooking, payBalance, type Booking,
+  getBooking, acceptBooking, declineBooking, cancelBooking, payBalance, type Booking, type PaymentInit,
 } from "@/lib/bookingApi";
+import { openRazorpayCheckout } from "@/lib/razorpay";
 import { statusLabel, statusClasses } from "@/lib/bookingStatus";
 import { TravellersForm } from "@/components/trips/TravellersForm";
 import { SlotMeter } from "@/components/trips/SlotMeter";
@@ -38,13 +39,21 @@ export default function TripDetailPage() {
     if (hydrated && user) load();
   }, [hydrated, user, load]);
 
+  async function startCheckout(p: PaymentInit) {
+    await openRazorpayCheckout(id, p, {
+      onSuccess: (updated) => { setB(updated); toast("Payment successful — your seat is confirmed! 🎉", "success"); },
+      onError: (msg) => toast(msg, "error"),
+      onDismiss: () => toast("Payment cancelled — you can pay anytime.", "default"),
+    });
+  }
+
   async function onAccept() {
     setBusy(true);
     try {
       const { booking, payment } = await acceptBooking(id);
-      if (payment?.redirectUrl) { window.location.href = payment.redirectUrl; return; }
       setB(booking);
-      toast("Slot accepted — deposit payment will be available shortly.", "success");
+      if (payment?.razorpayOrderId) await startCheckout(payment);
+      else toast("Slot accepted — deposit payment will be available shortly.", "success");
     } catch (e) {
       toast(e instanceof Error ? e.message : "Could not accept", "error");
     } finally {
@@ -68,8 +77,8 @@ export default function TripDetailPage() {
     setBusy(true);
     try {
       const p = await payBalance(id);
-      if (p.redirectUrl) { window.location.href = p.redirectUrl; return; }
-      toast("Balance payment unavailable right now.", "error");
+      if (p.razorpayOrderId) await startCheckout(p);
+      else toast("Balance payment unavailable right now.", "error");
     } catch (e) {
       toast(e instanceof Error ? e.message : "Could not start payment", "error");
     } finally {

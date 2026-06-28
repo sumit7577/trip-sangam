@@ -1,6 +1,7 @@
 """camelCase serializers for the slot booking API (matches the Next.js side)."""
 import re
 
+from django.conf import settings
 from rest_framework import serializers
 
 from cms.models import PackagePage
@@ -17,17 +18,29 @@ def mask_phone(phone):
 
 
 class PaymentSerializer(serializers.ModelSerializer):
-    """Returned when a deposit/balance order is created — the frontend redirects
-    the user to `redirectUrl`."""
+    """Returned when a deposit/balance order is created — the frontend opens
+    Razorpay Checkout with these fields (order id + key + prefill)."""
 
     bookingId = serializers.IntegerField(source="booking_id", read_only=True)
-    merchantOrderId = serializers.CharField(source="merchant_order_id", read_only=True)
-    redirectUrl = serializers.CharField(source="redirect_url", read_only=True)
-    amountPaise = serializers.IntegerField(source="amount", read_only=True)
+    razorpayOrderId = serializers.CharField(source="phonepe_order_id", read_only=True)
+    keyId = serializers.SerializerMethodField()
+    currency = serializers.SerializerMethodField()
+    prefillName = serializers.CharField(source="booking.lead_name", read_only=True)
+    prefillEmail = serializers.EmailField(source="booking.lead_email", read_only=True)
+    prefillContact = serializers.CharField(source="booking.lead_phone", read_only=True)
 
     class Meta:
         model = Payment
-        fields = ["id", "bookingId", "kind", "merchantOrderId", "amountPaise", "status", "redirectUrl"]
+        fields = [
+            "id", "bookingId", "kind", "razorpayOrderId", "amount", "currency", "keyId", "status",
+            "prefillName", "prefillEmail", "prefillContact",
+        ]
+
+    def get_keyId(self, obj):
+        return settings.RAZORPAY_KEY_ID
+
+    def get_currency(self, obj):
+        return "INR"
 
 
 class DepartureSerializer(serializers.ModelSerializer):

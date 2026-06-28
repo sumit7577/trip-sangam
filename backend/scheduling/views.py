@@ -22,7 +22,7 @@ from .serializers import (
 from .throttles import WebhookRateThrottle
 
 # Booking actions that mutate state / cost money → rate-limited per user.
-_THROTTLED_ACTIONS = {"create", "accept", "decline", "cancel", "pay_deposit", "pay_balance", "travellers"}
+_THROTTLED_ACTIONS = {"create", "accept", "decline", "cancel", "pay_deposit", "pay_balance", "verify_payment", "travellers"}
 
 logger = logging.getLogger(__name__)
 
@@ -212,6 +212,26 @@ class BookingViewSet(
     @action(detail=True, methods=["post"], url_path="pay-balance")
     def pay_balance(self, request, pk=None):
         return self._initiate(self.get_object(), Payment.KIND_BALANCE)
+
+    @action(detail=True, methods=["post"], url_path="verify-payment")
+    def verify_payment(self, request, pk=None):
+        """Verify a Razorpay Checkout success and confirm the booking."""
+        booking = self.get_object()
+        oid = request.data.get("razorpay_order_id")
+        pid = request.data.get("razorpay_payment_id")
+        sig = request.data.get("razorpay_signature")
+        if not (oid and pid and sig):
+            return Response({"detail": "Missing payment fields.", "code": "missing_fields"},
+                            status=status.HTTP_400_BAD_REQUEST)
+        payment = booking.payments.filter(phonepe_order_id=oid).first()
+        if payment is None:
+            return Response({"detail": "Unknown order.", "code": "unknown_order"},
+                            status=status.HTTP_400_BAD_REQUEST)
+        if not payments.verify_and_apply(payment, oid, pid, sig):
+            return Response({"detail": "Payment verification failed.", "code": "bad_signature"},
+                            status=status.HTTP_400_BAD_REQUEST)
+        booking.refresh_from_db()
+        return Response(BookingDetailSerializer(booking, context=self.get_serializer_context()).data)
 
     def _initiate(self, booking, kind):
         if not gateway.is_configured():
