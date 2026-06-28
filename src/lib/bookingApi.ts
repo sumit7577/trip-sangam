@@ -35,6 +35,7 @@ export interface Booking {
   paymentStatus: string;
   packageSlug: string;
   packageName: string;
+  packageImage: string;
   partySize: number;
   totalAmount: number;
   depositAmount: number;

@@ -17,12 +17,13 @@ const inr = (n: number) => `₹${n.toLocaleString("en-IN")}`;
  *   happens in Razorpay's secure modal via the Pay button)
  * ============================================================ */
 export function PriceSummary({
-  booking, formed, remainingToForm, busy, onAccept, onDecline, onPayDeposit, onPayBalance,
+  booking, formed, remainingToForm, busy, dateRange, onAccept, onDecline, onPayDeposit, onPayBalance,
 }: {
   booking: Booking;
   formed: boolean;
   remainingToForm: number;
   busy: boolean;
+  dateRange?: string;
   onAccept: () => void;
   onDecline: () => void;
   onPayDeposit: () => void;
@@ -44,17 +45,30 @@ export function PriceSummary({
       initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
       className="overflow-hidden rounded-3xl border border-line/70 bg-white/80 shadow-lift backdrop-blur-xl dark:border-white/10 dark:bg-white/[0.05]"
     >
-      {/* Gradient header */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-ink via-ink to-crimson/80 px-5 py-4 text-white">
-        <div aria-hidden className="pointer-events-none absolute -right-8 -top-12 h-32 w-32 rounded-full bg-gold/30 blur-2xl" />
-        <div className="relative flex items-center justify-between">
-          <h3 className="flex items-center gap-2 font-serif text-lg tracking-tight"><Lock className="h-4 w-4" /> Price summary</h3>
-          <span className="inline-flex items-center rounded-full bg-white/15 px-2.5 py-1 font-mono text-[10px] font-semibold uppercase tracking-wider backdrop-blur">256-bit SSL</span>
+      {/* Package image header */}
+      <div className="relative h-36 overflow-hidden">
+        {b.packageImage ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={b.packageImage} alt={b.packageName} className="absolute inset-0 h-full w-full object-cover" />
+        ) : (
+          <div className="absolute inset-0 bg-gradient-to-br from-ink via-ink to-crimson/80" />
+        )}
+        <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/35 to-black/10" />
+        <div className="relative flex h-full flex-col justify-between p-4 text-white">
+          <div className="flex items-center justify-between">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-1 text-[11px] font-semibold backdrop-blur"><Lock className="h-3 w-3" /> Secure checkout</span>
+            <span className="inline-flex items-center rounded-full bg-white/15 px-2.5 py-1 font-mono text-[10px] font-semibold uppercase tracking-wider backdrop-blur">256-bit SSL</span>
+          </div>
+          <div className="min-w-0">
+            <p className="truncate font-serif text-lg leading-tight tracking-tight drop-shadow-sm">{b.packageName}</p>
+            {dateRange && <p className="mt-0.5 text-xs text-white/85">{dateRange}</p>}
+          </div>
         </div>
       </div>
 
       {/* Breakdown */}
-      <div className="space-y-2 px-5 py-4 text-sm">
+      <p className="px-5 pt-4 text-[10px] font-medium uppercase tracking-[0.18em] text-muted">Price summary</p>
+      <div className="space-y-2 px-5 pb-4 pt-2 text-sm">
         <Row label="Trip total" value={inr(b.totalAmount)} />
         <Row label="Deposit (50%)" value={inr(b.depositAmount)} muted strike={depositPaid} />
         <Row label="Balance (pay later)" value={inr(b.balanceAmount)} muted strike={fullyPaid} />
@@ -156,24 +170,38 @@ const METHODS = [
   { icon: Building2, label: "EMI / Pay Later", sub: "Card EMI & Pay Later options" },
 ];
 
-export function PaymentMethods() {
+export function PaymentMethods({ onPay, payable, busy }: { onPay: () => void; payable: boolean; busy: boolean }) {
   return (
     <div className="overflow-hidden rounded-3xl border border-line bg-white shadow-soft dark:border-white/10 dark:bg-white/5">
       <div className="border-b border-line/70 px-5 py-4 dark:border-white/10">
         <h3 className="font-serif text-lg">Payment options</h3>
-        <p className="mt-0.5 text-xs text-muted">Choose any of these in the secure checkout.</p>
+        <p className="mt-0.5 text-xs text-muted">
+          {payable ? "Tap any method to pay securely." : "Available once your seat is ready to pay."}
+        </p>
       </div>
       <div className="divide-y divide-line/60 dark:divide-white/5">
-        {METHODS.map((m) => (
-          <div key={m.label} className="flex items-center gap-3.5 px-5 py-3.5">
-            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-ink/[0.04] text-ink dark:bg-white/10 dark:text-white"><m.icon className="h-[18px] w-[18px]" /></span>
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium">{m.label}</p>
-              <p className="truncate text-xs text-muted">{m.sub}</p>
-            </div>
-            <ChevronRight className="h-4 w-4 shrink-0 text-muted/60" />
-          </div>
-        ))}
+        {METHODS.map((m) => {
+          const inner = (
+            <>
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-ink/[0.04] text-ink dark:bg-white/10 dark:text-white"><m.icon className="h-[18px] w-[18px]" /></span>
+              <div className="min-w-0 flex-1 text-left">
+                <p className="text-sm font-medium">{m.label}</p>
+                <p className="truncate text-xs text-muted">{m.sub}</p>
+              </div>
+              <ChevronRight className="h-4 w-4 shrink-0 text-muted/60" />
+            </>
+          );
+          return payable ? (
+            <button
+              key={m.label} onClick={onPay} disabled={busy}
+              className="flex w-full items-center gap-3.5 px-5 py-3.5 transition-colors hover:bg-gold/[0.06] disabled:opacity-60 dark:hover:bg-white/[0.04]"
+            >
+              {inner}
+            </button>
+          ) : (
+            <div key={m.label} className="flex items-center gap-3.5 px-5 py-3.5 opacity-70">{inner}</div>
+          );
+        })}
       </div>
       <div className="flex items-center gap-2 border-t border-line/70 px-5 py-3 text-[11px] text-muted dark:border-white/10">
         <ShieldCheck className="h-3.5 w-3.5 text-jade" /> You&apos;ll choose your exact method on Razorpay&apos;s secure window.

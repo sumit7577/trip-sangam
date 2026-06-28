@@ -91,6 +91,7 @@ class BookingSerializer(serializers.ModelSerializer):
 
     packageSlug = serializers.CharField(source="package.slug", read_only=True)
     packageName = serializers.CharField(source="package.title", read_only=True)
+    packageImage = serializers.CharField(source="package.hero_src", read_only=True)
     partySize = serializers.IntegerField(source="party_size", read_only=True)
     paymentStatus = serializers.CharField(source="payment_status", read_only=True)
     totalAmount = serializers.IntegerField(source="total_amount", read_only=True)
@@ -103,7 +104,7 @@ class BookingSerializer(serializers.ModelSerializer):
     class Meta:
         model = Booking
         fields = [
-            "id", "status", "paymentStatus", "packageSlug", "packageName", "partySize",
+            "id", "status", "paymentStatus", "packageSlug", "packageName", "packageImage", "partySize",
             "totalAmount", "depositAmount", "balanceAmount", "holdExpiresAt",
             "departure", "createdAt",
         ]

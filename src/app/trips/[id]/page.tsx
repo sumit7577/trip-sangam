@@ -141,6 +141,13 @@ export default function TripDetailPage() {
   const isAccepted = b.status === "accepted";
   const isConfirmed = b.status === "confirmed";
   const canCancel = !["confirmed", "cancelled", "declined", "expired"].includes(b.status);
+  // A single "pay now" action + whether the user can pay yet — shared by the
+  // price card and the (clickable) payment-options list.
+  const depositPaid = b.paymentStatus === "deposit_paid" || b.paymentStatus === "fully_paid";
+  const fullyPaid = b.paymentStatus === "fully_paid";
+  const payable = (b.status === "pending" && formed) || isAccepted || (isConfirmed && depositPaid && !fullyPaid && b.balanceAmount > 0);
+  const onPay = isAccepted ? onPayDeposit : (b.status === "pending" && formed) ? onAccept : onPayBalance;
+  const dateRange = dep ? fmtRange(dep.startDate, dep.endDate) : undefined;
   // Group filled (≥ min) but this traveller hasn't paid the deposit yet — show
   // it as "Confirmed" rather than "Forming group".
   const groupConfirmed = formed && b.status === "pending";
@@ -263,7 +270,7 @@ export default function TripDetailPage() {
             )}
 
             <OffersStrip />
-            <PaymentMethods />
+            <PaymentMethods onPay={onPay} payable={payable} busy={busy} />
           </div>
 
           {/* RIGHT — sticky price summary + pay */}
@@ -273,6 +280,7 @@ export default function TripDetailPage() {
               formed={formed}
               remainingToForm={remainingToForm}
               busy={busy}
+              dateRange={dateRange}
               onAccept={onAccept}
               onDecline={onDecline}
               onPayDeposit={onPayDeposit}
