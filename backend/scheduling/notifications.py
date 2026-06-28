@@ -72,7 +72,7 @@ def notify_balance_due(booking):
     )
 
 
-def notify_booking_confirmed(booking, fully_paid=False):
+def notify_booking_confirmed(booking, fully_paid=False, payment=None):
     """Sent right after a successful payment — deposit (seat locked) or final
     balance (fully paid). Branded HTML confirmation + a PDF voucher attachment,
     MakeMyTrip-style. Best-effort: never raises into the payment flow."""
@@ -104,7 +104,7 @@ def notify_booking_confirmed(booking, fully_paid=False):
     try:
         msg = EmailMultiAlternatives(subject, text, settings.DEFAULT_FROM_EMAIL, [to_email])
         msg.attach_alternative(_confirmed_html(booking, ref, dates, fully_paid, paid), "text/html")
-        pdf = build_voucher_pdf(booking)
+        pdf = build_voucher_pdf(booking, payment)
         if pdf:
             msg.attach(f"TripSangam-Voucher-{ref}.pdf", pdf, "application/pdf")
         msg.send(fail_silently=False)

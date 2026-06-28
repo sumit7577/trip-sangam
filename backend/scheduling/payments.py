@@ -137,11 +137,11 @@ def _on_success(payment):
                 booking.id, booking.status,
             )
         booking.refresh_from_db()
-        notifications.notify_booking_confirmed(booking)
+        notifications.notify_booking_confirmed(booking, payment=payment)
     elif payment.kind == Payment.KIND_BALANCE:
         booking.payment_status = Booking.PAYMENT_FULLY_PAID
         booking.save(update_fields=["payment_status", "updated_at"])
-        notifications.notify_booking_confirmed(booking, fully_paid=True)
+        notifications.notify_booking_confirmed(booking, fully_paid=True, payment=payment)
 
 
 def handle_webhook(event, body):
