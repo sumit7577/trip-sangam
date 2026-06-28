@@ -16,12 +16,12 @@ import { initials } from "@/components/layout/AccountMenu";
 
 type Form = {
   fullName: string; email: string; gender: string; dateOfBirth: string;
-  city: string; state: string; pincode: string; documentType: string; documentNumber: string;
-  emergencyName: string; emergencyPhone: string;
+  city: string; district: string; state: string; pincode: string;
+  documentType: string; documentNumber: string; emergencyName: string; emergencyPhone: string;
 };
 
 const EMPTY: Form = {
-  fullName: "", email: "", gender: "", dateOfBirth: "", city: "", state: "", pincode: "",
+  fullName: "", email: "", gender: "", dateOfBirth: "", city: "", district: "", state: "", pincode: "",
   documentType: "", documentNumber: "", emergencyName: "", emergencyPhone: "",
 };
 
@@ -50,8 +50,8 @@ export default function AccountPage() {
     if (user) {
       setForm({
         fullName: user.fullName || "", email: user.email || "", gender: user.gender || "",
-        dateOfBirth: user.dateOfBirth || "", city: user.city || "", state: user.state || "",
-        pincode: user.pincode || "",
+        dateOfBirth: user.dateOfBirth || "", city: user.city || "", district: user.district || "",
+        state: user.state || "", pincode: user.pincode || "",
         documentType: user.documentType || "", documentNumber: user.documentNumber || "",
         emergencyName: user.emergencyName || "", emergencyPhone: user.emergencyPhone || "",
       });
@@ -86,8 +86,13 @@ export default function AccountPage() {
       const data = await res.json();
       const po = data?.[0]?.PostOffice?.[0];
       if (po) {
-        setForm((f) => ({ ...f, pincode: digits, city: po.District || f.city, state: po.State || f.state }));
-        toast(`📍 ${po.District}, ${po.State}`, "success");
+        // API: District = administrative district; Block/Division = the town/city.
+        const city = po.Block || po.Division || po.Name || po.District || "";
+        setForm((f) => ({
+          ...f, pincode: digits,
+          city: city || f.city, district: po.District || f.district, state: po.State || f.state,
+        }));
+        toast(`📍 ${city || po.District}, ${po.State}`, "success");
       } else {
         toast("Couldn't find that PIN code.", "error");
       }
@@ -112,8 +117,8 @@ export default function AccountPage() {
     try {
       await updateProfile({
         fullName: form.fullName.trim(), email: form.email.trim(), gender: form.gender,
-        city: form.city.trim(), state: form.state.trim(), pincode: form.pincode.trim(),
-        documentType: form.documentType,
+        city: form.city.trim(), district: form.district.trim(), state: form.state.trim(),
+        pincode: form.pincode.trim(), documentType: form.documentType,
         documentNumber: form.documentNumber.trim(), emergencyName: form.emergencyName.trim(),
         emergencyPhone: form.emergencyPhone.trim(),
         dateOfBirth: form.dateOfBirth || undefined,
@@ -273,8 +278,10 @@ export default function AccountPage() {
                     onChange={(v) => set("dateOfBirth", v)} />
                   <PinField icon={<Navigation className="h-4 w-4" />} label="PIN code" value={form.pincode}
                     loading={pinLoading} onChange={onPincodeChange} />
-                  <Input icon={<MapPin className="h-4 w-4" />} label="City" value={form.city}
+                  <Input icon={<MapPin className="h-4 w-4" />} label="City / Town" value={form.city}
                     onChange={(v) => set("city", v)} placeholder="Auto-filled from PIN" />
+                  <Input icon={<MapPin className="h-4 w-4" />} label="District" value={form.district}
+                    onChange={(v) => set("district", v)} placeholder="Auto-filled from PIN" />
                   <Input icon={<MapPin className="h-4 w-4" />} label="State" value={form.state}
                     onChange={(v) => set("state", v)} placeholder="Auto-filled from PIN" />
                   <div className="sm:col-span-2">
