@@ -16,7 +16,7 @@ from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
 
-from . import razorpay_gw as gw, services
+from . import notifications, razorpay_gw as gw, services
 from .models import Booking, Payment
 
 logger = logging.getLogger(__name__)
@@ -136,9 +136,12 @@ def _on_success(payment):
                 "Deposit paid but booking %s not holdable (status=%s) — needs manual re-slot.",
                 booking.id, booking.status,
             )
+        booking.refresh_from_db()
+        notifications.notify_booking_confirmed(booking)
     elif payment.kind == Payment.KIND_BALANCE:
         booking.payment_status = Booking.PAYMENT_FULLY_PAID
         booking.save(update_fields=["payment_status", "updated_at"])
+        notifications.notify_booking_confirmed(booking, fully_paid=True)
 
 
 def handle_webhook(event, body):
