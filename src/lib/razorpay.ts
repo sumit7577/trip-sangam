@@ -26,8 +26,6 @@ type Callbacks = {
   onDismiss: () => void;
 };
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 /** Open Razorpay Standard Checkout for a created order, then verify on success. */
 export async function openRazorpayCheckout(bookingId: number | string, p: PaymentInit, cb: Callbacks) {
   const ok = await loadRazorpay();
