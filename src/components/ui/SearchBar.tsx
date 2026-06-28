@@ -4,11 +4,14 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { MapPin, Calendar, Users, Search, Minus, Plus, ChevronDown } from "lucide-react";
+import { MapPin, Calendar, Users, Search, Minus, Plus, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import type { Package } from "@/types";
 import { cn } from "@/lib/utils";
 
-type Popover = "dest" | "trav" | null;
+type Popover = "dest" | "trav" | "date" | null;
+
+const MONTHS_LONG = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+const DOW = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 
 export function SearchBar({ packages }: { packages: Package[] }) {
   const router = useRouter();
@@ -17,23 +20,20 @@ export function SearchBar({ packages }: { packages: Package[] }) {
   const [adults, setAdults] = useState(2);
   const [children, setChildren] = useState(0);
   const [popover, setPopover] = useState<Popover>(null);
+  const [cal, setCal] = useState(() => { const d = new Date(); return { y: d.getFullYear(), m: d.getMonth() }; });
   const formRef = useRef<HTMLFormElement>(null);
-  const dateInputRef = useRef<HTMLInputElement>(null);
 
-  function openDatePicker() {
+  function openDate() {
+    if (date) { const [y, m] = date.split("-").map(Number); setCal({ y, m: m - 1 }); }
+    else { const d = new Date(); setCal({ y: d.getFullYear(), m: d.getMonth() }); }
+    setPopover(popover === "date" ? null : "date");
+  }
+  function shiftMonth(by: number) {
+    setCal(({ y, m }) => { const d = new Date(y, m + by, 1); return { y: d.getFullYear(), m: d.getMonth() }; });
+  }
+  function pickDate(d: number) {
+    setDate(`${cal.y}-${String(cal.m + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`);
     setPopover(null);
-    const el = dateInputRef.current;
-    if (!el) return;
-    if (typeof el.showPicker === "function") {
-      try {
-        el.showPicker();
-        return;
-      } catch {
-        /* fall through */
-      }
-    }
-    el.focus();
-    el.click();
   }
 
   // Click outside closes any open popover
@@ -128,35 +128,16 @@ export function SearchBar({ packages }: { packages: Package[] }) {
 
         <Divider />
 
-        {/* DATE — pretty display, native input layered invisibly on top */}
+        {/* DATE — custom calendar popover (works identically on mobile/tablet/desktop) */}
         <Field
           icon={<Calendar className="h-3.5 w-3.5" strokeWidth={1.5} />}
           label="When"
-          active={false}
-          onActivate={openDatePicker}
+          active={popover === "date"}
+          onActivate={openDate}
         >
-          <div className="relative">
-            <span
-              className={cn(
-                "block truncate text-sm",
-                date ? "font-medium text-ink" : "text-ink/35"
-              )}
-            >
-              {dateDisplay || "Add dates"}
-            </span>
-            {/* Native input covers the whole field and is directly tappable so
-                the picker opens reliably on mobile (showPicker is a fallback). */}
-            <input
-              ref={dateInputRef}
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              onClick={(e) => e.stopPropagation()}
-              onFocus={() => setPopover(null)}
-              aria-label="Departure date"
-              className="absolute -inset-y-3 inset-x-0 cursor-pointer opacity-0"
-            />
-          </div>
+          <span className={cn("block truncate text-sm", date ? "font-medium text-ink" : "text-ink/35")}>
+            {dateDisplay || "Add dates"}
+          </span>
         </Field>
 
         <Divider />
@@ -279,6 +260,54 @@ export function SearchBar({ packages }: { packages: Package[] }) {
             </button>
           </motion.div>
         )}
+      </AnimatePresence>
+
+      {/* DATE POPOVER — custom calendar (consistent on mobile / tablet / desktop) */}
+      <AnimatePresence>
+        {popover === "date" && (() => {
+          const firstDow = new Date(cal.y, cal.m, 1).getDay();
+          const daysIn = new Date(cal.y, cal.m + 1, 0).getDate();
+          const cells: (number | null)[] = [...Array(firstDow).fill(null), ...Array.from({ length: daysIn }, (_, i) => i + 1)];
+          const t = new Date();
+          const todayIso = `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, "0")}-${String(t.getDate()).padStart(2, "0")}`;
+          return (
+            <motion.div
+              initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 16 }}
+              transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+              className="absolute left-1/2 top-full z-50 mt-3 w-[20rem] max-w-[calc(100vw-2rem)] -translate-x-1/2 rounded-2xl border border-line/60 bg-white p-4 shadow-[0_24px_64px_-20px_rgba(28,28,26,0.35)] ring-1 ring-ink/5"
+            >
+              <div className="flex items-center justify-between">
+                <button type="button" onClick={() => shiftMonth(-1)} className="grid h-9 w-9 place-items-center rounded-full text-muted transition-colors hover:bg-sand hover:text-ink">
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+                <p className="text-sm font-semibold text-ink">{MONTHS_LONG[cal.m]} {cal.y}</p>
+                <button type="button" onClick={() => shiftMonth(1)} className="grid h-9 w-9 place-items-center rounded-full text-muted transition-colors hover:bg-sand hover:text-ink">
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              </div>
+              <div className="mt-3 grid grid-cols-7 text-center text-[11px] font-medium text-muted">
+                {DOW.map((d) => <span key={d}>{d}</span>)}
+              </div>
+              <div className="mt-1 grid grid-cols-7 gap-1">
+                {cells.map((d, i) => {
+                  if (d === null) return <span key={i} />;
+                  const iso = `${cal.y}-${String(cal.m + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+                  const past = iso < todayIso;
+                  const on = date === iso;
+                  return (
+                    <button key={i} type="button" disabled={past} onClick={() => pickDate(d)}
+                      className={cn(
+                        "grid h-9 place-items-center rounded-lg text-sm transition-colors",
+                        on ? "bg-ink font-semibold text-white" : past ? "cursor-not-allowed text-ink/25" : "text-ink hover:bg-sand"
+                      )}>
+                      {d}
+                    </button>
+                  );
+                })}
+              </div>
+            </motion.div>
+          );
+        })()}
       </AnimatePresence>
     </motion.form>
     </>
