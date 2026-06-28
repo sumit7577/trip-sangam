@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ConfirmationResult } from "firebase/auth";
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -48,6 +48,20 @@ export function SignInModal() {
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [sentEmail, setSentEmail] = useState(false);
+  const [resendIn, setResendIn] = useState(0);
+
+  // Resend-OTP countdown.
+  useEffect(() => {
+    if (resendIn <= 0) return;
+    const t = setInterval(() => setResendIn((s) => (s <= 1 ? 0 : s - 1)), 1000);
+    return () => clearInterval(t);
+  }, [resendIn]);
+
+  // Auto-verify once all 6 digits are entered.
+  useEffect(() => {
+    if (view === "otp" && otp.replace(/\D/g, "").length === 6 && !loading) onVerifyOtp();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [otp]);
 
   function resetAll() {
     setView(phoneEnabled ? "phone" : "email");
@@ -74,6 +88,8 @@ export function SignInModal() {
     try {
       const conf = await sendPhoneOtp(`${dial}${digits}`, RECAPTCHA_ID);
       setConfirmation(conf);
+      setOtp("");
+      setResendIn(30);
       setView("otp");
       toast("OTP sent to your phone.", "success");
     } catch (err) {
@@ -83,8 +99,8 @@ export function SignInModal() {
     }
   }
 
-  async function onVerifyOtp(e: React.FormEvent) {
-    e.preventDefault();
+  async function onVerifyOtp(e?: React.FormEvent) {
+    e?.preventDefault();
     if (!confirmation || otp.replace(/\D/g, "").length < 6) return;
     setLoading(true);
     try {
@@ -234,20 +250,22 @@ export function SignInModal() {
                       Sent to <span className="font-medium text-ink dark:text-white">{dial} {phone}</span>
                     </p>
 
-                    <form onSubmit={onVerifyOtp} className="mt-7 space-y-3">
-                      <div className="flex h-12 items-center gap-2 rounded-2xl border border-line bg-white px-4 transition-colors focus-within:border-ink dark:bg-white/5">
-                        <Smartphone className="h-4 w-4 shrink-0 text-muted" />
-                        <input autoFocus type="tel" inputMode="numeric" maxLength={6} value={otp}
-                          onChange={(e) => setOtp(e.target.value)} placeholder="6-digit code"
-                          className="flex-1 border-none bg-transparent text-center text-lg font-semibold tracking-[0.4em] text-ink focus:outline-none dark:text-white" />
+                    <div className="mt-7">
+                      <OtpBoxes value={otp} onChange={setOtp} disabled={loading} />
+                      <div className="mt-5">
+                        <SubmitButton loading={loading} label="Verify & continue" onClick={() => onVerifyOtp()} />
                       </div>
-                      <SubmitButton loading={loading} label="Verify & continue" />
-                    </form>
+                    </div>
 
-                    <button onClick={() => onSendOtp()}
-                      className="mt-4 block w-full text-center text-xs text-muted hover:text-ink dark:hover:text-white">
-                      Didn&apos;t get it? <span className="font-medium text-ink dark:text-white">Resend code</span>
-                    </button>
+                    <div className="mt-4 text-center text-xs text-muted">
+                      {resendIn > 0 ? (
+                        <>Resend code in <span className="font-mono font-semibold text-ink dark:text-white">0:{String(resendIn).padStart(2, "0")}</span></>
+                      ) : (
+                        <button onClick={() => onSendOtp()}>
+                          Didn&apos;t get it? <span className="font-medium text-ink underline-offset-4 hover:underline dark:text-white">Resend code</span>
+                        </button>
+                      )}
+                    </div>
                   </motion.div>
                 ) : view === "profile" ? (
                   <motion.div key="profile" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
@@ -344,13 +362,60 @@ export function SignInModal() {
 
 /* ---------- small pieces ---------- */
 
-function SubmitButton({ loading, label }: { loading: boolean; label: string }) {
+function SubmitButton({ loading, label, onClick }: { loading: boolean; label: string; onClick?: () => void }) {
   return (
-    <motion.button whileTap={{ scale: 0.98 }} type="submit" disabled={loading}
+    <motion.button whileTap={{ scale: 0.98 }} type={onClick ? "button" : "submit"} onClick={onClick} disabled={loading}
       className="mt-3 inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-ink text-sm font-semibold text-white transition-colors hover:bg-ink/90 disabled:opacity-60">
       {loading ? "Please wait…" : label}
       {!loading && <ArrowRight className="h-4 w-4" />}
     </motion.button>
+  );
+}
+
+function OtpBoxes({ value, onChange, disabled }: { value: string; onChange: (v: string) => void; disabled?: boolean }) {
+  const LEN = 6;
+  const refs = useRef<(HTMLInputElement | null)[]>([]);
+
+  function setChar(i: number, c: string) {
+    const digit = c.replace(/\D/g, "").slice(-1);
+    const chars = value.padEnd(LEN, " ").slice(0, LEN).split("");
+    chars[i] = digit || " ";
+    onChange(chars.join(""));
+    if (digit && i < LEN - 1) refs.current[i + 1]?.focus();
+  }
+  function onKey(i: number, e: React.KeyboardEvent<HTMLInputElement>) {
+    const empty = !value[i] || value[i] === " ";
+    if (e.key === "Backspace" && empty && i > 0) refs.current[i - 1]?.focus();
+  }
+  function onPaste(e: React.ClipboardEvent<HTMLDivElement>) {
+    e.preventDefault();
+    const digits = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, LEN);
+    if (!digits) return;
+    onChange(digits.padEnd(LEN, " "));
+    refs.current[Math.min(digits.length, LEN - 1)]?.focus();
+  }
+
+  return (
+    <div className="flex justify-between gap-2 sm:gap-3" onPaste={onPaste}>
+      {Array.from({ length: LEN }).map((_, i) => {
+        const ch = value[i] && value[i] !== " " ? value[i] : "";
+        return (
+          <input
+            key={i}
+            ref={(el) => { refs.current[i] = el; }}
+            inputMode="numeric"
+            maxLength={1}
+            disabled={disabled}
+            autoFocus={i === 0}
+            value={ch}
+            onChange={(e) => setChar(i, e.target.value)}
+            onKeyDown={(e) => onKey(i, e)}
+            aria-label={`Digit ${i + 1}`}
+            className="h-14 w-full rounded-2xl border-2 border-line bg-white text-center text-xl font-semibold text-ink outline-none transition-all focus:border-crimson focus:ring-4 focus:ring-crimson/10 disabled:opacity-60 dark:bg-white/5 dark:text-white"
+          />
+        );
+      })}
+    </div>
   );
 }
 

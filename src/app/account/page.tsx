@@ -5,7 +5,8 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   UserRound, Mail, Phone, Check, LogIn, Briefcase, LogOut, Camera,
-  MapPin, IdCard, Cake, Users2, ShieldAlert, Loader2, Sparkles, Calendar, type LucideIcon,
+  MapPin, IdCard, Cake, Users2, ShieldAlert, Loader2, Sparkles, Calendar,
+  ChevronLeft, ChevronRight, Navigation, type LucideIcon,
 } from "lucide-react";
 import { useAuth, type ProfileInput } from "@/lib/auth";
 import { useModal } from "@/lib/modal";
@@ -15,12 +16,12 @@ import { initials } from "@/components/layout/AccountMenu";
 
 type Form = {
   fullName: string; email: string; gender: string; dateOfBirth: string;
-  city: string; state: string; documentType: string; documentNumber: string;
+  city: string; state: string; pincode: string; documentType: string; documentNumber: string;
   emergencyName: string; emergencyPhone: string;
 };
 
 const EMPTY: Form = {
-  fullName: "", email: "", gender: "", dateOfBirth: "", city: "", state: "",
+  fullName: "", email: "", gender: "", dateOfBirth: "", city: "", state: "", pincode: "",
   documentType: "", documentNumber: "", emergencyName: "", emergencyPhone: "",
 };
 
@@ -50,6 +51,7 @@ export default function AccountPage() {
       setForm({
         fullName: user.fullName || "", email: user.email || "", gender: user.gender || "",
         dateOfBirth: user.dateOfBirth || "", city: user.city || "", state: user.state || "",
+        pincode: user.pincode || "",
         documentType: user.documentType || "", documentNumber: user.documentNumber || "",
         emergencyName: user.emergencyName || "", emergencyPhone: user.emergencyPhone || "",
       });
@@ -71,6 +73,31 @@ export default function AccountPage() {
     setForm((f) => ({ ...f, [k]: v }));
   }
 
+  const [pinLoading, setPinLoading] = useState(false);
+
+  // Indian PIN → auto-fill city + state (free India Post API).
+  async function onPincodeChange(v: string) {
+    const digits = v.replace(/\D/g, "").slice(0, 6);
+    setForm((f) => ({ ...f, pincode: digits }));
+    if (digits.length !== 6) return;
+    setPinLoading(true);
+    try {
+      const res = await fetch(`https://api.postalpincode.in/pincode/${digits}`);
+      const data = await res.json();
+      const po = data?.[0]?.PostOffice?.[0];
+      if (po) {
+        setForm((f) => ({ ...f, pincode: digits, city: po.District || f.city, state: po.State || f.state }));
+        toast(`📍 ${po.District}, ${po.State}`, "success");
+      } else {
+        toast("Couldn't find that PIN code.", "error");
+      }
+    } catch {
+      /* offline / blocked — leave fields as-is */
+    } finally {
+      setPinLoading(false);
+    }
+  }
+
   const completion = Math.round(
     (COMPLETION_KEYS.filter((k) => form[k]?.trim()).length / COMPLETION_KEYS.length) * 100
   );
@@ -85,7 +112,8 @@ export default function AccountPage() {
     try {
       await updateProfile({
         fullName: form.fullName.trim(), email: form.email.trim(), gender: form.gender,
-        city: form.city.trim(), state: form.state.trim(), documentType: form.documentType,
+        city: form.city.trim(), state: form.state.trim(), pincode: form.pincode.trim(),
+        documentType: form.documentType,
         documentNumber: form.documentNumber.trim(), emergencyName: form.emergencyName.trim(),
         emergencyPhone: form.emergencyPhone.trim(),
         dateOfBirth: form.dateOfBirth || undefined,
@@ -241,12 +269,14 @@ export default function AccountPage() {
                     onChange={(v) => set("email", v)} placeholder="you@example.com" />
                   <Select icon={<Users2 className="h-4 w-4" />} label="Gender" value={form.gender}
                     onChange={(v) => set("gender", v)} options={["", "Male", "Female", "Other", "Prefer not to say"]} />
-                  <DateField icon={<Cake className="h-4 w-4" />} label="Date of birth" value={form.dateOfBirth}
+                  <DatePicker icon={<Cake className="h-4 w-4" />} label="Date of birth" value={form.dateOfBirth}
                     onChange={(v) => set("dateOfBirth", v)} />
+                  <PinField icon={<Navigation className="h-4 w-4" />} label="PIN code" value={form.pincode}
+                    loading={pinLoading} onChange={onPincodeChange} />
                   <Input icon={<MapPin className="h-4 w-4" />} label="City" value={form.city}
-                    onChange={(v) => set("city", v)} placeholder="e.g. Raxaul" />
+                    onChange={(v) => set("city", v)} placeholder="Auto-filled from PIN" />
                   <Input icon={<MapPin className="h-4 w-4" />} label="State" value={form.state}
-                    onChange={(v) => set("state", v)} placeholder="e.g. Bihar" />
+                    onChange={(v) => set("state", v)} placeholder="Auto-filled from PIN" />
                   <div className="sm:col-span-2">
                     <Label>Mobile (login)</Label>
                     <div className="flex h-11 items-center gap-2 rounded-xl border border-ink/5 bg-ink/[0.03] px-3 dark:border-white/5 dark:bg-white/[0.02]">
@@ -352,7 +382,7 @@ function Input({
   return (
     <div>
       <Label>{label}</Label>
-      <div className="flex items-center gap-2 rounded-xl border border-ink/10 bg-white/55 px-3 transition-all focus-within:border-ink/40 focus-within:bg-white focus-within:shadow-soft focus-within:ring-2 focus-within:ring-ink/[0.06] dark:border-white/10 dark:bg-white/5 dark:focus-within:bg-white/10">
+      <div className={FIELD}>
         <span className="shrink-0 text-muted">{icon}</span>
         <input type={type} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder}
           className="h-11 w-full bg-transparent text-sm outline-none" />
@@ -361,39 +391,127 @@ function Input({
   );
 }
 
-function DateField({
+const FIELD = "flex items-center gap-2 rounded-xl border border-ink/10 bg-white/55 px-3 transition-all focus-within:border-crimson/45 focus-within:bg-white focus-within:ring-2 focus-within:ring-crimson/15 dark:border-white/10 dark:bg-white/5 dark:focus-within:bg-white/10";
+const MONTHS_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const MONTHS_LONG = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+const DOW = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+
+function PinField({
+  icon, label, value, onChange, loading,
+}: {
+  icon: React.ReactNode; label: string; value: string; onChange: (v: string) => void; loading: boolean;
+}) {
+  return (
+    <div>
+      <Label>{label}</Label>
+      <div className={FIELD}>
+        <span className="shrink-0 text-muted">{icon}</span>
+        <input inputMode="numeric" maxLength={6} value={value} onChange={(e) => onChange(e.target.value)}
+          placeholder="6-digit PIN"
+          className="h-11 w-full bg-transparent text-sm outline-none" />
+        {loading && <Loader2 className="h-4 w-4 shrink-0 animate-spin text-muted" />}
+      </div>
+    </div>
+  );
+}
+
+/** Custom calendar: month/year dropdowns + day grid — easy to pick a birth year. */
+function DatePicker({
   icon, label, value, onChange,
 }: {
   icon: React.ReactNode; label: string; value: string; onChange: (v: string) => void;
 }) {
-  const ref = useRef<HTMLInputElement>(null);
-  const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const ref = useRef<HTMLDivElement>(null);
+  const [open, setOpen] = useState(false);
+  const nowY = new Date().getFullYear();
+  const init = value ? value.split("-").map(Number) : null;
+  const [vy, setVy] = useState(init ? init[0] : nowY - 25);
+  const [vm, setVm] = useState(init ? init[1] - 1 : 0);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDoc = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
+    window.addEventListener("mousedown", onDoc);
+    return () => window.removeEventListener("mousedown", onDoc);
+  }, [open]);
+
   let display = "";
-  if (value) {
-    const [y, m, d] = value.split("-");
-    if (y && m && d) display = `${d} ${MONTHS[+m - 1]} ${y}`;
+  if (value) { const [y, m, d] = value.split("-"); if (y && m && d) display = `${d} ${MONTHS_SHORT[+m - 1]} ${y}`; }
+
+  function openCal() {
+    if (value) { const [y, m] = value.split("-").map(Number); setVy(y); setVm(m - 1); }
+    setOpen(true);
   }
-  function open() {
-    const el = ref.current;
-    if (!el) return;
-    if (typeof el.showPicker === "function") {
-      try { el.showPicker(); return; } catch { /* fall through */ }
-    }
-    el.focus();
+  function shift(by: number) {
+    const t = vm + by;
+    setVm((t + 12) % 12);
+    setVy(vy + Math.floor(t / 12) + (t < 0 ? 0 : 0));
+    if (t < 0) setVy(vy - 1);
+    if (t > 11) setVy(vy + 1);
   }
+  function pick(d: number) {
+    onChange(`${vy}-${String(vm + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`);
+    setOpen(false);
+  }
+
+  const firstDow = new Date(vy, vm, 1).getDay();
+  const daysIn = new Date(vy, vm + 1, 0).getDate();
+  const cells: (number | null)[] = [...Array(firstDow).fill(null), ...Array.from({ length: daysIn }, (_, i) => i + 1)];
+  const years = Array.from({ length: nowY - 1920 + 1 }, (_, i) => nowY - i);
+
   return (
-    <div>
+    <div ref={ref} className="relative">
       <Label>{label}</Label>
-      <div onClick={open}
-        className="relative flex h-11 cursor-pointer items-center gap-2 rounded-xl border border-ink/10 bg-white/55 px-3 transition-all hover:border-ink/30 focus-within:border-ink/40 focus-within:ring-2 focus-within:ring-ink/[0.06] dark:border-white/10 dark:bg-white/5">
+      <div onClick={openCal} className={cn(FIELD, "h-11 cursor-pointer", open && "border-crimson/45 ring-2 ring-crimson/15")}>
         <span className="shrink-0 text-muted">{icon}</span>
-        <span className={cn("flex-1 text-sm", display ? "text-ink dark:text-white" : "text-muted")}>
-          {display || "Select date"}
-        </span>
+        <span className={cn("flex-1 text-sm", display ? "text-ink dark:text-white" : "text-muted")}>{display || "Select date"}</span>
         <Calendar className="h-4 w-4 shrink-0 text-muted" />
-        <input ref={ref} type="date" value={value} onChange={(e) => onChange(e.target.value)} aria-label={label}
-          className="pointer-events-none absolute inset-0 opacity-0 [color-scheme:light] dark:[color-scheme:dark]" />
       </div>
+
+      <AnimatePresence>
+        {open && (
+          <motion.div initial={{ opacity: 0, y: -6, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -6, scale: 0.98 }} transition={{ duration: 0.16 }}
+            className="absolute left-0 top-full z-30 mt-2 w-[18.5rem] max-w-[calc(100vw-3rem)] rounded-2xl border border-line bg-white p-3 shadow-lift dark:border-white/10 dark:bg-[#1A1A18]">
+            <div className="flex items-center gap-2">
+              <button type="button" onClick={() => shift(-1)} className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-muted hover:bg-sand dark:hover:bg-white/5">
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+              <select value={vm} onChange={(e) => setVm(+e.target.value)}
+                className="h-8 flex-1 rounded-lg border border-line bg-transparent px-2 text-sm font-medium outline-none focus:border-crimson/45 dark:border-white/10 dark:bg-[#1A1A18]">
+                {MONTHS_LONG.map((m, i) => <option key={m} value={i}>{m}</option>)}
+              </select>
+              <select value={vy} onChange={(e) => setVy(+e.target.value)}
+                className="h-8 w-[5.5rem] rounded-lg border border-line bg-transparent px-2 text-sm font-medium outline-none focus:border-crimson/45 dark:border-white/10 dark:bg-[#1A1A18]">
+                {years.map((y) => <option key={y} value={y}>{y}</option>)}
+              </select>
+              <button type="button" onClick={() => shift(1)} className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-muted hover:bg-sand dark:hover:bg-white/5">
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="mt-3 grid grid-cols-7 text-center text-[11px] font-medium text-muted">
+              {DOW.map((d) => <span key={d}>{d}</span>)}
+            </div>
+            <div className="mt-1 grid grid-cols-7 gap-1">
+              {cells.map((d, i) => {
+                if (d === null) return <span key={i} />;
+                const iso = `${vy}-${String(vm + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+                const on = value === iso;
+                return (
+                  <button key={i} type="button" onClick={() => pick(d)}
+                    className={cn(
+                      "grid h-9 place-items-center rounded-lg text-sm transition-colors",
+                      on ? "bg-crimson font-semibold text-white" : "text-ink hover:bg-sand dark:text-white dark:hover:bg-white/5"
+                    )}>
+                    {d}
+                  </button>
+                );
+              })}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -407,7 +525,7 @@ function Select({
   return (
     <div>
       <Label>{label}</Label>
-      <div className="flex items-center gap-2 rounded-xl border border-ink/10 bg-white/55 px-3 transition-all focus-within:border-ink/40 focus-within:bg-white focus-within:shadow-soft focus-within:ring-2 focus-within:ring-ink/[0.06] dark:border-white/10 dark:bg-white/5 dark:focus-within:bg-white/10">
+      <div className={FIELD}>
         <span className="shrink-0 text-muted">{icon}</span>
         <select value={value} onChange={(e) => onChange(e.target.value)}
           className="h-11 w-full bg-transparent text-sm outline-none dark:bg-[#1A1A18]">

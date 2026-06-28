@@ -28,6 +28,7 @@ class Profile(models.Model):
     date_of_birth = models.DateField(null=True, blank=True)
     city = models.CharField(max_length=120, blank=True)
     state = models.CharField(max_length=120, blank=True)
+    pincode = models.CharField(max_length=12, blank=True)
     # Travel document for the Raxaul–Birgunj border crossing.
     document_type = models.CharField(max_length=40, blank=True)
     document_number = models.CharField(max_length=80, blank=True)

@@ -17,6 +17,7 @@ class UserSerializer(serializers.ModelSerializer):
     dateOfBirth = serializers.SerializerMethodField()
     city = serializers.SerializerMethodField()
     state = serializers.SerializerMethodField()
+    pincode = serializers.SerializerMethodField()
     documentType = serializers.SerializerMethodField()
     documentNumber = serializers.SerializerMethodField()
     emergencyName = serializers.SerializerMethodField()
@@ -26,7 +27,7 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = [
             "id", "email", "fullName", "phone", "avatarUrl", "gender", "dateOfBirth",
-            "city", "state", "documentType", "documentNumber", "emergencyName", "emergencyPhone",
+            "city", "state", "pincode", "documentType", "documentNumber", "emergencyName", "emergencyPhone",
         ]
 
     @staticmethod
@@ -55,6 +56,9 @@ class UserSerializer(serializers.ModelSerializer):
 
     def get_state(self, obj):
         return getattr(self._p(obj), "state", "")
+
+    def get_pincode(self, obj):
+        return getattr(self._p(obj), "pincode", "")
 
     def get_documentType(self, obj):
         return getattr(self._p(obj), "document_type", "")
@@ -113,6 +117,7 @@ class ProfileUpdateSerializer(serializers.Serializer):
     dateOfBirth = serializers.DateField(required=False, allow_null=True)
     city = serializers.CharField(max_length=120, required=False, allow_blank=True)
     state = serializers.CharField(max_length=120, required=False, allow_blank=True)
+    pincode = serializers.CharField(max_length=12, required=False, allow_blank=True)
     documentType = serializers.CharField(max_length=40, required=False, allow_blank=True)
     documentNumber = serializers.CharField(max_length=80, required=False, allow_blank=True)
     emergencyName = serializers.CharField(max_length=200, required=False, allow_blank=True)
@@ -121,7 +126,7 @@ class ProfileUpdateSerializer(serializers.Serializer):
     # camelCase API field → snake_case Profile field
     _MAP = {
         "gender": "gender", "dateOfBirth": "date_of_birth", "city": "city", "state": "state",
-        "documentType": "document_type", "documentNumber": "document_number",
+        "pincode": "pincode", "documentType": "document_type", "documentNumber": "document_number",
         "emergencyName": "emergency_name", "emergencyPhone": "emergency_phone",
     }
 

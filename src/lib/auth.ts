@@ -15,6 +15,7 @@ export interface AuthUser {
   dateOfBirth: string;
   city: string;
   state: string;
+  pincode: string;
   documentType: string;
   documentNumber: string;
   emergencyName: string;
@@ -25,7 +26,7 @@ export interface AuthUser {
 export type ProfileInput = Partial<
   Pick<
     AuthUser,
-    | "fullName" | "phone" | "email" | "gender" | "dateOfBirth" | "city" | "state"
+    | "fullName" | "phone" | "email" | "gender" | "dateOfBirth" | "city" | "state" | "pincode"
     | "documentType" | "documentNumber" | "emergencyName" | "emergencyPhone"
   >
 >;
