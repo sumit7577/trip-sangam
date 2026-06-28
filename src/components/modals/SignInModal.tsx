@@ -432,7 +432,7 @@ function Divider() {
 function Benefit({ icon, title, desc }: { icon: React.ReactNode; title: string; desc: string }) {
   return (
     <li className="flex items-start gap-3">
-      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-white text-crimson shadow-soft dark:bg-white/10">
+      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-gold/20 to-crimson/20 text-crimson shadow-soft ring-1 ring-inset ring-ink/5 dark:from-gold/35 dark:to-crimson/30 dark:text-white dark:ring-white/15 dark:shadow-[0_4px_18px_-6px_rgba(180,150,90,0.5)]">
         {icon}
       </span>
       <span className="flex flex-col">
