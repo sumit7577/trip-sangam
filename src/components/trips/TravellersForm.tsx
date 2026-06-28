@@ -11,7 +11,21 @@ function blank(): Traveller {
 
 const GENDERS = ["Male", "Female", "Other"];
 
-export function TravellersForm({ bookingId, partySize }: { bookingId: number; partySize: number }) {
+/** Every traveller in the party has a name, age and gender. */
+export function allTravellersComplete(list: Traveller[], partySize: number): boolean {
+  const done = list.filter(
+    (r) => r.fullName?.trim() && r.gender?.trim() && r.age != null && String(r.age).trim() !== "",
+  );
+  return done.length >= partySize;
+}
+
+export function TravellersForm({
+  bookingId, partySize, onComplete,
+}: {
+  bookingId: number;
+  partySize: number;
+  onComplete?: (complete: boolean) => void;
+}) {
   const [rows, setRows] = useState<Traveller[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -19,12 +33,14 @@ export function TravellersForm({ bookingId, partySize }: { bookingId: number; pa
   useEffect(() => {
     getTravellers(bookingId)
       .then((existing) => {
+        onComplete?.(allTravellersComplete(existing, partySize));
         const filled = existing.length ? existing : [];
         while (filled.length < partySize) filled.push(blank());
         setRows(filled.slice(0, partySize));
       })
       .catch(() => setRows(Array.from({ length: partySize }, blank)))
       .finally(() => setLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bookingId, partySize]);
 
   function update(i: number, field: keyof Traveller, value: string) {
@@ -47,6 +63,7 @@ export function TravellersForm({ bookingId, partySize }: { bookingId: number; pa
           gender: r.gender || "",
         }))
       );
+      onComplete?.(allTravellersComplete(saved, partySize));
       const next = [...saved];
       while (next.length < partySize) next.push(blank());
       setRows(next.slice(0, partySize));

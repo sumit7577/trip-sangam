@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import {
@@ -31,6 +31,8 @@ export default function TripDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [travellersDone, setTravellersDone] = useState(false);
+  const travellersRef = useRef<HTMLDivElement>(null);
 
   const load = useCallback(() => {
     getBooking(id).then(setB).catch((e) => setError(e instanceof Error ? e.message : "Failed to load"));
@@ -39,6 +41,14 @@ export default function TripDetailPage() {
   useEffect(() => {
     if (hydrated && user) load();
   }, [hydrated, user, load]);
+
+  /** Payment is gated on traveller details — name, age & gender for everyone. */
+  function requireTravellers(): boolean {
+    if (travellersDone) return true;
+    toast("Please fill & save all traveller details (name, age, gender) first.", "error");
+    travellersRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    return false;
+  }
 
   async function startCheckout(p: PaymentInit, method?: string) {
     await openRazorpayCheckout(id, p, {
@@ -49,6 +59,7 @@ export default function TripDetailPage() {
   }
 
   async function onAccept(method?: string) {
+    if (!requireTravellers()) return;
     setBusy(true);
     try {
       const { booking, payment } = await acceptBooking(id);
@@ -67,6 +78,7 @@ export default function TripDetailPage() {
   }
 
   async function onPayDeposit(method?: string) {
+    if (!requireTravellers()) return;
     setBusy(true);
     try {
       const p = await payDeposit(id);
@@ -92,6 +104,7 @@ export default function TripDetailPage() {
   }
 
   async function onPayBalance(method?: string) {
+    if (!requireTravellers()) return;
     setBusy(true);
     try {
       const p = await payBalance(id);
@@ -298,9 +311,14 @@ export default function TripDetailPage() {
         </p>
       )}
 
-      {(isAccepted || isConfirmed) && (
-        <div className="mt-6">
-          <TravellersForm bookingId={b.id} partySize={b.partySize} />
+      {dep && (formed || isAccepted || isConfirmed) && (
+        <div ref={travellersRef} className="mt-6 scroll-mt-28">
+          {!travellersDone && (
+            <p className="mb-3 inline-flex items-center gap-2 rounded-xl border border-gold/30 bg-gold/[0.08] px-3.5 py-2 text-xs font-medium text-ink dark:text-white">
+              <UserCheck className="h-4 w-4 text-gold-600" /> Fill &amp; save traveller details below to unlock payment.
+            </p>
+          )}
+          <TravellersForm bookingId={b.id} partySize={b.partySize} onComplete={setTravellersDone} />
         </div>
       )}
 
