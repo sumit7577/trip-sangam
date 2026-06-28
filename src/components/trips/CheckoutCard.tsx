@@ -1,15 +1,16 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Lock, ShieldCheck, BadgeCheck } from "lucide-react";
+import { Lock, ShieldCheck, BadgeCheck, Gift, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { WELCOME_OFFER } from "@/components/layout/PromoBanner";
 
 const inr = (n: number) => `₹${n.toLocaleString("en-IN")}`;
 
 /**
- * Futuristic "Secure Checkout" summary. Presentational only — the actual
- * payment runs through PhonePe via the page's pay button. We never collect
- * card/UPI details on our domain (PhonePe's secure page does that).
+ * Premium "Secure Checkout" panel. Presentational only — the actual payment
+ * runs through Razorpay's secure modal via the page's pay button. We never
+ * collect card/UPI details on our domain.
  */
 export function CheckoutCard({
   total, deposit, balance, paymentStatus,
@@ -22,17 +23,20 @@ export function CheckoutCard({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+      initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
       className="mt-6 overflow-hidden rounded-3xl border border-line/70 bg-white/70 shadow-lift backdrop-blur-xl dark:border-white/10 dark:bg-white/[0.05]"
     >
-      {/* Header */}
-      <div className="flex items-center justify-between border-b border-line/60 px-5 py-4 dark:border-white/10">
-        <h3 className="flex items-center gap-2 font-serif text-lg tracking-tight">
-          <Lock className="h-4 w-4 text-jade" /> Secure checkout
-        </h3>
-        <span className="inline-flex items-center gap-1 rounded-full bg-jade/12 px-2.5 py-1 font-mono text-[10px] font-semibold uppercase tracking-wider text-jade">
-          256-bit SSL
-        </span>
+      {/* Gradient header */}
+      <div className="relative overflow-hidden bg-gradient-to-br from-ink via-ink to-crimson/80 px-5 py-4 text-white">
+        <div aria-hidden className="pointer-events-none absolute -right-8 -top-12 h-32 w-32 rounded-full bg-gold/30 blur-2xl" />
+        <div className="relative flex items-center justify-between">
+          <h3 className="flex items-center gap-2 font-serif text-lg tracking-tight">
+            <Lock className="h-4 w-4" /> Secure checkout
+          </h3>
+          <span className="inline-flex items-center gap-1 rounded-full bg-white/15 px-2.5 py-1 font-mono text-[10px] font-semibold uppercase tracking-wider backdrop-blur">
+            256-bit SSL
+          </span>
+        </div>
       </div>
 
       {/* Price breakdown */}
@@ -45,7 +49,7 @@ export function CheckoutCard({
       {/* Pay-now highlight */}
       {!fullyPaid && (
         <div className="relative mx-5 mb-4 overflow-hidden rounded-2xl bg-gradient-to-br from-gold/20 to-crimson/20 px-4 py-3.5 ring-1 ring-inset ring-ink/5 dark:ring-white/10">
-          <div className="pointer-events-none absolute -right-6 -top-8 h-24 w-24 rounded-full bg-gold/20 blur-2xl" />
+          <div className="pointer-events-none absolute -right-6 -top-8 h-24 w-24 rounded-full bg-gold/25 blur-2xl" />
           <div className="relative flex items-center justify-between">
             <span className="text-sm font-medium text-ink dark:text-white">
               {depositPaid ? "Balance due now" : "Pay now to lock your seat"}
@@ -60,6 +64,20 @@ export function CheckoutCard({
         </div>
       )}
 
+      {/* Offer */}
+      {!fullyPaid && (
+        <div className="px-5 pb-1">
+          <div className="flex items-center gap-2.5 rounded-2xl border border-dashed border-jade/30 bg-jade/[0.06] px-3 py-2.5">
+            <Gift className="h-4 w-4 shrink-0 text-jade" />
+            <p className="flex-1 text-[12px] leading-snug text-ink/80 dark:text-white/80">
+              First trip? Save <span className="font-semibold text-jade">{WELCOME_OFFER.percent}%</span> with code{" "}
+              <span className="font-mono font-bold text-ink dark:text-white">{WELCOME_OFFER.code}</span>
+            </p>
+            <Sparkles className="h-3.5 w-3.5 shrink-0 text-jade" />
+          </div>
+        </div>
+      )}
+
       {/* Accepted methods */}
       <div className="border-t border-line/60 px-5 py-4 dark:border-white/10">
         <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-muted">Pay with</p>
@@ -67,6 +85,7 @@ export function CheckoutCard({
           <Upi /> <Visa /> <Mastercard /> <Rupay />
           <Chip>Net Banking</Chip>
           <Chip>Wallets</Chip>
+          <Chip>EMI</Chip>
         </div>
       </div>
 
