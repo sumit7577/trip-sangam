@@ -391,8 +391,8 @@ function Input({
   );
 }
 
-// Focus = a soft warm colour change (no heavy border / ring).
-const FIELD = "flex items-center gap-2 rounded-xl border border-ink/10 bg-white/55 px-3 transition-colors focus-within:border-gold/40 focus-within:bg-gold/[0.07] dark:border-white/10 dark:bg-white/5 dark:focus-within:border-gold/40 dark:focus-within:bg-gold/10";
+// Focus = brighten + a soft warm glow (NO hard border colour change).
+const FIELD = "flex items-center gap-2 rounded-xl border border-ink/10 bg-white/55 px-3 transition-all duration-300 focus-within:bg-white focus-within:shadow-[0_4px_22px_-6px_rgba(180,150,90,0.5)] dark:border-white/10 dark:bg-white/5 dark:focus-within:bg-white/[0.08] dark:focus-within:shadow-[0_4px_22px_-6px_rgba(180,150,90,0.35)]";
 const MONTHS_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const MONTHS_LONG = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 const DOW = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
@@ -463,7 +463,7 @@ function DatePicker({
   return (
     <div ref={ref} className="relative">
       <Label>{label}</Label>
-      <div onClick={openCal} className={cn(FIELD, "h-11 cursor-pointer", open && "border-gold/40 bg-gold/[0.07]")}>
+      <div onClick={openCal} className={cn(FIELD, "h-11 cursor-pointer", open && "bg-white shadow-[0_4px_22px_-6px_rgba(180,150,90,0.5)]")}>
         <span className="shrink-0 text-muted">{icon}</span>
         <span className={cn("flex-1 text-sm", display ? "text-ink dark:text-white" : "text-muted")}>{display || "Select date"}</span>
         <Calendar className="h-4 w-4 shrink-0 text-muted" />

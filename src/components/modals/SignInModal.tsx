@@ -216,7 +216,7 @@ export function SignInModal() {
                     <form onSubmit={onSendOtp} className="mt-7 space-y-3">
                       <div>
                         <span className="text-[10px] font-medium uppercase tracking-[0.18em] text-muted">Mobile number</span>
-                        <div className="mt-1.5 flex h-12 items-center gap-2 rounded-2xl border border-line bg-white px-3 transition-colors focus-within:border-gold/40 focus-within:bg-gold/[0.05] dark:bg-white/5">
+                        <div className="mt-1.5 flex h-12 items-center gap-2 rounded-2xl border border-line bg-white px-3 transition-all duration-300 focus-within:shadow-[0_4px_22px_-6px_rgba(180,150,90,0.5)] dark:bg-white/5">
                           <Phone className="h-4 w-4 shrink-0 text-muted" />
                           <select value={dial} onChange={(e) => setDial(e.target.value)}
                             className="shrink-0 border-none bg-transparent text-sm font-medium text-ink focus:outline-none dark:text-white">
@@ -411,7 +411,7 @@ function OtpBoxes({ value, onChange, disabled }: { value: string; onChange: (v: 
             onChange={(e) => setChar(i, e.target.value)}
             onKeyDown={(e) => onKey(i, e)}
             aria-label={`Digit ${i + 1}`}
-            className="h-14 w-full rounded-2xl border-2 border-line bg-white text-center text-xl font-semibold text-ink outline-none transition-colors focus:border-gold/60 focus:bg-gold/[0.07] disabled:opacity-60 dark:bg-white/5 dark:text-white"
+            className="h-14 w-full rounded-2xl border-2 border-line bg-white text-center text-xl font-semibold text-ink outline-none transition-all duration-300 focus:bg-white focus:shadow-[0_4px_22px_-6px_rgba(180,150,90,0.55)] disabled:opacity-60 dark:bg-white/5 dark:text-white"
           />
         );
       })}
@@ -488,7 +488,7 @@ function Field({
   return (
     <label className="block">
       <span className="text-[10px] font-medium uppercase tracking-[0.18em] text-muted">{label}</span>
-      <div className="mt-1.5 flex h-12 items-center gap-2 rounded-2xl border border-line bg-white px-4 transition-colors focus-within:border-gold/40 focus-within:bg-gold/[0.05] dark:bg-white/5">
+      <div className="mt-1.5 flex h-12 items-center gap-2 rounded-2xl border border-line bg-white px-4 transition-all duration-300 focus-within:shadow-[0_4px_22px_-6px_rgba(180,150,90,0.5)] dark:bg-white/5">
         <span className="shrink-0 text-muted">{icon}</span>
         <input required={!optional} autoFocus={autoFocus} type={type} value={value}
           onChange={(e) => onChange(e.target.value)} placeholder={placeholder}
