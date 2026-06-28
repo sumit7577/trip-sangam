@@ -24,10 +24,10 @@ export function PriceSummary({
   remainingToForm: number;
   busy: boolean;
   dateRange?: string;
-  onAccept: () => void;
+  onAccept: (method?: string) => void;
   onDecline: () => void;
-  onPayDeposit: () => void;
-  onPayBalance: () => void;
+  onPayDeposit: (method?: string) => void;
+  onPayBalance: (method?: string) => void;
 }) {
   const b = booking;
   const canAct = b.status === "pending";
@@ -99,7 +99,7 @@ export function PriceSummary({
         ) : isConfirmed && depositPaid && b.balanceAmount === 0 ? (
           <div className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-jade/10 px-5 py-4 text-sm font-semibold text-jade"><ShieldCheck className="h-4 w-4" /> Deposit paid — seat confirmed</div>
         ) : canPayNow ? (
-          <button onClick={primaryPay} disabled={busy}
+          <button onClick={() => primaryPay()} disabled={busy}
             className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-ink px-6 py-4 text-sm font-semibold text-white shadow-glow transition-shadow hover:shadow-lift disabled:opacity-60">
             <Lock className="h-4 w-4" /> {payLabel} securely
           </button>
@@ -163,14 +163,14 @@ export function OffersStrip() {
  *  you actually pick your method inside Razorpay's secure window)
  * ============================================================ */
 const METHODS = [
-  { icon: Smartphone, label: "UPI", sub: "GPay, PhonePe, Paytm & all UPI apps" },
-  { icon: CreditCard, label: "Credit / Debit / ATM Card", sub: "Visa, Mastercard, RuPay, Amex" },
-  { icon: Landmark, label: "Net Banking", sub: "All major banks supported" },
-  { icon: Wallet, label: "Wallets", sub: "Amazon Pay, Mobikwik & more" },
-  { icon: Building2, label: "EMI / Pay Later", sub: "Card EMI & Pay Later options" },
+  { icon: Smartphone, label: "UPI", sub: "GPay, PhonePe, Paytm & all UPI apps", method: "upi" },
+  { icon: CreditCard, label: "Credit / Debit / ATM Card", sub: "Visa, Mastercard, RuPay, Amex", method: "card" },
+  { icon: Landmark, label: "Net Banking", sub: "All major banks supported", method: "netbanking" },
+  { icon: Wallet, label: "Wallets", sub: "Amazon Pay, Mobikwik & more", method: "wallet" },
+  { icon: Building2, label: "EMI / Pay Later", sub: "Card EMI & Pay Later options", method: "emi" },
 ];
 
-export function PaymentMethods({ onPay, payable, busy }: { onPay: () => void; payable: boolean; busy: boolean }) {
+export function PaymentMethods({ onPay, payable, busy }: { onPay: (method?: string) => void; payable: boolean; busy: boolean }) {
   return (
     <div className="overflow-hidden rounded-3xl border border-line bg-white shadow-soft dark:border-white/10 dark:bg-white/5">
       <div className="border-b border-line/70 px-5 py-4 dark:border-white/10">
@@ -193,7 +193,7 @@ export function PaymentMethods({ onPay, payable, busy }: { onPay: () => void; pa
           );
           return payable ? (
             <button
-              key={m.label} onClick={onPay} disabled={busy}
+              key={m.label} onClick={() => onPay(m.method)} disabled={busy}
               className="flex w-full items-center gap-3.5 px-5 py-3.5 transition-colors hover:bg-gold/[0.06] disabled:opacity-60 dark:hover:bg-white/[0.04]"
             >
               {inner}

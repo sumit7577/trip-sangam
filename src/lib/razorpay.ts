@@ -26,8 +26,11 @@ type Callbacks = {
   onDismiss: () => void;
 };
 
-/** Open Razorpay Standard Checkout for a created order, then verify on success. */
-export async function openRazorpayCheckout(bookingId: number | string, p: PaymentInit, cb: Callbacks) {
+/** Open Razorpay Standard Checkout for a created order, then verify on success.
+ *  Pass `method` (upi/card/netbanking/wallet/emi) to open straight to that section. */
+export async function openRazorpayCheckout(
+  bookingId: number | string, p: PaymentInit, cb: Callbacks, method?: string,
+) {
   const ok = await loadRazorpay();
   const RZP = (window as any).Razorpay;
   if (!ok || !RZP) {
@@ -41,7 +44,10 @@ export async function openRazorpayCheckout(bookingId: number | string, p: Paymen
     currency: p.currency || "INR",
     name: "Trip Sangam",
     description: p.kind === "balance" ? "Balance payment" : "Deposit payment",
-    prefill: { name: p.prefillName || "", email: p.prefillEmail || "", contact: p.prefillContact || "" },
+    prefill: {
+      name: p.prefillName || "", email: p.prefillEmail || "", contact: p.prefillContact || "",
+      ...(method ? { method } : {}),
+    },
     theme: { color: "#1C1C1A" },
     handler: async (resp: any) => {
       try {

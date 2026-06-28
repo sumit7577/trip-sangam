@@ -40,24 +40,24 @@ export default function TripDetailPage() {
     if (hydrated && user) load();
   }, [hydrated, user, load]);
 
-  async function startCheckout(p: PaymentInit) {
+  async function startCheckout(p: PaymentInit, method?: string) {
     await openRazorpayCheckout(id, p, {
       onSuccess: (updated) => { setB(updated); toast("Payment successful — your seat is confirmed! 🎉", "success"); },
       onError: (msg) => toast(msg, "error"),
       onDismiss: () => toast("Payment cancelled — you can pay anytime.", "default"),
-    });
+    }, method);
   }
 
-  async function onAccept() {
+  async function onAccept(method?: string) {
     setBusy(true);
     try {
       const { booking, payment } = await acceptBooking(id);
       setB(booking);
-      if (payment?.razorpayOrderId) { await startCheckout(payment); return; }
+      if (payment?.razorpayOrderId) { await startCheckout(payment, method); return; }
       // Accept's auto-init didn't return an order (e.g. gateway hiccup) — open
       // the deposit checkout directly so the user can pay right away.
       const p = await payDeposit(id);
-      if (p.razorpayOrderId) await startCheckout(p);
+      if (p.razorpayOrderId) await startCheckout(p, method);
       else toast("Payment couldn't start. Please try again.", "error");
     } catch (e) {
       toast(e instanceof Error ? e.message : "Could not accept", "error");
@@ -66,11 +66,11 @@ export default function TripDetailPage() {
     }
   }
 
-  async function onPayDeposit() {
+  async function onPayDeposit(method?: string) {
     setBusy(true);
     try {
       const p = await payDeposit(id);
-      if (p.razorpayOrderId) await startCheckout(p);
+      if (p.razorpayOrderId) await startCheckout(p, method);
       else toast("Payment couldn't start. Please try again.", "error");
     } catch (e) {
       toast(e instanceof Error ? e.message : "Could not start payment", "error");
@@ -91,11 +91,11 @@ export default function TripDetailPage() {
     }
   }
 
-  async function onPayBalance() {
+  async function onPayBalance(method?: string) {
     setBusy(true);
     try {
       const p = await payBalance(id);
-      if (p.razorpayOrderId) await startCheckout(p);
+      if (p.razorpayOrderId) await startCheckout(p, method);
       else toast("Balance payment unavailable right now.", "error");
     } catch (e) {
       toast(e instanceof Error ? e.message : "Could not start payment", "error");
@@ -146,7 +146,11 @@ export default function TripDetailPage() {
   const depositPaid = b.paymentStatus === "deposit_paid" || b.paymentStatus === "fully_paid";
   const fullyPaid = b.paymentStatus === "fully_paid";
   const payable = (b.status === "pending" && formed) || isAccepted || (isConfirmed && depositPaid && !fullyPaid && b.balanceAmount > 0);
-  const onPay = isAccepted ? onPayDeposit : (b.status === "pending" && formed) ? onAccept : onPayBalance;
+  const onPay = (method?: string) => {
+    if (isAccepted) onPayDeposit(method);
+    else if (b.status === "pending" && formed) onAccept(method);
+    else onPayBalance(method);
+  };
   const dateRange = dep ? fmtRange(dep.startDate, dep.endDate) : undefined;
   // Group filled (≥ min) but this traveller hasn't paid the deposit yet — show
   // it as "Confirmed" rather than "Forming group".
