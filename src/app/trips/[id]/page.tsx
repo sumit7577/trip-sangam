@@ -13,7 +13,8 @@ import { useModal } from "@/lib/modal";
 import { toast } from "@/lib/toast";
 import { CheckoutCard } from "@/components/trips/CheckoutCard";
 import {
-  getBooking, acceptBooking, declineBooking, cancelBooking, payBalance, type Booking, type PaymentInit,
+  getBooking, acceptBooking, declineBooking, cancelBooking, payDeposit, payBalance,
+  type Booking, type PaymentInit,
 } from "@/lib/bookingApi";
 import { openRazorpayCheckout } from "@/lib/razorpay";
 import { statusLabel, statusClasses } from "@/lib/bookingStatus";
@@ -52,12 +53,24 @@ export default function TripDetailPage() {
     try {
       const { booking, payment } = await acceptBooking(id);
       setB(booking);
-      if (payment?.razorpayOrderId) await startCheckout(payment);
-      else toast("Slot accepted — deposit payment will be available shortly.", "success");
+      if (payment?.razorpayOrderId) { await startCheckout(payment); return; }
+      // Accept's auto-init didn't return an order (e.g. gateway hiccup) — open
+      // the deposit checkout directly so the user can pay right away.
+      await onPayDeposit();
     } catch (e) {
       toast(e instanceof Error ? e.message : "Could not accept", "error");
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function onPayDeposit() {
+    try {
+      const p = await payDeposit(id);
+      if (p.razorpayOrderId) await startCheckout(p);
+      else toast("Payment couldn't start. Please try again.", "error");
+    } catch (e) {
+      toast(e instanceof Error ? e.message : "Could not start payment", "error");
     }
   }
 
@@ -277,7 +290,7 @@ export default function TripDetailPage() {
           </>
         )}
         {isAccepted && (
-          <button onClick={onAccept} disabled={busy}
+          <button onClick={async () => { setBusy(true); await onPayDeposit(); setBusy(false); }} disabled={busy}
             className="inline-flex flex-1 items-center justify-center gap-2 rounded-2xl bg-ink px-6 py-4 text-sm font-semibold text-white shadow-glow transition-shadow hover:shadow-lift disabled:opacity-60">
             <Lock className="h-4 w-4" /> Pay ₹{b.depositAmount.toLocaleString("en-IN")} securely
           </button>

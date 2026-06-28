@@ -108,6 +108,10 @@ export async function cancelBooking(id: number | string): Promise<Booking> {
   return unwrap<Booking>(await authFetch(`/api/bookings/${id}/cancel/`, { method: "POST" }));
 }
 
+export async function payDeposit(id: number | string): Promise<PaymentInit> {
+  return unwrap<PaymentInit>(await authFetch(`/api/bookings/${id}/pay-deposit/`, { method: "POST" }));
+}
+
 export async function payBalance(id: number | string): Promise<PaymentInit> {
   return unwrap<PaymentInit>(await authFetch(`/api/bookings/${id}/pay-balance/`, { method: "POST" }));
 }
