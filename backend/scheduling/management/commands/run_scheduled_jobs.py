@@ -6,7 +6,7 @@ at this (e.g. every 5 min) instead of wiring each separately.
 from django.core.management.base import BaseCommand
 
 from cms.models import PackagePage
-from scheduling import payments, phonepe, services
+from scheduling import payments, razorpay_gw as gateway, services
 
 
 class Command(BaseCommand):
@@ -25,7 +25,7 @@ class Command(BaseCommand):
         reminders = services.send_balance_reminders()
         self.stdout.write(f"  balance reminders: {reminders}")
 
-        if phonepe.is_configured():
+        if gateway.is_configured():
             from scheduling.models import Payment
             pending = Payment.objects.filter(status=Payment.STATUS_PENDING)
             done = 0
@@ -33,7 +33,7 @@ class Command(BaseCommand):
                 try:
                     payments.reconcile_payment(p)
                     done += 1
-                except phonepe.PhonePeError:
+                except gateway.GatewayError:
                     pass
             self.stdout.write(f"  payments reconciled: {done}/{pending.count()}")
 

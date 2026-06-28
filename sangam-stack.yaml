@@ -59,6 +59,13 @@ services:
       - PHONEPE_WEBHOOK_PASSWORD=${PHONEPE_WEBHOOK_PASSWORD:-}
       - PHONEPE_REDIRECT_BASE=https://${SITE_DOMAIN}/trips
 
+      # Razorpay (active gateway) — set keys in the VM .env to activate payments.
+      # Blank ⇒ pay endpoints return 503 (booking/accept still work).
+      # Webhook URL to register on the dashboard: https://${CMS_DOMAIN}/api/webhooks/razorpay/
+      - RAZORPAY_KEY_ID=${RAZORPAY_KEY_ID:-}
+      - RAZORPAY_KEY_SECRET=${RAZORPAY_KEY_SECRET:-}
+      - RAZORPAY_WEBHOOK_SECRET=${RAZORPAY_WEBHOOK_SECRET:-}
+
       # Email (booking notifications) — set SMTP creds in the VM .env to send.
       # Blank host ⇒ sends are attempted then silently swallowed.
       - EMAIL_HOST=${EMAIL_HOST:-}

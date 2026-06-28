@@ -9,7 +9,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 
-from . import payments, phonepe, services
+from . import payments, razorpay_gw as gateway, services
 from .models import Booking, Departure, Payment
 from .serializers import (
     BookingCreateSerializer,
@@ -139,11 +139,11 @@ class BookingViewSet(
                             status=status.HTTP_409_CONFLICT)
         # Kick off the deposit payment if the gateway is live.
         payment_data = None
-        if phonepe.is_configured():
+        if gateway.is_configured():
             try:
                 payment = payments.initiate_payment(booking, Payment.KIND_DEPOSIT)
                 payment_data = PaymentSerializer(payment).data
-            except (payments.PaymentNotAllowed, phonepe.PhonePeError) as exc:
+            except (payments.PaymentNotAllowed, gateway.GatewayError) as exc:
                 logger.error("Deposit init after accept failed (booking %s): %s", booking.id, exc)
         booking.refresh_from_db()
         return Response({
@@ -214,7 +214,7 @@ class BookingViewSet(
         return self._initiate(self.get_object(), Payment.KIND_BALANCE)
 
     def _initiate(self, booking, kind):
-        if not phonepe.is_configured():
+        if not gateway.is_configured():
             return Response(
                 {"detail": "Payments are not available yet.", "code": "gateway_unconfigured"},
                 status=status.HTTP_503_SERVICE_UNAVAILABLE,
@@ -224,8 +224,8 @@ class BookingViewSet(
         except payments.PaymentNotAllowed as exc:
             return Response({"detail": str(exc), "code": "payment_not_allowed"},
                             status=status.HTTP_409_CONFLICT)
-        except phonepe.PhonePeError as exc:
-            logger.error("PhonePe %s init failed for booking %s: %s", kind, booking.id, exc)
+        except gateway.GatewayError as exc:
+            logger.error("Razorpay %s init failed for booking %s: %s", kind, booking.id, exc)
             return Response({"detail": "Could not start payment. Please try again.",
                              "code": "gateway_error"}, status=status.HTTP_502_BAD_GATEWAY)
         return Response(PaymentSerializer(payment).data, status=status.HTTP_201_CREATED)
@@ -235,18 +235,17 @@ class BookingViewSet(
 @authentication_classes([])
 @permission_classes([AllowAny])
 @throttle_classes([WebhookRateThrottle])
-def phonepe_webhook(request):
-    """PhonePe S2S callback. Validates the SHA256(user:pass) Authorization
-    header, applies the outcome idempotently, and always acks 2xx fast."""
-    auth = request.META.get("HTTP_AUTHORIZATION", "")
-    if not phonepe.verify_webhook_auth(auth):
+def razorpay_webhook(request):
+    """Razorpay webhook. Verifies the X-Razorpay-Signature (HMAC over the raw
+    body), applies the outcome idempotently, and always acks 2xx fast."""
+    sig = request.META.get("HTTP_X_RAZORPAY_SIGNATURE", "")
+    if not gateway.verify_webhook_signature(request.body, sig):
         return Response({"detail": "Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
 
     body = request.data if isinstance(request.data, dict) else {}
     event = body.get("event", "")
-    payload = body.get("payload") or {}
     try:
-        payments.handle_webhook(event, payload)
-    except Exception:  # never 500 at PhonePe — log and ack
-        logger.exception("Error handling PhonePe webhook event=%s", event)
+        payments.handle_webhook(event, body)
+    except Exception:  # never 500 at Razorpay — log and ack
+        logger.exception("Error handling Razorpay webhook event=%s", event)
     return Response({"ok": True}, status=status.HTTP_200_OK)

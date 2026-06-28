@@ -72,7 +72,7 @@ export function CheckoutCard({
 
       {/* Trust */}
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 border-t border-line/60 px-5 py-3 text-[11px] text-muted dark:border-white/10">
-        <span className="inline-flex items-center gap-1.5"><BadgeCheck className="h-3.5 w-3.5 text-jade" /> Powered by PhonePe</span>
+        <span className="inline-flex items-center gap-1.5"><BadgeCheck className="h-3.5 w-3.5 text-jade" /> Powered by Razorpay</span>
         <span className="inline-flex items-center gap-1.5"><ShieldCheck className="h-3.5 w-3.5 text-jade" /> 100% secure · RBI-compliant</span>
       </div>
     </motion.div>

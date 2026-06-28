@@ -312,11 +312,25 @@ else:
 PHONEPE_AUTH_URL = os.environ.get("PHONEPE_AUTH_URL", PHONEPE_AUTH_URL)
 PHONEPE_PG_BASE = os.environ.get("PHONEPE_PG_BASE", PHONEPE_PG_BASE)
 
-# Where PhonePe redirects the traveller back to after paying. The booking id is
-# appended, e.g. https://tripsangam.com/trips/<id>.
+# Where the gateway redirects the traveller back to after paying. The booking id
+# is appended, e.g. https://tripsangam.com/trips/<id>.
 PHONEPE_REDIRECT_BASE = os.environ.get(
     "PHONEPE_REDIRECT_BASE", "http://localhost:3000/trips"
 )
+
+# ---------------------------------------------------------------------------
+# Razorpay (active gateway). Test vs live is decided by the key (rzp_test_* vs
+# rzp_live_*) on the same host. Blank keys ⇒ payment endpoints return 503.
+# ---------------------------------------------------------------------------
+RAZORPAY_KEY_ID = os.environ.get("RAZORPAY_KEY_ID", "")
+RAZORPAY_KEY_SECRET = os.environ.get("RAZORPAY_KEY_SECRET", "")
+# Webhook signing secret set on the Razorpay dashboard (Settings → Webhooks).
+RAZORPAY_WEBHOOK_SECRET = os.environ.get("RAZORPAY_WEBHOOK_SECRET", "")
+RAZORPAY_BASE = os.environ.get("RAZORPAY_BASE", "https://api.razorpay.com/v1")
+
+# Generic post-payment redirect base (booking id appended). Reuses the existing
+# value so prod stays pointed at https://tripsangam.com/trips.
+PAYMENT_REDIRECT_BASE = os.environ.get("PAYMENT_REDIRECT_BASE") or PHONEPE_REDIRECT_BASE
 
 LOGGING = {
     "version": 1,
