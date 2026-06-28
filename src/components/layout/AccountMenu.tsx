@@ -73,9 +73,15 @@ export function AccountMenu({ scrolled }: { scrolled: boolean }) {
           scrolled ? "hover:bg-ink/5" : "hover:bg-white/10"
         )}
       >
-        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-gradient-to-br from-gold to-crimson text-[12px] font-semibold uppercase text-white shadow-soft ring-2 ring-white/70">
-          {ini}
-        </span>
+        {user.avatarUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={user.avatarUrl} alt={name}
+            className="h-8 w-8 shrink-0 rounded-full object-cover shadow-soft ring-2 ring-white/70" />
+        ) : (
+          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-gradient-to-br from-gold to-crimson text-[12px] font-semibold uppercase text-white shadow-soft ring-2 ring-white/70">
+            {ini}
+          </span>
+        )}
         <span
           className={cn(
             "hidden max-w-[120px] truncate text-sm font-medium xl:inline",
@@ -110,9 +116,15 @@ export function AccountMenu({ scrolled }: { scrolled: boolean }) {
                 You are viewing your personal profile
               </p>
               <div className="relative mt-3 flex items-center gap-3">
-                <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-gradient-to-br from-gold to-crimson text-sm font-semibold uppercase text-white shadow-soft">
-                  {ini}
-                </span>
+                {user.avatarUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={user.avatarUrl} alt={name}
+                    className="h-11 w-11 shrink-0 rounded-full object-cover shadow-soft" />
+                ) : (
+                  <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-gradient-to-br from-gold to-crimson text-sm font-semibold uppercase text-white shadow-soft">
+                    {ini}
+                  </span>
+                )}
                 <div className="min-w-0">
                   <p className="truncate text-sm font-semibold text-ink dark:text-white">{name}</p>
                   <p className="truncate text-xs text-muted">{user.email}</p>

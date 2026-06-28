@@ -242,9 +242,15 @@ export function Header() {
                 {hydrated && user ? (
                   <div className="flex flex-col gap-2.5">
                     <div className="flex items-center gap-3 rounded-2xl border border-ink/8 bg-white/55 px-3 py-3">
-                      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-gradient-to-br from-gold to-crimson text-sm font-semibold uppercase text-white shadow-soft">
-                        {initials(user.fullName, user.email)}
-                      </span>
+                      {user.avatarUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={user.avatarUrl} alt={user.fullName || "You"}
+                          className="h-10 w-10 shrink-0 rounded-full object-cover shadow-soft" />
+                      ) : (
+                        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-gradient-to-br from-gold to-crimson text-sm font-semibold uppercase text-white shadow-soft">
+                          {initials(user.fullName, user.email)}
+                        </span>
+                      )}
                       <div className="min-w-0">
                         <p className="truncate text-sm font-semibold text-ink">{user.fullName || user.email.split("@")[0]}</p>
                         <p className="truncate text-xs text-muted">{user.email}</p>
