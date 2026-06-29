@@ -92,7 +92,7 @@ export function BookingCard({ pkg }: { pkg: PackageDetail }) {
             </button>
             <span className="font-mono text-lg font-semibold tabular-nums text-ink">{travelers}</span>
             <button
-              onClick={() => setTravelers((t) => Math.min(10, t + 1))}
+              onClick={() => setTravelers((t) => Math.min(50, t + 1))}
               className="grid h-10 w-10 place-items-center rounded-full text-muted transition-colors hover:bg-ink/5 hover:text-ink active:scale-90"
               aria-label="Increase travelers"
             >

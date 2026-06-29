@@ -58,10 +58,16 @@ export function BookingModal() {
   const formed = dep ? seatsTaken >= dep.minCapacity : false;
   const remainingToForm = dep ? Math.max(0, dep.minCapacity - seatsTaken) : 0;
 
+  const today = new Date().toISOString().slice(0, 10);
+
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!user) {
       openSignin();
+      return;
+    }
+    if (!date) {
+      toast("Please pick your preferred trip date first.", "error");
       return;
     }
     setLoading(true);
@@ -69,7 +75,7 @@ export function BookingModal() {
       const newBooking = await createBooking({
         packageSlug: pkg.slug,
         partySize: travelers,
-        preferredStartDate: date || undefined,
+        preferredStartDate: date,
       });
       setCreated(newBooking);
       setStep("success");
@@ -113,13 +119,15 @@ export function BookingModal() {
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <label className="block">
                       <span className="text-[10px] font-medium uppercase tracking-[0.18em] text-muted">
-                        Preferred date
+                        Preferred date <span className="text-crimson">*</span>
                       </span>
-                      <div className="mt-1.5 flex h-12 items-center gap-2 rounded-2xl border border-line bg-white px-4 focus-within:border-ink">
+                      <div className={`mt-1.5 flex h-12 items-center gap-2 rounded-2xl border bg-white px-4 focus-within:border-ink ${date ? "border-line" : "border-gold/50"}`}>
                         <CalendarDays className="h-4 w-4 shrink-0 text-muted" />
                         <input
                           type="date"
                           value={date}
+                          min={today}
+                          required
                           onChange={(e) => setDate(e.target.value)}
                           className="flex-1 border-none bg-transparent text-sm focus:outline-none"
                         />
@@ -136,7 +144,7 @@ export function BookingModal() {
                           <Minus className="h-4 w-4" />
                         </button>
                         <span className="font-mono text-lg font-semibold tabular-nums">{travelers}</span>
-                        <button type="button" onClick={() => setTravelers((t) => Math.min(18, t + 1))}
+                        <button type="button" onClick={() => setTravelers((t) => Math.min(50, t + 1))}
                           className="grid h-10 w-10 place-items-center rounded-full text-muted transition-colors hover:bg-ink/5 hover:text-ink"
                           aria-label="Increase travellers">
                           <Plus className="h-4 w-4" />
@@ -156,7 +164,7 @@ export function BookingModal() {
                       </p>
                     ) : (
                       <p>
-                        We run departures in groups of <span className="font-medium text-ink">6–18</span> travellers.
+                        We run departures in groups of up to <span className="font-medium text-ink">50</span> travellers.
                         You'll be placed in a forming group — once it's ready you can see your co-travellers, then
                         accept and pay a <span className="font-medium text-ink">50% deposit</span> to confirm your seat.
                       </p>

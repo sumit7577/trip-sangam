@@ -81,7 +81,7 @@ def _new_departure(package, start_date):
         start_date=start_date,
         end_date=start_date + timedelta(days=duration - 1),
         min_capacity=package.min_group or 6,
-        max_capacity=package.max_group or 18,
+        max_capacity=package.max_group or 50,
         cutoff_date=start_date - timedelta(days=package.cutoff_days or 0),
         price_inr=package.price_inr,
         auto_created=True,
@@ -246,7 +246,7 @@ def create_booking(
     """
     if party_size < 1:
         raise ValueError("party_size must be >= 1")
-    if party_size > (package.max_group or 18):
+    if party_size > (package.max_group or 50):
         raise PartyTooLarge(party_size)
 
     last_err = None

@@ -239,7 +239,7 @@ export function SearchBar({ packages }: { packages: Package[] }) {
               hint="Ages 18+"
               value={adults}
               min={1}
-              max={10}
+              max={50}
               onChange={setAdults}
             />
             <div className="my-3 h-px bg-line" />

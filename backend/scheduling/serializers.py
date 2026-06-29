@@ -144,7 +144,12 @@ class BookingCreateSerializer(serializers.Serializer):
 
     packageSlug = serializers.SlugField()
     partySize = serializers.IntegerField(min_value=1)
-    preferredStartDate = serializers.DateField(required=False, allow_null=True)
+    preferredStartDate = serializers.DateField(
+        required=True,
+        error_messages={"required": "Please pick your preferred trip date.",
+                        "null": "Please pick your preferred trip date.",
+                        "invalid": "Please pick a valid trip date."},
+    )
     flexible = serializers.BooleanField(required=False, default=False)
     departureId = serializers.IntegerField(required=False, allow_null=True)
     # Optional overrides — otherwise taken from the logged-in user's profile.

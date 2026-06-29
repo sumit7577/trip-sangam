@@ -324,7 +324,7 @@ class PackagePage(HeadlessPreviewMixin, Page):
         default=6, help_text="Minimum travellers for a departure to be guaranteed/run."
     )
     max_group = models.PositiveSmallIntegerField(
-        default=18, help_text="Maximum travellers per group/slot."
+        default=50, help_text="Maximum travellers per group/slot."
     )
     max_groups_per_date = models.PositiveSmallIntegerField(
         default=2,
