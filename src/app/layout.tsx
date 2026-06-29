@@ -42,11 +42,9 @@ export const metadata: Metadata = {
     "Muktinath tour package",
     "Nepal pilgrimage tour from India",
   ],
-  icons: {
-    icon: "/tripsangam-logo.jpg",
-    shortcut: "/tripsangam-logo.jpg",
-    apple: "/tripsangam-logo.jpg",
-  },
+  // Favicon + apple-touch-icon come from the SQUARE app/icon.png &
+  // app/apple-icon.png (Next file convention). Google only uses square
+  // favicons, so the old wide logo.jpg was rejected → generic globe.
   openGraph: {
     type: "website",
     siteName: BUSINESS.name,
