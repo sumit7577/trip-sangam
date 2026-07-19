@@ -16,6 +16,7 @@ export function BookingCard({ pkg }: { pkg: PackageDetail }) {
   const { openBooking } = useModal();
   const [travelers, setTravelers] = useState(2);
   const [date, setDate] = useState("");
+  const today = new Date().toISOString().slice(0, 10);
   const saved = has(pkg.slug);
 
   function onSave() {
@@ -74,6 +75,7 @@ export function BookingCard({ pkg }: { pkg: PackageDetail }) {
             <input
               type="date"
               value={date}
+              min={today}
               onChange={(e) => setDate(e.target.value)}
               className="flex-1 border-none bg-transparent text-sm text-ink focus:outline-none"
             />
