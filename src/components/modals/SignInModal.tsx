@@ -11,7 +11,7 @@ import { useModal } from "@/lib/modal";
 import { useAuth, requestPasswordReset, loginWithFirebase } from "@/lib/auth";
 import { toast } from "@/lib/toast";
 import { firebaseReady } from "@/lib/firebase";
-import { sendPhoneOtp, confirmPhoneOtp } from "@/lib/phoneAuth";
+import { sendPhoneOtp, confirmPhoneOtp, resetPhoneAuth } from "@/lib/phoneAuth";
 import { WELCOME_OFFER } from "@/components/layout/PromoBanner";
 import { ModalShell } from "./ModalShell";
 
@@ -56,6 +56,12 @@ export function SignInModal() {
     const t = setInterval(() => setResendIn((s) => (s <= 1 ? 0 : s - 1)), 1000);
     return () => clearInterval(t);
   }, [resendIn]);
+
+  // The reCAPTCHA container (below) unmounts with the modal on close — drop
+  // the verifier bound to it so reopening starts from a clean slate.
+  useEffect(() => {
+    if (!signin) resetPhoneAuth();
+  }, [signin]);
 
   // Auto-verify once all 6 digits are entered.
   useEffect(() => {
