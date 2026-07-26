@@ -14,7 +14,6 @@ from wagtail.fields import RichTextField
 from wagtail.models import Orderable, Page
 from wagtail.snippets.models import register_snippet
 
-from app.BunnyStorage import BunnyStorage
 from cms.preview import HeadlessPreviewMixin
 
 CATEGORY_CHOICES = [
@@ -123,7 +122,6 @@ class TeamMember(models.Model):
         default=list, help_text="List of language names, e.g. [\"English\", \"Nepali\"]"
     )
     photo = models.ImageField(
-        storage=BunnyStorage(),
         upload_to=upload_to_team_photo,
         null=True, blank=True, max_length=500,
     )
@@ -158,7 +156,6 @@ class Testimonial(models.Model):
     name = models.CharField(max_length=120)
     location = models.CharField(max_length=120)
     avatar = models.ImageField(
-        storage=BunnyStorage(),
         upload_to=upload_to_testimonial_avatar,
         null=True, blank=True, max_length=500,
     )
@@ -199,7 +196,6 @@ class HomePage(HeadlessPreviewMixin, Page):
         default="Trekking, cultural and spiritual experiences led by lifelong local guides.",
     )
     hero_image = models.ImageField(
-        storage=BunnyStorage(),
         upload_to=upload_to_home_hero,
         null=True, blank=True, max_length=500,
     )
@@ -252,7 +248,6 @@ class GenericPage(HeadlessPreviewMixin, Page):
 
     body = RichTextField(blank=True)
     hero_image = models.ImageField(
-        storage=BunnyStorage(),
         upload_to=upload_to_generic_hero,
         null=True, blank=True, max_length=500,
     )
@@ -293,7 +288,6 @@ class PackagePage(HeadlessPreviewMixin, Page):
     best_season = models.CharField(max_length=80)
 
     hero_image = models.ImageField(
-        storage=BunnyStorage(),
         upload_to=upload_to_package_hero,
         null=True, blank=True, max_length=500,
     )
@@ -467,7 +461,6 @@ class Exclusion(Orderable):
 class GalleryImage(Orderable):
     page = ParentalKey(PackagePage, related_name="gallery_images", on_delete=models.CASCADE)
     image = models.ImageField(
-        storage=BunnyStorage(),
         upload_to=upload_to_package_gallery,
         null=True, blank=True, max_length=500,
     )
@@ -495,13 +488,11 @@ class JourneyStop(Orderable):
         help_text="WGS84 longitude, e.g. 85.3240 for Kathmandu",
     )
     image = models.ImageField(
-        storage=BunnyStorage(),
         upload_to=upload_to_journey_stop,
         null=True, blank=True, max_length=500,
         help_text="Photo shown in a lightbox when the user clicks this stop's marker on the map.",
     )
     panorama = models.ImageField(
-        storage=BunnyStorage(),
         upload_to=upload_to_journey_stop_panorama,
         null=True, blank=True, max_length=500,
         help_text="Equirectangular 360° photo (2:1 ratio, e.g. 4096×2048). Shown as an interactive panorama when the marker is clicked.",
@@ -545,7 +536,6 @@ class PackageReview(Orderable):
     author = models.CharField(max_length=120)
     location = models.CharField(max_length=120, blank=True)
     avatar = models.ImageField(
-        storage=BunnyStorage(),
         upload_to=upload_to_package_review_avatar,
         null=True, blank=True, max_length=500,
     )
@@ -616,7 +606,6 @@ class BlogPostPage(HeadlessPreviewMixin, Page):
     publish_date = models.DateField(help_text="Used as the canonical date")
     reading_time = models.PositiveSmallIntegerField(default=5, help_text="Minutes")
     cover_image = models.ImageField(
-        storage=BunnyStorage(),
         upload_to=upload_to_blog_cover,
         null=True, blank=True, max_length=500,
     )
