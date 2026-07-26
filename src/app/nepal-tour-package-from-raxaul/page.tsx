@@ -10,9 +10,9 @@ import { RelatedPackages } from "@/components/packages/RelatedPackages";
 const PATH = "/nepal-tour-package-from-raxaul/";
 
 export const metadata: Metadata = pageMeta({
-  title: "Nepal Tour Package from Raxaul",
+  title: "Raxaul Nepal Trip & Tour Package",
   description:
-    "Book a Nepal tour package from Raxaul with TripSangam Travels. Private and group tours to Kathmandu, Pokhara, Muktinath and Chitwan, with Raxaul–Birgunj border assistance.",
+    "Planning a Raxaul Nepal trip or tour? TripSangam Travels arranges private and group tours to Kathmandu, Pokhara, Muktinath and Chitwan, with Raxaul–Birgunj border assistance.",
   path: PATH,
 });
 
@@ -46,15 +46,15 @@ export default async function NepalFromRaxaulPage() {
   return (
     <main className="min-h-screen bg-sand pb-8 pt-28 dark:bg-[#0E0E0D] md:pt-32">
       <header className="mx-auto max-w-3xl px-5 md:px-8">
-        <Breadcrumbs items={[{ name: "Home", path: "/" }, { name: "Nepal Tour Package from Raxaul", path: PATH }]} />
+        <Breadcrumbs items={[{ name: "Home", path: "/" }, { name: "Raxaul Nepal Trip", path: PATH }]} />
         <h1 className="balance mt-4 font-serif text-4xl tracking-tight md:text-5xl">
-          Nepal Tour Packages from Raxaul
+          Raxaul Nepal Trip &amp; Tour Packages
         </h1>
         <p className="mt-4 text-[15px] leading-relaxed text-muted md:text-base">
-          TripSangam Travels designs Nepal tours that start from Raxaul, on the India–Nepal border in
-          Bihar. Choose your destinations and dates, travel by private vehicle or join a group, and let
-          us handle the Raxaul–Birgunj crossing and everything onward — for pilgrimage, family and
-          holiday trips alike.
+          Planning a Raxaul Nepal trip? TripSangam Travels designs Nepal tours that start from Raxaul, on
+          the India–Nepal border in Bihar. Choose your destinations and dates, travel by private vehicle
+          or join a group, and let us handle the Raxaul–Birgunj crossing and everything onward — for
+          pilgrimage, family and holiday trips alike.
         </p>
         <ContactCTA className="mt-6" message="Hi TripSangam, I'd like a Nepal tour package from Raxaul." />
       </header>

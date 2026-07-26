@@ -10,9 +10,9 @@ import { RelatedPackages } from "@/components/packages/RelatedPackages";
 const PATH = "/raxaul-to-kathmandu-travel/";
 
 export const metadata: Metadata = pageMeta({
-  title: "Raxaul to Kathmandu Travel & Tour Package",
+  title: "Raxaul to Kathmandu Trip & Travel Package",
   description:
-    "Travelling from Raxaul to Kathmandu? TripSangam arranges pickup at Raxaul, Raxaul–Birgunj border assistance and a private vehicle or tour package to Kathmandu.",
+    "Planning a Raxaul to Kathmandu trip? TripSangam arranges pickup at Raxaul, Raxaul–Birgunj border assistance and a private vehicle or tour package to Kathmandu.",
   path: PATH,
 });
 
@@ -48,12 +48,12 @@ export default async function RaxaulToKathmanduPage() {
   return (
     <main className="min-h-screen bg-sand pb-8 pt-28 dark:bg-[#0E0E0D] md:pt-32">
       <header className="mx-auto max-w-3xl px-5 md:px-8">
-        <Breadcrumbs items={[{ name: "Home", path: "/" }, { name: "Raxaul to Kathmandu Travel", path: PATH }]} />
+        <Breadcrumbs items={[{ name: "Home", path: "/" }, { name: "Raxaul to Kathmandu Trip", path: PATH }]} />
         <h1 className="balance mt-4 font-serif text-4xl tracking-tight md:text-5xl">
-          Raxaul to Kathmandu Travel and Tour Packages
+          Raxaul to Kathmandu Trip &amp; Travel Packages
         </h1>
         <p className="mt-4 text-[15px] leading-relaxed text-muted md:text-base">
-          Planning to travel from Raxaul to Kathmandu? TripSangam Travels arranges the complete
+          Planning a Raxaul to Kathmandu trip? TripSangam Travels arranges the complete
           journey from Raxaul and the Raxaul–Birgunj border to Kathmandu — with pickup, border
           assistance and a choice of private vehicle or group tour. Here is what to know before you go.
         </p>

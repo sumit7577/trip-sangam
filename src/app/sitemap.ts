@@ -19,6 +19,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: u("/muktinath-tour-package-from-raxaul"), lastModified: now, changeFrequency: "weekly", priority: 0.9 },
     { url: u("/kathmandu-tour-package-from-raxaul"), lastModified: now, changeFrequency: "weekly", priority: 0.9 },
     { url: u("/nepal-tour-package-cost"), lastModified: now, changeFrequency: "weekly", priority: 0.9 },
+    { url: u("/nepal-trip-plan"), lastModified: now, changeFrequency: "weekly", priority: 0.9 },
     { url: u("/nepal-pilgrimage-tour-from-india"), lastModified: now, changeFrequency: "weekly", priority: 0.9 },
     { url: u("/nepal-group-tour-package"), lastModified: now, changeFrequency: "weekly", priority: 0.85 },
     { url: u("/nepal-family-tour-package"), lastModified: now, changeFrequency: "weekly", priority: 0.85 },

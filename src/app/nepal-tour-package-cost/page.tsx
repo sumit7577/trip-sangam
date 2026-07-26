@@ -113,8 +113,9 @@ export default async function NepalTourCostPage() {
         <p className="text-sm text-muted">
           See also:{" "}
           <Link href="/nepal-tour-packages/" className="font-medium text-ink underline-offset-4 hover:underline dark:text-white">All Nepal tour packages</Link>{" · "}
-          <Link href="/nepal-tour-package-from-raxaul/" className="font-medium text-ink underline-offset-4 hover:underline dark:text-white">Nepal tour package from Raxaul</Link>{" · "}
-          <Link href="/raxaul-to-kathmandu-travel/" className="font-medium text-ink underline-offset-4 hover:underline dark:text-white">Raxaul to Kathmandu travel</Link>
+          <Link href="/nepal-tour-package-from-raxaul/" className="font-medium text-ink underline-offset-4 hover:underline dark:text-white">Raxaul Nepal trip</Link>{" · "}
+          <Link href="/nepal-trip-plan/" className="font-medium text-ink underline-offset-4 hover:underline dark:text-white">Nepal trip plan</Link>{" · "}
+          <Link href="/raxaul-to-kathmandu-travel/" className="font-medium text-ink underline-offset-4 hover:underline dark:text-white">Raxaul to Kathmandu trip</Link>
         </p>
       </div>
 
