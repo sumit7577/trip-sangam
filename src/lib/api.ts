@@ -5,6 +5,41 @@ import type {
   TeamMember,
   Testimonial,
 } from "@/types";
+import { mediaUrl } from "./media";
+
+function mapPackage(p: Package): Package {
+  return { ...p, heroImage: mediaUrl(p.heroImage) };
+}
+
+function mapPackageDetail(p: PackageDetail): PackageDetail {
+  return {
+    ...p,
+    heroImage: mediaUrl(p.heroImage),
+    galleryImages: p.galleryImages.map(mediaUrl),
+    reviews: p.reviews.map((r) => ({
+      ...r,
+      avatar: mediaUrl(r.avatar),
+      photos: r.photos?.map(mediaUrl),
+    })),
+    journey: p.journey.map((j) => ({
+      ...j,
+      image: mediaUrl(j.image),
+      panorama: mediaUrl(j.panorama),
+    })),
+  };
+}
+
+function mapBlogPost(p: BlogPost): BlogPost {
+  return { ...p, coverImage: mediaUrl(p.coverImage) };
+}
+
+function mapTeamMember(m: TeamMember): TeamMember {
+  return { ...m, photo: mediaUrl(m.photo) };
+}
+
+function mapTestimonial(t: Testimonial): Testimonial {
+  return { ...t, avatar: mediaUrl(t.avatar) };
+}
 
 // Server-side (ISR) fetches prefer the in-cluster URL; falls back to the public
 // one. Browser/client API calls use NEXT_PUBLIC_API_URL directly (see lib/auth.ts).
@@ -52,17 +87,24 @@ async function fetchJSONOrNull<T>(path: string): Promise<T | null> {
   }
 }
 
-export const getPackages = () => fetchJSON<Package[]>("/api/packages/", []);
-export const getPackage = (slug: string) =>
-  fetchJSONOrNull<PackageDetail>(`/api/packages/${slug}/`);
+export const getPackages = async () =>
+  (await fetchJSON<Package[]>("/api/packages/", [])).map(mapPackage);
+export const getPackage = async (slug: string) => {
+  const p = await fetchJSONOrNull<PackageDetail>(`/api/packages/${slug}/`);
+  return p ? mapPackageDetail(p) : null;
+};
 
-export const getBlogPosts = () => fetchJSON<BlogPost[]>("/api/blog/", []);
-export const getBlogPost = (slug: string) =>
-  fetchJSONOrNull<BlogPost>(`/api/blog/${slug}/`);
+export const getBlogPosts = async () =>
+  (await fetchJSON<BlogPost[]>("/api/blog/", [])).map(mapBlogPost);
+export const getBlogPost = async (slug: string) => {
+  const p = await fetchJSONOrNull<BlogPost>(`/api/blog/${slug}/`);
+  return p ? mapBlogPost(p) : null;
+};
 
-export const getTeam = () => fetchJSON<TeamMember[]>("/api/team/", []);
-export const getTestimonials = () =>
-  fetchJSON<Testimonial[]>("/api/testimonials/", []);
+export const getTeam = async () =>
+  (await fetchJSON<TeamMember[]>("/api/team/", [])).map(mapTeamMember);
+export const getTestimonials = async () =>
+  (await fetchJSON<Testimonial[]>("/api/testimonials/", [])).map(mapTestimonial);
 
 export interface HomepagePayload {
   heroEyebrow: string;
@@ -94,8 +136,15 @@ const HOMEPAGE_FALLBACK: HomepagePayload = {
   testimonials: [],
 };
 
-export const getHomepage = () =>
-  fetchJSON<HomepagePayload>("/api/homepage/", HOMEPAGE_FALLBACK);
+export const getHomepage = async () => {
+  const h = await fetchJSON<HomepagePayload>("/api/homepage/", HOMEPAGE_FALLBACK);
+  return {
+    ...h,
+    heroImage: mediaUrl(h.heroImage),
+    featuredPackages: h.featuredPackages.map(mapPackage),
+    testimonials: h.testimonials.map(mapTestimonial),
+  };
+};
 
 export async function getTeamBySlug(): Promise<Record<string, TeamMember>> {
   const team = await getTeam();
