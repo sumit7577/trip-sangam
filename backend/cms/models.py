@@ -93,7 +93,18 @@ def upload_to_journey_stop_panorama(instance, filename):
 
 
 def _img_url(field):
-    return field.url if field and field.name else ""
+    if not field or not field.name:
+        return ""
+    # Bunny-stored files, and legacy seed data that assigned a raw external
+    # URL directly as the field's "name" (see seed_data.py), are already a
+    # full URL — field.url must NOT be used for those. FileSystemStorage's
+    # url() treats any name as a path relative to MEDIA_URL, so an absolute
+    # URL stored as name comes out mangled (e.g. "/media/https%3A/...").
+    # Only a genuinely relative name (an uploaded-to-local-disk file) should
+    # be resolved via storage.
+    if field.name.startswith("http://") or field.name.startswith("https://"):
+        return field.name
+    return field.url
 
 
 def _google_maps_pano_to_equirect(url):
