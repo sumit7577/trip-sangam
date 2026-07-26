@@ -23,16 +23,20 @@ urlpatterns = [
     path("api/", include("api.urls")),
     path("api/", include("accounts.urls")),
     path("api/", include("scheduling.urls")),
-    path("", include(wagtail_urls)),
 ]
-
 
 # Media (uploaded images/documents) has no CDN in front of it unless Bunny is
 # configured — serve it directly regardless of DEBUG, or local-storage
-# fallback uploads would save fine but 404 when viewed in production.
+# fallback uploads would save fine but 404 when viewed in production. Must
+# come BEFORE the wagtail_urls catch-all below, which matches any remaining
+# path as a page slug and would otherwise swallow /media/... first.
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 if settings.DEBUG:
     # Static assets are served by whitenoise's middleware in production
     # (see STORAGES in settings.py); this route is only needed in dev.
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+
+urlpatterns += [
+    path("", include(wagtail_urls)),
+]
