@@ -34,6 +34,18 @@ const faqs: Faq[] = [
     q: "Is a Pokhara trip suitable for families and senior citizens?",
     a: "Yes. Pokhara is relaxed and easy-going, so it suits families and senior travellers. We can arrange a comfortable vehicle and a gentle pace.",
   },
+  {
+    q: "How far is Pokhara from Raxaul?",
+    a: "Pokhara is a full day's road journey from Raxaul via the Raxaul–Birgunj border, usually with an overnight stop or a long single drive depending on your route. We plan the journey with comfortable breaks rather than rushing it in one go.",
+  },
+  {
+    q: "Is Phewa Lake boating included in the Pokhara package?",
+    a: "Boating on Phewa Lake is a highlight of most Pokhara itineraries, though whether it's included or optional depends on the specific package — check the inclusions on the itinerary you're booking, or ask us to add it.",
+  },
+  {
+    q: "What does a Pokhara tour package cost from Bihar?",
+    a: "Our Pokhara Himalayan Escape starts from ₹7,999 per person for 3 days, on a twin-sharing basis. The exact price depends on your dates, season and group size — see our Nepal tour package cost guide, or ask us for a quote.",
+  },
 ];
 
 export default async function PokharaFromRaxaulPage() {

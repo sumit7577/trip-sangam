@@ -32,7 +32,15 @@ const faqs: Faq[] = [
   },
   {
     q: "Can I combine Muktinath with Pokhara and Kathmandu?",
-    a: "Yes. A common plan is Kathmandu and Pokhara with Muktinath as the pilgrimage highlight. Tell us your days and we will build a combined itinerary.",
+    a: "Yes. A common plan is Kathmandu and Pokhara with Muktinath as the pilgrimage highlight — see our Muktinath · Pokhara · Kathmandu Divine Journey for a ready-made 7-day itinerary. Tell us your days and we will build a combined route.",
+  },
+  {
+    q: "Does the Muktinath tour package include Jomsom?",
+    a: "Yes — Jomsom is the overnight base for Muktinath darshan on our itineraries, and the route through the Kali Gandaki valley (Rupse Waterfall, Lete viewpoint) is part of the journey there and back.",
+  },
+  {
+    q: "Is there a Muktinath darshan package for families?",
+    a: "Yes. We plan Muktinath trips at a comfortable pace with rest stops, suitable vehicles and flexible timing, which works well for families and mixed-age groups travelling together.",
   },
 ];
 

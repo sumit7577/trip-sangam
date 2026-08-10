@@ -37,6 +37,22 @@ const faqs: Faq[] = [
     q: "How do I book a Nepal tour package from Raxaul?",
     a: "Share your travel dates and number of travellers, and we will suggest an itinerary with a quotation. Once you are happy, we confirm the trip and arrange your pickup from Raxaul.",
   },
+  {
+    q: "Are you a Nepal tour operator or travel agency based in Raxaul?",
+    a: "Yes — TripSangam Travels is a Nepal tour operator and travel agency based in Raxaul, East Champaran, right at the India–Nepal border crossing. We plan and run the full trip ourselves, from pickup at Raxaul to the return journey.",
+  },
+  {
+    q: "What makes TripSangam the best Nepal tour package from Raxaul?",
+    a: "We're based right at the Raxaul–Birgunj border, so pickup, border assistance and the onward journey are handled by one team, not multiple agents. Itineraries are built around real, bookable packages with transparent pricing, and every route can be customised to your dates and group.",
+  },
+  {
+    q: "Do you arrange Nepal darshan tours from Raxaul?",
+    a: "Yes. Nepal darshan — Pashupatinath, Muktinath, Manakamana, the Shaktipiths of the Kathmandu Valley and more — is one of our most-booked trip types from Raxaul. See our Nepal pilgrimage tour page for a dedicated itinerary.",
+  },
+  {
+    q: "Can you help plan a Nepal tour itinerary from Raxaul?",
+    a: "Yes. Tell us your available days and the places you'd like to see, and we'll build a day-by-day itinerary from Raxaul — see our Nepal trip plan guide for how the planning process works.",
+  },
 ];
 
 export default async function NepalFromRaxaulPage() {

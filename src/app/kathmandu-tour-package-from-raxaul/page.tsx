@@ -34,6 +34,18 @@ const faqs: Faq[] = [
     q: "Should I choose a private vehicle or a small-group tour?",
     a: "A private vehicle gives you flexibility over your pace and the order you see the sites; a small-group tour is friendlier and better value for couples and solo travellers. Tell us your group size and dates and we will suggest the better fit.",
   },
+  {
+    q: "Is there a 3-day Kathmandu tour package from Raxaul?",
+    a: "Yes — 3 days is a comfortable length for a focused Kathmandu visit: Pashupatinath, Boudhanath, Swayambhunath and Durbar Square, with time for Thamel. See our Kathmandu Heritage Tour for a ready-made 3-day itinerary.",
+  },
+  {
+    q: "What does a Kathmandu tour package cost from Bihar?",
+    a: "Our Kathmandu Heritage Tour starts from ₹7,599 per person for 3 days, on a twin-sharing basis. The exact price depends on your dates, season and group size — see our Nepal tour package cost guide, or ask us for a quote.",
+  },
+  {
+    q: "Can I book a Kathmandu · Pokhara · Muktinath combined tour package?",
+    a: "Yes — this is one of our most popular routes. See our Muktinath · Pokhara · Kathmandu Divine Journey for a ready-made 7-day itinerary covering all three.",
+  },
 ];
 
 export default async function KathmanduFromRaxaulPage() {

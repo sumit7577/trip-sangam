@@ -23,6 +23,10 @@ const faqs: Faq[] = [
     a: "It depends on your route, number of days, the season and how many of you travel together. Short trips start lower and longer multi-city trips cost more. All our prices are per person and vary with dates, season and group size — tell us your plan and we'll share an exact quote.",
   },
   {
+    q: "What is the Nepal tour package price list from Raxaul?",
+    a: "Current starting prices per person: Kathmandu Heritage Tour ₹7,599 (3 days), Pokhara Himalayan Escape ₹7,999 (3 days), Kathmandu · Pokhara Tour ₹14,500 (5 days), Muktinath · Pokhara · Kathmandu Divine Journey ₹16,800 (7 days), Lumbini · Pokhara · Kathmandu Tour ₹22,000 (6 days). All prices vary with dates, season and group size.",
+  },
+  {
     q: "Is it cheaper to travel in a group?",
     a: "Usually yes. A shared group departure spreads the cost of transport and a guide across more travellers, so it tends to be better value than a fully private trip. A private vehicle gives more flexibility but costs more.",
   },
