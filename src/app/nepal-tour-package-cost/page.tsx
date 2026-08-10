@@ -86,11 +86,23 @@ export default async function NepalTourCostPage() {
           To give you a rough sense, here are real starting prices per person. These vary with dates,
           season and group size, so treat them as a guide and ask us for a quote.
           <ul className="ml-5 mt-3 list-disc space-y-1.5">
-            <li>Ayodhya Ram Mandir Yatra — from ₹4,600 (2 days)</li>
             <li>Kathmandu Heritage Tour — from ₹7,599 (3 days)</li>
             <li>Pokhara Himalayan Escape — from ₹7,999 (3 days)</li>
-            <li>Himalayan Soul Escape – Chitwan, Pokhara & Ghandruk — from ₹15,600 (5 days)</li>
+            <li>Kathmandu · Pokhara Tour — from ₹14,500 (5 days)</li>
             <li>Muktinath · Pokhara · Kathmandu Divine Journey — from ₹16,800 (7 days)</li>
+            <li>Lumbini · Pokhara · Kathmandu Tour — from ₹22,000 (6 days)</li>
+            <li>Pokhara · Muktinath · Kathmandu · Janakpur Grand Yatra — from ₹82,000 (8 days)</li>
+          </ul>
+        </Section>
+
+        <Section title="Nepal tour packages by budget">
+          Looking for a specific price range? Here's roughly what each budget tier gets you from
+          Raxaul:
+          <ul className="ml-5 mt-3 list-disc space-y-1.5">
+            <li><strong>Under ₹10,000</strong> — a focused 3-day trip to one city, Kathmandu or Pokhara</li>
+            <li><strong>Under ₹20,000</strong> — a 5 to 7-day trip covering two cities, or Kathmandu, Pokhara and Muktinath together</li>
+            <li><strong>Under ₹30,000</strong> — a longer multi-city circuit, such as Lumbini, Pokhara and Kathmandu</li>
+            <li><strong>₹30,000 and above</strong> — grand multi-city pilgrimages covering four or more destinations over a week or longer</li>
           </ul>
         </Section>
 
